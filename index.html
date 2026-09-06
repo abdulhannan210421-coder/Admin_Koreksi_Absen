@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard Taklimda - Realtime Monitoring</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+:root {
+    --primary: #0f172a;
+    --accent: #059669;
+    --accent-gradient: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    --bg-color: #f8fafc;
+    --card-bg: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+
+    --sakit-color: #0284c7;
+    --izin-color: #d97706;
+    --alpha-color: #e11d48;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+body { background-color: var(--bg-color); color: var(--text-main); padding: 16px; max-width: 1200px; margin: 0 auto; padding-bottom: 50px; }
+
+/* HEADER */
+.admin-header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 16px 20px; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.03); margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.admin-badge { background: #1e293b; color: white; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+
+/* NAV TABS */
+.nav-tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid var(--border); padding-bottom: 8px; }
+.tab-btn { padding: 10px 18px; border: none; background: transparent; border-radius: 12px; font-weight: 700; font-size: 13px; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+.tab-btn.active { background: var(--primary); color: white; }
+
+/* KPI GRID */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.kpi-card { background: white; padding: 18px; border-radius: 18px; border: 1px solid var(--border); box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+.kpi-title { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.kpi-value { font-size: 24px; font-weight: 800; margin-top: 4px; color: var(--text-main); }
+
+/* TABLES & CARDS */
+.panel { background: white; border-radius: 20px; border: 1px solid var(--border); padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); }
+.panel-title { font-size: 15px; font-weight: 800; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+
+.table-container { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; white-space: nowrap; }
+th { background: #f1f5f9; padding: 12px 14px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); }
+td { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+
+.progress-bg { background: #e2e8f0; height: 8px; border-radius: 10px; overflow: hidden; width: 100px; display: inline-block; vertical-align: middle; }
+.progress-fill { background: var(--accent); height: 100%; width: 0%; border-radius: 10px; }
+
+.status-tag { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+.status-selesai { background: #d1fae5; color: #047857; }
+.status-proses { background: #fef3c7; color: #b45309; }
+
+/* MODAL UPDATE PASSWORD */
+#modal-pass { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15,23,42,0.6); backdrop-filter: blur(6px); z-index: 99999; align-items: center; justify-content: center; padding: 16px; }
+.modal-box { background: white; padding: 24px; border-radius: 20px; width: 100%; max-width: 380px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+
+button { border: none; cursor: pointer; font-family: inherit; font-weight: 700; }
+.btn-primary { background: var(--accent-gradient); color: white; padding: 10px 16px; border-radius: 10px; font-size: 12px; }
+.btn-dark { background: var(--primary); color: white; padding: 10px 16px; border-radius: 10px; font-size: 12px; }
+
+.toast { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 10px 22px; border-radius: 30px; font-size: 12px; font-weight: 600; opacity: 0; transition: 0.3s; z-index: 99999; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(-5px); }
+    </style>
+</head>
+<body>
+
+    <div id="toast" class="toast">Notifikasi</div>
+
+    <!-- HEADER -->
+    <div class="admin-header">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:40px; height:40px; background:var(--primary); color:white; border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px;">A</div>
+            <div>
+                <h2 style="font-size:16px; font-weight:800;">Admin Dashboard Taklimda</h2>
+                <p style="font-size:12px; color:var(--text-muted);">Monitoring Realtime Seluruh Daerah (A-Z)</p>
+            </div>
+        </div>
+        <div>
+            <span class="admin-badge">Pusat Control</span>
+            <button class="btn-dark" style="margin-left:8px;" onclick="loadAllRealtimeData()">🔄 Refresh Data</button>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="nav-tabs">
+        <button class="tab-btn active" id="tab-btn-monitor" onclick="switchTab('tab-monitor')">📊 Monitoring Realtime</button>
+        <button class="tab-btn" id="tab-btn-users" onclick="switchTab('tab-users')">🔑 Kelola Sandi Daerah</button>
+    </div>
+
+    <!-- TAB 1: MONITORING REALTIME -->
+    <div id="tab-monitor" class="tab-content">
+        <!-- KPI RINGKASAN -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-title">Total Santri Seluruh Daerah</div>
+                <div class="kpi-value" id="kpi-total-santri">0</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Sudah Dikoreksi</div>
+                <div class="kpi-value" style="color:var(--accent);" id="kpi-total-sudah">0</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Total Sakit (S)</div>
+                <div class="kpi-value" style="color:var(--sakit-color);" id="kpi-total-sakit">0</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Total Izin (I)</div>
+                <div class="kpi-value" style="color:var(--izin-color);" id="kpi-total-izin">0</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Total Alpha (A)</div>
+                <div class="kpi-value" style="color:var(--alpha-color);" id="kpi-total-alpha">0</div>
+            </div>
+        </div>
+
+        <!-- TABEL MONITORING PER DAERAH -->
+        <div class="panel">
+            <div class="panel-title">
+                <span>Progress Koreksi Per Daerah (A – Z)</span>
+                <input type="text" id="search-daerah" placeholder="Cari Daerah..." oninput="renderMonitoringTable()" style="padding:6px 12px; border:1px solid var(--border); border-radius:8px; font-size:12px; outline:none;">
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Daerah</th>
+                            <th>Status Progress</th>
+                            <th>Total Santri</th>
+                            <th>Sudah Koreksi</th>
+                            <th>Belum Koreksi</th>
+                            <th>Sakit (S)</th>
+                            <th>Izin (I)</th>
+                            <th>Alpha (A)</th>
+                            <th>Persentase</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-monitoring">
+                        <tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding:20px;">Memuat data dari Spreadsheet...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: KELOLA SANDI USER DAERAH -->
+    <div id="tab-users" class="tab-content" style="display:none;">
+        <div class="panel">
+            <div class="panel-title">Pengaturan Sandi Pengurus Daerah (A – Z)</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Daerah</th>
+                            <th>Sandi Saat Ini</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-users">
+                        <tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:20px;">Memuat data password...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDIT PASSWORD -->
+    <div id="modal-pass">
+        <div class="modal-box">
+            <h3 style="font-size:16px; font-weight:800; margin-bottom:4px;">Ubah Sandi Daerah <span id="modal-target-daerah">A</span></h3>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">Sandi baru akan langsung berlaku untuk login APK Mobile.</p>
+            
+            <input type="text" id="input-new-pass" placeholder="Masukkan Sandi Baru..." style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font-weight:700; margin-bottom:16px; outline:none;">
+
+            <div style="display:flex; gap:8px; justify-content:flex-end;">
+                <button onclick="closePassModal()" style="padding:10px 14px; background:#f1f5f9; border-radius:10px;">Batal</button>
+                <button onclick="submitNewPassword()" class="btn-primary">Simpan Sandi Baru</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz1ecMJ8KBdbsNhuJCm_eYrRH2ATxZH7sn73GV-B19JoxKLNMrS8BCS8fZNnHBcqjM/exec";
+
+    let rawKoreksiData = [];
+    let rawUserData = [];
+    let activePassDaerah = "";
+
+    document.addEventListener("DOMContentLoaded", () => {
+        loadAllRealtimeData();
+    });
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById(tabId).style.display = 'block';
+        if (tabId === 'tab-monitor') document.getElementById('tab-btn-monitor').classList.add('active');
+        if (tabId === 'tab-users') document.getElementById('tab-btn-users').classList.add('active');
+    }
+
+    async function loadAllRealtimeData() {
+        showToast("Memuat data realtime...");
+        try {
+            // 1. Fetch Data Koreksi Absen
+            let resK = await fetch(APPS_SCRIPT_URL);
+            rawKoreksiData = await resK.json();
+
+            // 2. Fetch Data User Passwords
+            let resU = await fetch(APPS_SCRIPT_URL + "?action=getUsers");
+            rawUserData = await resU.json();
+
+            processAndRenderStats();
+            renderUsersTable();
+            showToast("Data Ter-update Realtime!");
+        } catch(e) {
+            console.error(e);
+            showToast("Gagal mengambil data dari server!");
+        }
+    }
+
+    function processAndRenderStats() {
+        let statsPerDaerah = {};
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(let => {
+            statsPerDaerah[let] = { total: 0, sudah: 0, belum: 0, sakit: 0, izin: 0, alpha: 0 };
+        });
+
+        let totSantri = 0, totSudah = 0, totSakit = 0, totIzin = 0, totAlpha = 0;
+
+        rawKoreksiData.forEach(row => {
+            let dom = String(row.domisili || row.daerah || '').toUpperCase().trim();
+            let letter = dom.charAt(0);
+
+            if (!statsPerDaerah[letter]) {
+                statsPerDaerah[letter] = { total: 0, sudah: 0, belum: 0, sakit: 0, izin: 0, alpha: 0 };
+            }
+
+            let sCount = parseInt(row.totalsakit) || (row.tanggalsakit && row.tanggalsakit !== '-' ? row.tanggalsakit.split(',').length : 0);
+            let iCount = parseInt(row.totalizin)  || (row.tanggalizin  && row.tanggalizin  !== '-' ? row.tanggalizin.split(',').length  : 0);
+            let aCount = parseInt(row.totalalpa)  || (row.tanggalalpa  && row.tanggalalpa  !== '-' ? row.tanggalalpa.split(',').length  : 0);
+            let isSudah = String(row.status || row.koreksi || '').includes('Sudah');
+
+            statsPerDaerah[letter].total++;
+            if (isSudah) statsPerDaerah[letter].sudah++;
+            else statsPerDaerah[letter].belum++;
+
+            statsPerDaerah[letter].sakit += sCount;
+            statsPerDaerah[letter].izin += iCount;
+            statsPerDaerah[letter].alpha += aCount;
+
+            totSantri++;
+            if (isSudah) totSudah++;
+            totSakit += sCount;
+            totIzin += iCount;
+            totAlpha += aCount;
+        });
+
+        // Update KPI
+        document.getElementById('kpi-total-santri').innerText = totSantri;
+        document.getElementById('kpi-total-sudah').innerText = `${totSudah} (${totSantri ? Math.round(totSudah/totSantri*100) : 0}%)`;
+        document.getElementById('kpi-total-sakit').innerText = totSakit;
+        document.getElementById('kpi-total-izin').innerText = totIzin;
+        document.getElementById('kpi-total-alpha').innerText = totAlpha;
+
+        window.processedStats = statsPerDaerah;
+        renderMonitoringTable();
+    }
+
+    function renderMonitoringTable() {
+        let tbody = document.getElementById('tbody-monitoring');
+        let searchVal = document.getElementById('search-daerah').value.toUpperCase().trim();
+        tbody.innerHTML = "";
+
+        let keys = Object.keys(window.processedStats || {}).filter(k => !searchVal || k.includes(searchVal));
+
+        keys.forEach(daerah => {
+            let d = window.processedStats[daerah];
+            if (d.total === 0) return; // Sembunyikan daerah tanpa santri
+
+            let percent = d.total > 0 ? Math.round((d.sudah / d.total) * 100) : 0;
+            let statusBadge = percent === 100 ? 
+                `<span class="status-tag status-selesai">Selesai</span>` : 
+                `<span class="status-tag status-proses">Proses (${percent}%)</span>`;
+
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><b>Daerah ${daerah}</b></td>
+                <td>${statusBadge}</td>
+                <td><b>${d.total}</b> Santri</td>
+                <td style="color:var(--accent); font-weight:700;">${d.sudah}</td>
+                <td style="color:var(--text-muted);">${d.belum}</td>
+                <td style="color:var(--sakit-color); font-weight:700;">${d.sakit}</td>
+                <td style="color:var(--izin-color); font-weight:700;">${d.izin}</td>
+                <td style="color:var(--alpha-color); font-weight:700;">${d.alpha}</td>
+                <td>
+                    <div class="progress-bg"><div class="progress-fill" style="width:${percent}%;"></div></div>
+                    <span style="font-size:11px; font-weight:700; margin-left:6px;">${percent}%</span>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderUsersTable() {
+        let tbody = document.getElementById('tbody-users');
+        tbody.innerHTML = "";
+
+        if (!rawUserData || rawUserData.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:20px;">Belum ada data di sheet User_Pass.</td></tr>`;
+            return;
+        }
+
+        rawUserData.forEach(u => {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><b>Daerah ${u.daerah}</b></td>
+                <td><code style="background:#f1f5f9; padding:4px 8px; border-radius:6px; font-weight:700;">${u.password}</code></td>
+                <td><button class="btn-dark" onclick="openPassModal('${u.daerah}', '${u.password}')">Ubah Sandi</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function openPassModal(daerah, currentPass) {
+        activePassDaerah = daerah;
+        document.getElementById('modal-target-daerah').innerText = daerah;
+        document.getElementById('input-new-pass').value = currentPass;
+        document.getElementById('modal-pass').style.display = 'flex';
+    }
+
+    function closePassModal() {
+        document.getElementById('modal-pass').style.display = 'none';
+    }
+
+    function submitNewPassword() {
+        let newPass = document.getElementById('input-new-pass').value.trim();
+        if (!newPass) return alert("Sandi tidak boleh kosong!");
+
+        showToast("Memperbarui sandi...");
+
+        fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'updatePassword',
+                data: { daerah: activePassDaerah, password: newPass }
+            })
+        }).then(res => res.json())
+          .then(data => {
+              showToast("✅ " + data.message);
+              closePassModal();
+              loadAllRealtimeData();
+          }).catch(err => console.error(err));
+    }
+    </script>
+</body>
+</html>
