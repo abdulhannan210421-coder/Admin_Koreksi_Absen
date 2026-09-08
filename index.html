@@ -2,12 +2,15 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard Taklimda - Realtime Monitoring</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Admin Dashboard Taklimda</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- CHART.JS LIBRARY FOR GRAPHICAL STATISTICAL CHARTS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
 :root {
@@ -21,56 +24,102 @@
     --border: #e2e8f0;
 
     --sakit-color: #0284c7;
+    --sakit-bg: #e0f2fe;
     --izin-color: #d97706;
+    --izin-bg: #fef3c7;
     --alpha-color: #e11d48;
+    --alpha-bg: #ffe4e6;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-body { background-color: var(--bg-color); color: var(--text-main); padding: 12px; max-width: 1200px; margin: 0 auto; padding-bottom: 40px; }
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+body { background-color: var(--bg-color); color: var(--text-main); padding: 12px; max-width: 500px; margin: 0 auto; padding-bottom: 84px; }
 
-/* HEADER */
-.admin-header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 12px 16px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
-.live-indicator { display: inline-flex; align-items: center; gap: 6px; background: #d1fae5; color: #047857; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; }
-.live-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; animation: pulse 1.5s infinite; }
+/* ANIMASI UI */
+@keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.slide-up { animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+.fade-in { animation: fadeIn 0.2s ease-in; }
+
+.app-view { display: none; }
+.app-view.active { display: block !important; }
+
+/* HEADER ATAS */
+.admin-header { background: white; padding: 12px 14px; border-radius: 18px; border: 1px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.02); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.avatar-icon { width: 38px; height: 38px; background: var(--primary); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; box-shadow: 0 4px 10px rgba(15,23,42,0.15); }
+
+.live-badge { display: inline-flex; align-items: center; gap: 4px; background: #d1fae5; color: #047857; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 800; }
+.live-dot { width: 6px; height: 6px; background: #10b981; border-radius: 50%; animation: pulse 1.5s infinite; }
 
 @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.8; } }
 
-/* NAV TABS */
-.nav-tabs { display: flex; gap: 6px; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
-.tab-btn { padding: 8px 14px; border: none; background: transparent; border-radius: 10px; font-weight: 800; font-size: 12px; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
-.tab-btn.active { background: var(--primary); color: white; }
+/* AUTO-REFRESH TOGGLE SWITCH */
+.toggle-switch { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 800; color: var(--text-muted); cursor: pointer; user-select: none; }
+.toggle-switch input { display: none; }
+.slider { width: 32px; height: 18px; background-color: #cbd5e1; border-radius: 20px; position: relative; transition: 0.2s; }
+.slider::before { content: ""; position: absolute; width: 14px; height: 14px; border-radius: 50%; background-color: white; top: 2px; left: 2px; transition: 0.2s; }
+.toggle-switch input:checked + .slider { background-color: var(--accent); }
+.toggle-switch input:checked + .slider::before { transform: translateX(14px); }
 
-/* COMPACT KPI GRID */
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom: 12px; }
-.kpi-card { background: white; padding: 12px; border-radius: 14px; border: 1px solid var(--border); }
-.kpi-title { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
-.kpi-value { font-size: 18px; font-weight: 800; margin-top: 2px; color: var(--text-main); }
+/* KPI CARDS (DASHBOARD) */
+.kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+.kpi-card { background: white; padding: 12px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.015); }
+.kpi-card.full-width { grid-column: span 2; }
+.kpi-title { font-size: 9px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; }
+.kpi-value { font-size: 20px; font-weight: 800; margin-top: 2px; color: var(--text-main); }
+.kpi-subtext { font-size: 10px; font-weight: 700; color: var(--text-muted); margin-top: 2px; }
 
-/* PANEL & TABLE */
-.panel { background: white; border-radius: 16px; border: 1px solid var(--border); padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
-.panel-title { font-size: 13px; font-weight: 800; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+/* PANEL & CONTAINERS */
+.panel { background: white; border-radius: 18px; border: 1px solid var(--border); padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.015); }
+.panel-title { font-size: 12px; font-weight: 800; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.3px; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; }
 
-.table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; white-space: nowrap; }
-th { background: #f8fafc; padding: 10px 12px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); }
-td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.controls-stack { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.input-search, .select-control { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; font-size: 11px; font-weight: 700; outline: none; background: white; }
+.input-search:focus, .select-control:focus { border-color: var(--accent); }
 
-.progress-bg { background: #e2e8f0; height: 6px; border-radius: 10px; overflow: hidden; width: 70px; display: inline-block; vertical-align: middle; }
+/* TABLE STYLING */
+.table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; white-space: nowrap; }
+th { background: #f8fafc; padding: 10px 12px; font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+
+.progress-bg { background: #e2e8f0; height: 6px; border-radius: 10px; overflow: hidden; width: 60px; display: inline-block; vertical-align: middle; }
 .progress-fill { background: var(--accent); height: 100%; width: 0%; border-radius: 10px; }
 
-.status-tag { padding: 3px 6px; border-radius: 6px; font-size: 10px; font-weight: 800; }
+.status-tag { padding: 3px 6px; border-radius: 6px; font-size: 9px; font-weight: 800; }
 .status-selesai { background: #d1fae5; color: #047857; }
 .status-proses { background: #fef3c7; color: #b45309; }
 
-/* MODAL UPDATE PASSWORD */
-#modal-pass { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); z-index: 99999; align-items: center; justify-content: center; padding: 16px; }
-.modal-box { background: white; padding: 20px; border-radius: 16px; width: 100%; max-width: 360px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+/* MODAL & OVERLAYS */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); z-index: 99999; align-items: center; justify-content: center; padding: 16px; }
+.modal-box { background: white; padding: 20px; border-radius: 20px; width: 100%; max-width: 380px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
 
+.modal-box-lg { background: white; border-radius: 24px; width: 100%; max-width: 480px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+.modal-header-lg { padding: 14px 16px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; }
+.modal-body-lg { padding: 14px 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+
+/* KAMAR BREAKDOWN CARD (DRILL-DOWN) */
+.room-breakdown-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+.room-breakdown-header { display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 11px; margin-bottom: 8px; border-bottom: 1px dashed var(--border); padding-bottom: 6px; }
+
+.santri-mini-list { display: flex; flex-direction: column; gap: 6px; }
+.santri-mini-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); font-size: 11px; }
+
+/* BUTTONS */
 button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; }
-.btn-primary { background: var(--accent-gradient); color: white; padding: 8px 14px; border-radius: 8px; font-size: 11px; }
-.btn-dark { background: var(--primary); color: white; padding: 8px 14px; border-radius: 8px; font-size: 11px; }
+.btn-primary { background: var(--accent-gradient); color: white; padding: 10px 14px; border-radius: 10px; font-size: 11px; }
+.btn-dark { background: var(--primary); color: white; padding: 8px 12px; border-radius: 10px; font-size: 11px; transition: 0.15s; }
+.btn-dark:active { transform: scale(0.95); }
+.btn-outline { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border); padding: 6px 10px; border-radius: 8px; font-size: 10px; }
 
-.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 8px 18px; border-radius: 25px; font-size: 11px; font-weight: 700; opacity: 0; transition: 0.25s; z-index: 99999; pointer-events: none; }
+/* BOTTOM NAVIGATION BAR */
+.bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(12px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 0 10px; z-index: 99990; box-shadow: 0 -4px 25px rgba(0,0,0,0.05); }
+.nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; color: var(--text-muted); font-size: 10px; font-weight: 800; cursor: pointer; width: 33.33%; transition: color 0.2s, transform 0.15s; }
+.nav-item.active { color: var(--accent); }
+.nav-item.active .nav-icon { transform: translateY(-2px); }
+.nav-icon { font-size: 18px; transition: transform 0.2s; }
+
+.toast { position: fixed; bottom: 75px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 8px 18px; border-radius: 25px; font-size: 11px; font-weight: 700; opacity: 0; transition: 0.25s; z-index: 999999; pointer-events: none; text-align: center; max-width: 90%; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
     </style>
 </head>
@@ -78,58 +127,134 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
     <div id="toast" class="toast">Notifikasi</div>
 
-    <!-- HEADER -->
-    <div class="admin-header">
+    <!-- HEADER ATAS -->
+    <div class="admin-header slide-up">
         <div style="display:flex; align-items:center; gap:10px;">
-            <div style="width:36px; height:36px; background:var(--primary); color:white; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:16px;">A</div>
+            <div class="avatar-icon">A</div>
             <div>
-                <h2 style="font-size:14px; font-weight:800;">Admin Dashboard</h2>
-                <p style="font-size:10px; color:var(--text-muted); font-weight:600;">Pondok Pesantren Sidogiri</p>
+                <h2 style="font-size:14px; font-weight:800; color:var(--text-main);">Admin Pusat</h2>
+                <p style="font-size:10px; color:var(--text-muted); font-weight:600;">Taklimda Sidogiri</p>
             </div>
         </div>
-        <div style="display:flex; align-items:center; gap:8px;">
-            <div class="live-indicator"><div class="live-dot"></div> Live Realtime</div>
-            <button class="btn-dark" onclick="manualSync()">🔄 Sync</button>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <label class="toggle-switch">
+                <input type="checkbox" id="toggle-autosync" checked onchange="toggleAutoSync(this.checked)">
+                <span class="slider"></span>
+                <span>Auto (15s)</span>
+            </label>
+            <button class="btn-dark" onclick="manualSync()" style="padding:6px 10px; font-size:10px;">🔄 Sync</button>
         </div>
     </div>
 
-    <!-- TABS -->
-    <div class="nav-tabs">
-        <button class="tab-btn active" id="tab-btn-monitor" onclick="switchTab('tab-monitor')">📊 Realtime Monitoring</button>
-        <button class="tab-btn" id="tab-btn-users" onclick="switchTab('tab-users')">🔑 Kelola Sandi Daerah</button>
-    </div>
-
-    <!-- TAB 1: MONITORING REALTIME -->
-    <div id="tab-monitor" class="tab-content">
-        <!-- KPI RINGKASAN -->
+    <!-- ==================== MENU 1: DASHBOARD (STATISTIK VISUAL & GRAFIK) ==================== -->
+    <div id="view-dashboard" class="app-view active fade-in">
+        <!-- KPI SUMMARY CARDS -->
         <div class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-title">Total Santri</div>
-                <div class="kpi-value" id="kpi-total-santri">0</div>
+            <div class="kpi-card full-width">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="kpi-title">Total Santri Terdaftar</div>
+                        <div class="kpi-value" id="dash-total-santri">0</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="kpi-title">Status Realtime</div>
+                        <div class="live-badge" style="margin-top:4px;"><div class="live-dot"></div> Connected</div>
+                    </div>
+                </div>
             </div>
+
             <div class="kpi-card">
-                <div class="kpi-title">Selesai / Diverifikasi</div>
-                <div class="kpi-value" style="color:var(--accent);" id="kpi-total-sudah">0</div>
+                <div class="kpi-title">Selesai Diverifikasi</div>
+                <div class="kpi-value" style="color:var(--accent);" id="dash-total-sudah">0</div>
+                <div class="kpi-subtext" id="dash-pct-sudah">0% selesai</div>
             </div>
+
             <div class="kpi-card">
                 <div class="kpi-title">Total Sakit (S)</div>
-                <div class="kpi-value" style="color:var(--sakit-color);" id="kpi-total-sakit">0</div>
+                <div class="kpi-value" style="color:var(--sakit-color);" id="dash-total-sakit">0</div>
+                <div class="kpi-subtext" id="dash-pct-sakit">0% total</div>
             </div>
+
             <div class="kpi-card">
                 <div class="kpi-title">Total Izin (I)</div>
-                <div class="kpi-value" style="color:var(--izin-color);" id="kpi-total-izin">0</div>
+                <div class="kpi-value" style="color:var(--izin-color);" id="dash-total-izin">0</div>
+                <div class="kpi-subtext" id="dash-pct-izin">0% total</div>
             </div>
+
             <div class="kpi-card">
                 <div class="kpi-title">Total Alpha (A)</div>
-                <div class="kpi-value" style="color:var(--alpha-color);" id="kpi-total-alpha">0</div>
+                <div class="kpi-value" style="color:var(--alpha-color);" id="dash-total-alpha">0</div>
+                <div class="kpi-subtext" id="dash-pct-alpha">0% total</div>
             </div>
         </div>
 
-        <!-- TABEL MONITORING PER DAERAH -->
+        <!-- GRAFIK 1: DIAGRAM BATANG REKAPITULASI ABSENSI PER DAERAH -->
         <div class="panel">
             <div class="panel-title">
-                <span>Progress Koreksi Per Daerah (A – Z)</span>
-                <input type="text" id="search-daerah" placeholder="Cari Daerah..." oninput="renderMonitoringTable()" style="padding:6px 10px; border:1px solid var(--border); border-radius:8px; font-size:11px; outline:none; width:120px;">
+                <span>📊 Statistik Absensi Per Daerah</span>
+            </div>
+            <div style="position: relative; height: 260px; width: 100%;">
+                <canvas id="chartBarDaerah"></canvas>
+            </div>
+        </div>
+
+        <!-- GRAFIK 2: DIAGRAM DONAT PROPORSI ABSENSI GLOBAL -->
+        <div class="panel">
+            <div class="panel-title">
+                <span>🍩 Proporsi Absensi Global</span>
+            </div>
+            <div style="position: relative; height: 220px; width: 100%; display:flex; justify-content:center;">
+                <canvas id="chartDonutAbsensi"></canvas>
+            </div>
+        </div>
+
+        <!-- TABEL MATRIKS RINGKASAN DATA (FORMAT PERSIS GAMBAR 2) -->
+        <div class="panel">
+            <div class="panel-title">
+                <span>📋 Tabel Rekapitulasi Daerah</span>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Daerah</th>
+                            <th style="text-align:center;">Sakit (S)</th>
+                            <th style="text-align:center;">Izin (I)</th>
+                            <th style="text-align:center;">Alpha (A)</th>
+                            <th style="text-align:center;">Diverifikasi</th>
+                            <th style="text-align:center;">Total Santri</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dash-matrix-tbody">
+                        <tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:16px;">Memuat matriks data...</td></tr>
+                    </tbody>
+                    <tfoot id="dash-matrix-tfoot">
+                        <!-- Total Akumulasi Dirender via JS -->
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MENU 2: PROGRESS (MONITORING KOREKSI) ==================== -->
+    <div id="view-progress" class="app-view fade-in">
+        <div class="panel">
+            <div class="panel-title">Monitoring Progress Koreksi</div>
+            
+            <div class="controls-stack">
+                <input type="text" id="search-daerah" class="input-search" placeholder="🔍 Cari Daerah..." oninput="renderMonitoringTable()">
+                <div style="display:flex; gap:6px;">
+                    <select id="filter-status-daerah" class="select-control" onchange="renderMonitoringTable()">
+                        <option value="all">Semua Status</option>
+                        <option value="proses">Proses / Belum 100%</option>
+                        <option value="selesai">Selesai (100%)</option>
+                    </select>
+                    <select id="sort-daerah" class="select-control" onchange="renderMonitoringTable()">
+                        <option value="az">Abjad (A–Z)</option>
+                        <option value="progress_asc">Progress Terendah</option>
+                        <option value="progress_desc">Progress Tertinggi</option>
+                    </select>
+                </div>
             </div>
 
             <div class="table-container">
@@ -141,52 +266,84 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                             <th>Total</th>
                             <th>Selesai</th>
                             <th>Belum</th>
-                            <th>Sakit</th>
-                            <th>Izin</th>
-                            <th>Alpha</th>
                             <th>Progress</th>
+                            <th style="text-align:center;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="tbody-monitoring">
-                        <tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding:16px;">Memuat data dari pusat...</td></tr>
+                        <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:20px;">Memuat data...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- TAB 2: KELOLA SANDI USER DAERAH -->
-    <div id="tab-users" class="tab-content" style="display:none;">
+    <!-- ==================== MENU 3: SANDI (KELOLA PASSWORD USER DAERAH) ==================== -->
+    <div id="view-users" class="app-view fade-in">
         <div class="panel">
-            <div class="panel-title">Pengaturan Sandi Pengurus Daerah (A – Z)</div>
+            <div class="panel-title">Pengaturan Sandi Daerah</div>
+            <p style="font-size:11px; color:var(--text-muted); margin-bottom:12px;">Sandi digunakan oleh pengurus daerah untuk login di HP.</p>
+
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
                             <th>Daerah</th>
                             <th>Sandi Saat Ini</th>
-                            <th>Aksi</th>
+                            <th style="text-align:center;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="tbody-users">
-                        <tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:16px;">Memuat data sandi...</td></tr>
+                        <tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:20px;">Memuat data sandi...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- MODAL EDIT PASSWORD -->
-    <div id="modal-pass">
-        <div class="modal-box">
-            <h3 style="font-size:14px; font-weight:800; margin-bottom:2px;">Ubah Sandi Daerah <span id="modal-target-daerah">A</span></h3>
-            <p style="font-size:11px; color:var(--text-muted); margin-bottom:12px;">Sandi baru langsung berlaku di HP Pengurus.</p>
-            
-            <input type="text" id="input-new-pass" placeholder="Masukkan Sandi Baru..." style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:8px; font-weight:700; margin-bottom:12px; font-size:12px; outline:none;">
+    <!-- BOTTOM NAVIGATION BAR -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" id="nav-btn-dashboard" onclick="switchNav('dashboard')">
+            <span class="nav-icon">📊</span>
+            <span>Dashboard</span>
+        </button>
+        <button class="nav-item" id="nav-btn-progress" onclick="switchNav('progress')">
+            <span class="nav-icon">📋</span>
+            <span>Progress</span>
+        </button>
+        <button class="nav-item" id="nav-btn-users" onclick="switchNav('users')">
+            <span class="nav-icon">🔑</span>
+            <span>Sandi</span>
+        </button>
+    </nav>
 
-            <div style="display:flex; gap:6px; justify-content:flex-end;">
-                <button onclick="closePassModal()" style="padding:8px 12px; background:#f1f5f9; border-radius:8px; font-size:11px;">Batal</button>
-                <button onclick="submitNewPassword()" class="btn-primary">Simpan Sandi Baru</button>
+    <!-- MODAL EDIT PASSWORD -->
+    <div id="modal-pass" class="modal-overlay">
+        <div class="modal-box slide-up">
+            <h3 style="font-size:14px; font-weight:800; margin-bottom:2px;">Ubah Sandi Daerah <span id="modal-target-daerah">A</span></h3>
+            <p style="font-size:11px; color:var(--text-muted); margin-bottom:14px;">Sandi baru langsung berlaku di HP Pengurus.</p>
+            
+            <input type="text" id="input-new-pass" placeholder="Masukkan Sandi Baru..." style="width:100%; padding:10px; border:1px solid var(--border); border-radius:10px; font-weight:700; margin-bottom:14px; font-size:12px; outline:none;">
+
+            <div style="display:flex; gap:8px; justify-content:flex-end;">
+                <button onclick="closePassModal()" style="padding:10px 14px; background:#f1f5f9; border-radius:10px; font-size:11px; font-weight:800;">Batal</button>
+                <button onclick="submitNewPassword()" class="btn-primary" style="padding:10px 14px; border-radius:10px;">Simpan Sandi Baru</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DRILL-DOWN DETAIL PER DAERAH & KAMAR -->
+    <div id="modal-detail-daerah" class="modal-overlay">
+        <div class="modal-box-lg slide-up">
+            <div class="modal-header-lg">
+                <div>
+                    <div style="font-size:9px; opacity:0.8; font-weight:800; text-transform:uppercase;">Rincian Detail Absensi</div>
+                    <div style="font-size:14px; font-weight:800;" id="detail-daerah-title">Daerah A</div>
+                </div>
+                <button onclick="closeDetailModal()" style="background:rgba(255,255,255,0.2); color:white; border:none; width:28px; height:28px; border-radius:50%; font-size:12px; font-weight:bold; cursor:pointer;">✕</button>
+            </div>
+            <div class="modal-body-lg" id="detail-daerah-body">
+                <!-- Data detail per kamar dan santri dirender lewat JS -->
             </div>
         </div>
     </div>
@@ -198,6 +355,11 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
     let rawUserData = [];
     let activePassDaerah = "";
     let autoSyncTimer = null;
+    let isAutoSyncEnabled = true;
+
+    // Chart.js Instances
+    let barChartInstance = null;
+    let donutChartInstance = null;
 
     document.addEventListener("DOMContentLoaded", () => {
         loadAllRealtimeData(false);
@@ -206,26 +368,34 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
     function showToast(msg) {
         const t = document.getElementById('toast');
+        if (!t) return;
         t.innerText = msg;
         t.classList.add('show');
         setTimeout(() => t.classList.remove('show'), 2200);
     }
 
-    function switchTab(tabId) {
-        document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-        
-        document.getElementById(tabId).style.display = 'block';
-        if (tabId === 'tab-monitor') document.getElementById('tab-btn-monitor').classList.add('active');
-        if (tabId === 'tab-users') document.getElementById('tab-btn-users').classList.add('active');
+    /* SWITCH MENU BOTTOM NAV BAR */
+    function switchNav(menu) {
+        document.querySelectorAll('.app-view').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+        document.getElementById(`view-${menu}`).classList.add('active');
+        document.getElementById(`nav-btn-${menu}`).classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function startAutoSync() {
-        if (!autoSyncTimer) {
-            autoSyncTimer = setInterval(() => {
+        if (autoSyncTimer) clearInterval(autoSyncTimer);
+        autoSyncTimer = setInterval(() => {
+            if (isAutoSyncEnabled && navigator.onLine) {
                 loadAllRealtimeData(true);
-            }, 5000);
-        }
+            }
+        }, 15000);
+    }
+
+    function toggleAutoSync(enabled) {
+        isAutoSyncEnabled = enabled;
+        showToast(enabled ? "✅ Auto-Refresh Aktif (15s)" : "⏸️ Auto-Refresh Dinonaktifkan");
     }
 
     function manualSync() {
@@ -250,29 +420,54 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         }
     }
 
+    function parseDates(val) {
+        if (Array.isArray(val)) return val.map(x => parseInt(x, 10)).filter(x => !isNaN(x));
+        if (typeof val === 'number') return [val];
+        if (typeof val === 'string' && val.trim()) {
+            return val.replace(/[/;]/g, ',').split(',').map(x => parseInt(x.trim(), 10)).filter(x => !isNaN(x));
+        }
+        return [];
+    }
+
     function processAndRenderStats() {
         let statsPerDaerah = {};
         'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(let => {
-            statsPerDaerah[let] = { total: 0, sudah: 0, belum: 0, sakit: 0, izin: 0, alpha: 0 };
+            statsPerDaerah[let] = { total: 0, sudah: 0, belum: 0, sakit: 0, izin: 0, alpha: 0, santriList: [] };
         });
 
         let totSantri = 0, totSudah = 0, totSakit = 0, totIzin = 0, totAlpha = 0;
 
         rawKoreksiData.forEach(row => {
-            let dom = String(row.domisili || row.daerah || '').toUpperCase().trim();
+            let dom = String(row.domisili || row.daerah || row.kamar || '').toUpperCase().trim();
             let letter = dom.charAt(0);
 
             if (!statsPerDaerah[letter]) {
-                statsPerDaerah[letter] = { total: 0, sudah: 0, belum: 0, sakit: 0, izin: 0, alpha: 0 };
+                statsPerDaerah[letter] = { total: 0, sudah: 0, belum: 0, sakit: 0, izin: 0, alpha: 0, santriList: [] };
             }
 
-            let sCount = parseInt(row.totalsakit) || (row.tanggalsakit && row.tanggalsakit !== '-' ? row.tanggalsakit.split(',').filter(Boolean).length : 0);
-            let iCount = parseInt(row.totalizin)  || (row.tanggalizin  && row.tanggalizin  !== '-' ? row.tanggalizin.split(',').filter(Boolean).length  : 0);
-            let aCount = parseInt(row.totalalpa)  || (row.tanggalalpa  && row.tanggalalpa  !== '-' ? row.tanggalalpa.split(',').filter(Boolean).length  : 0);
-            
-			let statusText = String(row.status || row.koreksi || '').toLowerCase();
-			let isDone = (statusText.includes('sudah') || statusText.includes('sesuai') || statusText.includes('benar') || statusText.includes('dikoreksi')) && !statusText.includes('belum');
+            let tAlpha = parseDates(row.tgl_alpha || row.tglalpha || row.tanggal_alpha || row.alpha || row.tanggalalpa);
+            let tIzin  = parseDates(row.tgl_izin || row.tglizin || row.tanggal_izin || row.izin || row.tanggalizin);
+            let tSakit = parseDates(row.tgl_sakit || row.tglsakit || row.tanggal_sakit || row.sakit || row.tanggalsakit);
 
+            let sCount = tSakit.length;
+            let iCount = tIzin.length;
+            let aCount = tAlpha.length;
+            
+            let statusText = String(row.status_koreksi || row.status || row.koreksi || '').toLowerCase();
+            let isDone = (statusText.includes('sudah') || statusText.includes('sesuai') || statusText.includes('benar') || statusText.includes('dikoreksi')) && !statusText.includes('belum');
+
+            let itemObj = {
+                nama: row.nama_santri || row.nama || '-',
+                idPps: row.id_pps || row.idpps || row.id || '-',
+                domisili: dom,
+                sakit: sCount,
+                izin: iCount,
+                alpha: aCount,
+                isDone: isDone,
+                status: statusText
+            };
+
+            statsPerDaerah[letter].santriList.push(itemObj);
             statsPerDaerah[letter].total++;
             if (isDone) statsPerDaerah[letter].sudah++;
             else statsPerDaerah[letter].belum++;
@@ -288,57 +483,260 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             totAlpha += aCount;
         });
 
-        document.getElementById('kpi-total-santri').innerText = totSantri;
-        document.getElementById('kpi-total-sudah').innerText = `${totSudah} (${totSantri ? Math.round(totSudah/totSantri*100) : 0}%)`;
-        document.getElementById('kpi-total-sakit').innerText = totSakit;
-        document.getElementById('kpi-total-izin').innerText = totIzin;
-        document.getElementById('kpi-total-alpha').innerText = totAlpha;
+        // UPDATE KPI MENU 1 DASHBOARD
+        document.getElementById('dash-total-santri').innerText = totSantri;
+        document.getElementById('dash-total-sudah').innerText = totSudah;
+        document.getElementById('dash-pct-sudah').innerText = `${totSantri ? Math.round((totSudah/totSantri)*100) : 0}% selesai`;
+
+        document.getElementById('dash-total-sakit').innerText = totSakit;
+        document.getElementById('dash-pct-sakit').innerText = `${totSantri ? ((totSakit/totSantri*100)).toFixed(1) : 0}% total`;
+
+        document.getElementById('dash-total-izin').innerText = totIzin;
+        document.getElementById('dash-pct-izin').innerText = `${totSantri ? ((totIzin/totSantri*100)).toFixed(1) : 0}% total`;
+
+        document.getElementById('dash-total-alpha').innerText = totAlpha;
+        document.getElementById('dash-pct-alpha').innerText = `${totSantri ? ((totAlpha/totSantri*100)).toFixed(1) : 0}% total`;
 
         window.processedStats = statsPerDaerah;
+        
+        // RENDER GRAFIK & TABEL MATRIKS DASHBOARD
+        renderGraphicalChartsAndMatrix(totSakit, totIzin, totAlpha, totSudah);
         renderMonitoringTable();
     }
 
+    /* RENDER GRAFIK & MATRIKS RINGKASAN DATA (AKUAN GAMBAR 2) */
+    function renderGraphicalChartsAndMatrix(totSakit, totIzin, totAlpha, totSudah) {
+        let activeRegions = Object.keys(window.processedStats || {}).filter(k => window.processedStats[k].total > 0).sort();
+
+        let labelsBar = activeRegions.map(r => `Daerah ${r}`);
+        let dataSakit = activeRegions.map(r => window.processedStats[r].sakit);
+        let dataIzin  = activeRegions.map(r => window.processedStats[r].izin);
+        let dataAlpha = activeRegions.map(r => window.processedStats[r].alpha);
+
+        // 1. RENDER DIAGRAM BATANG (BAR CHART) PER DAERAH
+        let ctxBar = document.getElementById('chartBarDaerah').getContext('2d');
+        if (barChartInstance) barChartInstance.destroy();
+
+        barChartInstance = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: labelsBar,
+                datasets: [
+                    { label: 'Sakit (S)', data: dataSakit, backgroundColor: '#0284c7', borderRadius: 4 },
+                    { label: 'Izin (I)', data: dataIzin, backgroundColor: '#d97706', borderRadius: 4 },
+                    { label: 'Alpha (A)', data: dataAlpha, backgroundColor: '#e11d48', borderRadius: 4 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { ticks: { font: { size: 10, weight: 'bold' } } },
+                    y: { beginAtZero: true, ticks: { precision: 0 } }
+                },
+                plugins: {
+                    legend: { position: 'bottom', labels: { font: { size: 10, weight: 'bold' }, boxWidth: 12 } }
+                }
+            }
+        });
+
+        // 2. RENDER DIAGRAM DONAT (DONUT CHART) PROPORSI ABSENSI
+        let ctxDonut = document.getElementById('chartDonutAbsensi').getContext('2d');
+        if (donutChartInstance) donutChartInstance.destroy();
+
+        donutChartInstance = new Chart(ctxDonut, {
+            type: 'doughnut',
+            data: {
+                labels: ['Sakit (S)', 'Izin (I)', 'Alpha (A)', 'Diverifikasi'],
+                datasets: [{
+                    data: [totSakit, totIzin, totAlpha, totSudah],
+                    backgroundColor: ['#0284c7', '#d97706', '#e11d48', '#059669'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { font: { size: 10, weight: 'bold' }, boxWidth: 12 } }
+                }
+            }
+        });
+
+        // 3. RENDER TABEL MATRIKS RINGKASAN (FORMAT PERSIS GAMBAR 2 BOTTOM)
+        let tbody = document.getElementById('dash-matrix-tbody');
+        let tfoot = document.getElementById('dash-matrix-tfoot');
+        tbody.innerHTML = "";
+
+        let sumSakit = 0, sumIzin = 0, sumAlpha = 0, sumSudah = 0, sumTotal = 0;
+
+        activeRegions.forEach(r => {
+            let d = window.processedStats[r];
+            sumSakit += d.sakit;
+            sumIzin += d.izin;
+            sumAlpha += d.alpha;
+            sumSudah += d.sudah;
+            sumTotal += d.total;
+
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><b>Daerah ${r}</b></td>
+                <td style="color:var(--sakit-color); font-weight:800; text-align:center;">${d.sakit}</td>
+                <td style="color:var(--izin-color); font-weight:800; text-align:center;">${d.izin}</td>
+                <td style="color:var(--alpha-color); font-weight:800; text-align:center;">${d.alpha}</td>
+                <td style="color:var(--accent); font-weight:800; text-align:center;">${d.sudah}</td>
+                <td style="font-weight:800; text-align:center;">${d.total}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        tfoot.innerHTML = `
+            <tr style="background:#f1f5f9; font-weight:800; border-top:2px solid var(--border);">
+                <td>TOTAL GLOBAL</td>
+                <td style="color:var(--sakit-color); text-align:center;">${sumSakit}</td>
+                <td style="color:var(--izin-color); text-align:center;">${sumIzin}</td>
+                <td style="color:var(--alpha-color); text-align:center;">${sumAlpha}</td>
+                <td style="color:var(--accent); text-align:center;">${sumSudah}</td>
+                <td style="text-align:center; color:var(--text-main);">${sumTotal}</td>
+            </tr>
+        `;
+    }
+
+    /* RENDER TABEL MONITORING DI MENU 2 (PROGRESS) */
     function renderMonitoringTable() {
         let tbody = document.getElementById('tbody-monitoring');
         let searchVal = document.getElementById('search-daerah').value.toUpperCase().trim();
+        let filterVal = document.getElementById('filter-status-daerah').value;
+        let sortVal = document.getElementById('sort-daerah').value;
+
         tbody.innerHTML = "";
 
-        let keys = Object.keys(window.processedStats || {}).filter(k => !searchVal || k.includes(searchVal));
+        let keys = Object.keys(window.processedStats || {}).filter(k => {
+            let d = window.processedStats[k];
+            if (d.total === 0) return false;
+            
+            let matchSearch = !searchVal || k.includes(searchVal);
+            
+            let percent = d.total > 0 ? Math.round((d.sudah / d.total) * 100) : 0;
+            let matchFilter = true;
+            if (filterVal === 'proses') matchFilter = percent < 100;
+            if (filterVal === 'selesai') matchFilter = percent === 100;
+
+            return matchSearch && matchFilter;
+        });
+
+        // Sorting
+        keys.sort((a, b) => {
+            let dA = window.processedStats[a];
+            let dB = window.processedStats[b];
+            let percentA = dA.total > 0 ? (dA.sudah / dA.total) : 0;
+            let percentB = dB.total > 0 ? (dB.sudah / dB.total) : 0;
+
+            if (sortVal === 'progress_asc') return percentA - percentB;
+            if (sortVal === 'progress_desc') return percentB - percentA;
+            return a.localeCompare(b);
+        });
+
+        if (keys.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:20px;">Data tidak ditemukan.</td></tr>`;
+            return;
+        }
 
         keys.forEach(daerah => {
             let d = window.processedStats[daerah];
-            if (d.total === 0) return;
-
             let percent = d.total > 0 ? Math.round((d.sudah / d.total) * 100) : 0;
             let statusBadge = percent === 100 ? 
-                `<span class="status-tag status-selesai">Selesai (100%)</span>` : 
+                `<span class="status-tag status-selesai">Selesai</span>` : 
                 `<span class="status-tag status-proses">Proses (${percent}%)</span>`;
 
             let tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><b>Daerah ${daerah}</b></td>
                 <td>${statusBadge}</td>
-                <td><b>${d.total}</b> Santri</td>
+                <td><b>${d.total}</b></td>
                 <td style="color:var(--accent); font-weight:800;">${d.sudah}</td>
                 <td style="color:var(--text-muted);">${d.belum}</td>
-                <td style="color:var(--sakit-color); font-weight:800;">${d.sakit}</td>
-                <td style="color:var(--izin-color); font-weight:800;">${d.izin}</td>
-                <td style="color:var(--alpha-color); font-weight:800;">${d.alpha}</td>
                 <td>
                     <div class="progress-bg"><div class="progress-fill" style="width:${percent}%;"></div></div>
-                    <span style="font-size:10px; font-weight:800; margin-left:4px;">${percent}%</span>
+                </td>
+                <td style="text-align:center;">
+                    <button class="btn-outline" onclick="openDetailModal('${daerah}')">🔍 Detail</button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
     }
 
+    /* DRILL-DOWN DETAIL PER-KAMAR & SANTRI */
+    function openDetailModal(daerah) {
+        let d = window.processedStats[daerah];
+        if (!d) return;
+
+        document.getElementById('detail-daerah-title').innerText = `Daerah ${daerah} (${d.sudah}/${d.total} Santri Selesai)`;
+        let container = document.getElementById('detail-daerah-body');
+        container.innerHTML = "";
+
+        let groupedByRoom = {};
+        d.santriList.forEach(s => {
+            let room = s.domisili || 'LAIN-LAIN';
+            if (!groupedByRoom[room]) groupedByRoom[room] = [];
+            groupedByRoom[room].push(s);
+        });
+
+        let sortedRooms = Object.keys(groupedByRoom).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
+
+        sortedRooms.forEach(roomName => {
+            let list = groupedByRoom[roomName];
+            let doneCount = list.filter(x => x.isDone).length;
+            let percentRoom = Math.round((doneCount / list.length) * 100);
+
+            let roomCard = document.createElement('div');
+            roomCard.className = 'room-breakdown-card';
+
+            let santriRows = list.map(s => {
+                let badge = s.isDone ? 
+                    `<span class="status-tag status-selesai">✔ Selesai</span>` : 
+                    `<span class="status-tag status-proses">Belum</span>`;
+
+                return `
+                    <div class="santri-mini-item">
+                        <div>
+                            <b>${s.nama}</b> <span style="color:var(--text-muted); font-size:9px;">(ID: ${s.idPps})</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="font-size:9px; font-weight:800;">S:${s.sakit} I:${s.izin} A:${s.alpha}</span>
+                            ${badge}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            roomCard.innerHTML = `
+                <div class="room-breakdown-header">
+                    <span>🚪 Kamar ${roomName}</span>
+                    <span style="color:var(--text-muted);">${doneCount} / ${list.length} Selesai (${percentRoom}%)</span>
+                </div>
+                <div class="santri-mini-list">
+                    ${santriRows}
+                </div>
+            `;
+            container.appendChild(roomCard);
+        });
+
+        document.getElementById('modal-detail-daerah').style.display = 'flex';
+    }
+
+    function closeDetailModal() {
+        document.getElementById('modal-detail-daerah').style.display = 'none';
+    }
+
+    /* RENDER TABEL USER PASSWORD DI MENU 3 (SANDI) */
     function renderUsersTable() {
         let tbody = document.getElementById('tbody-users');
         tbody.innerHTML = "";
 
         if (!rawUserData || rawUserData.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:16px;">Sandi belum diset di sheet User_Pass.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:20px;">Sandi belum diset di sheet User_Pass.</td></tr>`;
             return;
         }
 
@@ -346,11 +744,28 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             let tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><b>Daerah ${u.daerah}</b></td>
-                <td><code style="background:#f1f5f9; padding:3px 6px; border-radius:6px; font-weight:800; font-size:11px;">${u.password}</code></td>
-                <td><button class="btn-dark" onclick="openPassModal('${u.daerah}', '${u.password}')">Ubah Sandi</button></td>
+                <td>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <input type="password" readonly value="${u.password}" id="pass-input-${u.daerah}" style="background:#f1f5f9; border:1px solid var(--border); padding:5px 8px; border-radius:8px; font-weight:800; font-size:11px; width:90px; outline:none; text-align:center;">
+                        <button onclick="togglePassVisibility('${u.daerah}')" class="btn-outline" style="padding:4px 6px;" id="btn-toggle-${u.daerah}">👁️</button>
+                    </div>
+                </td>
+                <td style="text-align:center;"><button class="btn-dark" onclick="openPassModal('${u.daerah}', '${u.password}')" style="padding:6px 10px; font-size:10px;">Ubah</button></td>
             `;
             tbody.appendChild(tr);
         });
+    }
+
+    function togglePassVisibility(daerah) {
+        let input = document.getElementById(`pass-input-${daerah}`);
+        let btn = document.getElementById(`btn-toggle-${daerah}`);
+        if (input.type === 'password') {
+            input.type = 'text';
+            btn.innerText = '🙈';
+        } else {
+            input.type = 'password';
+            btn.innerText = '👁️';
+        }
     }
 
     function openPassModal(daerah, currentPass) {
@@ -378,7 +793,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             })
         }).then(res => res.json())
           .then(data => {
-              showToast("Data telah diperbarui");
+              showToast("Sandi berhasil diperbarui!");
               closePassModal();
               loadAllRealtimeData(false);
           }).catch(err => console.error(err));
