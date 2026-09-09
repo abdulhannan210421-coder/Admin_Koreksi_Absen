@@ -89,6 +89,7 @@ td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align:
 .status-tag { padding: 3px 6px; border-radius: 6px; font-size: 9px; font-weight: 800; }
 .status-selesai { background: #d1fae5; color: #047857; }
 .status-proses { background: #fef3c7; color: #b45309; }
+.status-matikan { background: #ffe4e6; color: #e11d48; }
 
 .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); z-index: 99999; align-items: center; justify-content: center; padding: 16px; }
 .modal-box { background: white; padding: 20px; border-radius: 20px; width: 100%; max-width: 380px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
@@ -153,7 +154,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                     </div>
                     <div style="text-align:right;">
                         <div class="kpi-title">Status Realtime</div>
-                        <div class="live-badge" style="margin-top:4px;"><div class="live-dot"></div> Connected</div>
+                        <div class="live-badge" style="margin-top:4px;"><div class="live-dot"></div> Connected (2 Server)</div>
                     </div>
                 </div>
             </div>
@@ -183,37 +184,93 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             </div>
         </div>
 
-        <!-- GRAFIK 1: DAERAH -->
+        <!-- RINGKASAN REKAPITULASI KOMPARASI GLOBAL MTQ & MQS -->
         <div class="panel">
             <div class="panel-title">
-                <span>📊 Statistik Absensi Per Daerah</span>
+                <span>🏆 Komparasi Rekapitulasi Global (MTQ & MQS)</span>
             </div>
-            <div style="position: relative; height: 250px; width: 100%;">
-                <canvas id="chartBarDaerah"></canvas>
-            </div>
-        </div>
-
-        <!-- KARTU KHUSUS STATISTIK KATEGORI MTQ & MQS -->
-        <div class="panel">
-            <div class="panel-title">
-                <span>🏆 Statistik Khusus Kategori MTQ & MQS Per Daerah</span>
-            </div>
-            <p style="font-size:10px; color:var(--text-muted); margin-bottom:10px;">Monitoring khusus santri kategori MTQ dan MQS per Daerah.</p>
+            <p style="font-size:10px; color:var(--text-muted); margin-bottom:10px;">Perbandingan data santri dari Master Data dengan data kehadiran dari Rekap Absen.</p>
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th>Daerah</th>
-                            <th style="text-align:center; color:var(--alpha-color);">Alpha MTQ</th>
-                            <th style="text-align:center; color:var(--alpha-color);">Alpha MQS</th>
-                            <th style="text-align:center;">Total MTQ</th>
-                            <th style="text-align:center;">Total MQS</th>
+                            <th>Kategori</th>
+                            <th style="text-align:center;">Total Induk</th>
+                            <th style="text-align:center; color:var(--accent);">Hadir</th>
+                            <th style="text-align:center; color:var(--sakit-color);">Sakit</th>
+                            <th style="text-align:center; color:var(--izin-color);">Izin</th>
+                            <th style="text-align:center; color:var(--alpha-color);">Alpha</th>
                         </tr>
                     </thead>
-                    <tbody id="tbody-mtq-mqs">
-                        <tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:16px;">Memuat data MTQ/MQS...</td></tr>
+                    <tbody id="tbody-mtq-mqs-global">
+                        <tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:16px;">Memuat data MTQ/MQS...</td></tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- TABEL STATISTIK KHUSUS MTQ & MQS PER DAERAH -->
+        <div class="panel">
+            <div class="panel-title">
+                <span>📍 Breakdown Kehadiran MTQ & MQS Per Daerah</span>
+            </div>
+            <p style="font-size:10px; color:var(--text-muted); margin-bottom:10px;">VLOOKUP domisili master data ke rekap absen untuk statistik detail tiap daerah.</p>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th rowspan="2" style="vertical-align:middle;">Daerah</th>
+                            <th colspan="5" style="text-align:center; border-bottom:1px solid var(--border); background:#f1f5f9;">KATEGORI MTQ</th>
+                            <th colspan="5" style="text-align:center; border-bottom:1px solid var(--border); background:#f8fafc;">KATEGORI MQS</th>
+                        </tr>
+                        <tr>
+                            <th style="text-align:center; background:#f1f5f9;">Induk</th>
+                            <th style="text-align:center; color:var(--accent); background:#f1f5f9;">Hadir</th>
+                            <th style="text-align:center; color:var(--sakit-color); background:#f1f5f9;">S</th>
+                            <th style="text-align:center; color:var(--izin-color); background:#f1f5f9;">I</th>
+                            <th style="text-align:center; color:var(--alpha-color); background:#f1f5f9;">A</th>
+
+                            <th style="text-align:center;">Induk</th>
+                            <th style="text-align:center; color:var(--accent);">Hadir</th>
+                            <th style="text-align:center; color:var(--sakit-color);">S</th>
+                            <th style="text-align:center; color:var(--izin-color);">I</th>
+                            <th style="text-align:center; color:var(--alpha-color);">A</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-mtq-mqs-daerah">
+                        <tr><td colspan="11" style="text-align:center; color:var(--text-muted); padding:16px;">Memuat data daerah...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- KARTU GRAFIK BATANG MTQ PER DAERAH -->
+        <div class="panel">
+            <div class="panel-title">
+                <span>📊 Grafik Kehadiran & Ketidakhadiran MTQ Per Daerah</span>
+            </div>
+            <div style="position: relative; height: 260px; width: 100%;">
+                <canvas id="chartBarMtq"></canvas>
+            </div>
+        </div>
+
+        <!-- KARTU GRAFIK BATANG MQS PER DAERAH -->
+        <div class="panel">
+            <div class="panel-title">
+                <span>📊 Grafik Kehadiran & Ketidakhadiran MQS Per Daerah</span>
+            </div>
+            <div style="position: relative; height: 260px; width: 100%;">
+                <canvas id="chartBarMqs"></canvas>
+            </div>
+        </div>
+
+        <!-- GRAFIK KETIDAKHADIRAN UMUM PER DAERAH -->
+        <div class="panel">
+            <div class="panel-title">
+                <span>📊 Grafik Ketidakhadiran Per Daerah</span>
+            </div>
+            <div style="position: relative; height: 250px; width: 100%;">
+                <canvas id="chartBarDaerah"></canvas>
             </div>
         </div>
 
@@ -317,8 +374,9 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         </div>
     </div>
 
-    <!-- MENU 3: CONTROL MODE -->
+    <!-- MENU 3: CONTROL MODE & BROADCAST -->
     <div id="view-config" class="app-view fade-in">
+        <!-- PANEL MODE KOREKSI -->
         <div class="panel">
             <div class="panel-title">
                 <span>⚙️ Mode Koreksi App Taklimda</span>
@@ -363,6 +421,52 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             </div>
 
             <button onclick="saveAppConfig()" class="btn-primary" style="width:100%; padding:12px; font-size:12px;">💾 Simpan Pengaturan Mode Koreksi</button>
+        </div>
+
+        <!-- PANEL BROADCAST PENGUMUMAN PUSAT -->
+        <div class="panel">
+            <div class="panel-title">
+                <span>📢 Terbitkan Pengumuman Pusat</span>
+            </div>
+
+            <!-- STATUS BROADCAST AKTIF SAAT INI -->
+            <div id="current-bc-box" style="background:#f8fafc; border:1px solid var(--border); border-radius:14px; padding:12px; margin-bottom:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <span style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">STATUS BROADCAST SAAT INI</span>
+                    <span id="current-bc-status-badge" class="status-tag status-selesai">MEMUAT...</span>
+                </div>
+                <h4 id="current-bc-disp-title" style="font-size:13px; font-weight:800; margin-bottom:4px;">-</h4>
+                <p id="current-bc-disp-msg" style="font-size:11px; color:var(--text-muted); white-space:pre-line; margin-bottom:12px;">-</p>
+                <div style="display:flex; gap:8px;">
+                    <button onclick="fillFormFromCurrentBc()" class="btn-outline" style="flex:1;">✏️ Edit Pengumuman Ini</button>
+                    <button id="btn-quick-toggle-bc" onclick="quickToggleBroadcast()" class="btn-dark" style="background:var(--alpha-color); flex:1;">🛑 Nonaktifkan Pengumuman</button>
+                </div>
+            </div>
+
+            <hr style="border:none; border-top:1px dashed var(--border); margin:14px 0;">
+
+            <p style="font-size:11px; color:var(--text-muted); margin-bottom:12px; line-height:1.4;">
+                Form Pembuatan / Pembaharuan Pengumuman:
+            </p>
+
+            <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+                <input type="text" id="bc-title" class="input-search" placeholder="Judul Pengumuman (misal: PERHATIAN PENGURUS)">
+                <textarea id="bc-message" class="input-search" style="height:70px; resize:none;" placeholder="Tuliskan isi pengumuman..."></textarea>
+                
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <select id="bc-type" class="select-control" style="flex:1;">
+                        <option value="info">🔵 Informasi (Biasa)</option>
+                        <option value="warning">🟠 Peringatan (Sedang)</option>
+                        <option value="danger">🔴 Penting / Darurat</option>
+                    </select>
+                    <label style="font-size:11px; font-weight:800; display:flex; align-items:center; gap:6px; cursor:pointer; white-space:nowrap;">
+                        <input type="checkbox" id="bc-active" checked style="accent-color:var(--accent);">
+                        Aktifkan
+                    </label>
+                </div>
+            </div>
+
+            <button onclick="sendBroadcastPusat()" class="btn-primary" style="width:100%; padding:12px; font-size:12px;">🚀 Terbitkan / Simpan Pengumuman</button>
         </div>
     </div>
 
@@ -437,16 +541,21 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
     </div>
 
     <script>
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz1ecMJ8KBdbsNhuJCm_eYrRH2ATxZH7sn73GV-B19JoxKLNMrS8BCS8fZNnHBcqjM/exec";
+    const APPS_SCRIPT_URL_REKAP  = "https://script.google.com/macros/s/AKfycbz1ecMJ8KBdbsNhuJCm_eYrRH2ATxZH7sn73GV-B19JoxKLNMrS8BCS8fZNnHBcqjM/exec";
+    const APPS_SCRIPT_URL_MASTER = "https://script.google.com/macros/s/AKfycbzV_l5rAXgnapi2c3ZH90WOusrHgN-Ny9wjaFJ9tczCl1mkz1pURw_sZUYhEF4YY6byRg/exec";
 
     let rawKoreksiData = [];
+    let rawMasterData = [];
     let rawUserData = [];
     let currentConfigMode = "all";
     let activePassDaerah = "";
     let autoSyncTimer = null;
     let isAutoSyncEnabled = true;
+    let activeBroadcastData = null;
 
     let barChartInstance = null;
+    let mtqChartInstance = null;
+    let mqsChartInstance = null;
     let dimensionChartInstance = null;
     let donutChartInstance = null;
 
@@ -490,28 +599,200 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         loadAllRealtimeData(false);
     }
 
+    function getRowVal(obj, ...possibleKeys) {
+        if (!obj || typeof obj !== 'object') return '';
+        const normMap = {};
+        for (let key in obj) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                let cleanKey = String(key).toLowerCase().replace(/[^a-z0-9]/g, '');
+                normMap[cleanKey] = obj[key];
+            }
+        }
+        for (let target of possibleKeys) {
+            let cleanTarget = String(target).toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (normMap[cleanTarget] !== undefined && normMap[cleanTarget] !== null && normMap[cleanTarget] !== '') {
+                return String(normMap[cleanTarget]).trim();
+            }
+        }
+        return '';
+    }
+
+    function extractDaerahLetter(domStr) {
+        if (!domStr) return 'LAIN';
+        let str = String(domStr).trim().toUpperCase();
+        str = str.replace(/^DAERAH\s*/i, '');
+        let match = str.match(/[A-Z]/);
+        return match ? match[0] : 'LAIN';
+    }
+
     async function loadAllRealtimeData(isSilent = false) {
-        if (!isSilent) showToast("Memperbarui data...");
+        if (!isSilent) showToast("Memuat Data Rekap & Master Santri...");
         try {
-            let resC = await fetch(APPS_SCRIPT_URL + "?action=getConfig");
-            let jsonC = await resC.json();
+            const parseArray = (res) => {
+                if (Array.isArray(res)) return res;
+                if (res && Array.isArray(res.data)) return res.data;
+                if (res && Array.isArray(res.result)) return res.result;
+                return [];
+            };
+
+            let [jsonC, users, bcData, rekapRes, masterRes] = await Promise.all([
+                fetch(APPS_SCRIPT_URL_REKAP + "?action=getConfig").then(r => r.json()).catch(() => null),
+                fetch(APPS_SCRIPT_URL_REKAP + "?action=getUsers").then(r => r.json()).catch(() => []),
+                fetch(APPS_SCRIPT_URL_REKAP + "?action=getBroadcast").then(r => r.json()).catch(() => null),
+                fetch(APPS_SCRIPT_URL_REKAP).then(r => r.json()).catch(e => { console.error("Rekap Error:", e); return []; }),
+                fetch(APPS_SCRIPT_URL_MASTER).then(r => r.json()).catch(e => { console.error("Master Error:", e); return null; })
+            ]);
+
             if (jsonC && jsonC.filterAbsen) {
-                currentConfigMode = jsonC.filterAbsen.toLowerCase();
+                currentConfigMode = String(jsonC.filterAbsen).toLowerCase();
                 updateConfigUI(currentConfigMode);
             }
 
-            let resK = await fetch(APPS_SCRIPT_URL);
-            rawKoreksiData = await resK.json();
+            rawUserData = parseArray(users);
+            activeBroadcastData = bcData;
+            renderBroadcastCardUI(bcData);
 
-            let resU = await fetch(APPS_SCRIPT_URL + "?action=getUsers");
-            rawUserData = await resU.json();
+            let listRekap = parseArray(rekapRes);
+
+            rawMasterData = [];
+            if (masterRes && masterRes.dataUtama && masterRes.headersUtama) {
+                let headers = masterRes.headersUtama.map(h => String(h).trim());
+                let mutaallimMap = masterRes.mutaallimMap || {};
+
+                rawMasterData = masterRes.dataUtama.map(row => {
+                    let item = {};
+                    headers.forEach((h, idx) => {
+                        item[h] = row[idx] !== undefined && row[idx] !== null ? String(row[idx]).trim() : '';
+                    });
+
+                    let idPps = item['ID PPS'] || row[0] || '';
+                    let mData = mutaallimMap[idPps] || {};
+
+                    let extraCat = "";
+                    for (let k in mData) {
+                        extraCat += " " + mData[k];
+                    }
+
+                    return {
+                        idpps: idPps,
+                        nama: item['Nama'] || row[1] || '',
+                        domisili: item['Domisili'] || row[6] || '',
+                        kelas: item['Kelas'] || row[7] || '',
+                        tingkat: item['Tingkat'] || row[8] || '',
+                        kategoriText: (extraCat + " " + (item['Kelas'] || '')).toUpperCase(),
+                        rawMaster: item
+                    };
+                });
+            }
+
+            console.log("Jumlah Data Rekap Diterima:", listRekap.length);
+            console.log("Jumlah Data Master Diterima (Parsed):", rawMasterData.length);
+
+            let masterMap = new Map();
+            rawMasterData.forEach(m => {
+                if (m.idpps) masterMap.set(String(m.idpps).trim(), m);
+            });
+
+            rawKoreksiData = listRekap.map(r => {
+                let idKey = String(getRowVal(r, 'idpps', 'id', 'idppsantri', 'nis')).trim();
+                let masterInfo = masterMap.get(idKey) || {};
+
+                return {
+                    ...r,
+                    namasantri: getRowVal(r, 'namasantri', 'nama', 'namalengkap') || masterInfo.nama,
+                    domisili:   getRowVal(r, 'domisili', 'daerah', 'kamar', 'wilayah') || masterInfo.domisili,
+                    marhalah:   getRowVal(r, 'marhalah', 'marhalahjilc'),
+                    tingkat:    getRowVal(r, 'tingkat', 'tingkatpendidikan') || masterInfo.tingkat,
+                    kelas:      getRowVal(r, 'kelas') || masterInfo.kelas,
+                    kategori:   getRowVal(r, 'kategori', 'kategorigroup') || masterInfo.kategoriText
+                };
+            });
 
             processAndRenderStats();
             renderUsersTable();
-            if (!isSilent) showToast("Data ter-update!");
+            if (!isSilent) showToast(`Data ter-update! (${rawKoreksiData.length} Santri)`);
+        } catch(e) {
+            console.error("Error Global:", e);
+            if (!isSilent) showToast("Gagal menyambung ke server Apps Script!");
+        }
+    }
+
+    function renderBroadcastCardUI(bcData) {
+        let statusBadge = document.getElementById('current-bc-status-badge');
+        let titleEl     = document.getElementById('current-bc-disp-title');
+        let msgEl       = document.getElementById('current-bc-disp-msg');
+        let btnToggle   = document.getElementById('btn-quick-toggle-bc');
+
+        if (!bcData || !bcData.title) {
+            statusBadge.className = 'status-tag status-matikan';
+            statusBadge.innerText = 'KOSONG / NONAKTIF';
+            titleEl.innerText = '(Belum ada pengumuman)';
+            msgEl.innerText = 'Tidak ada pengumuman yang sedang ditampilkan di HP pengurus.';
+            btnToggle.style.display = 'none';
+            return;
+        }
+
+        let isBcActive = (bcData.active === true || String(bcData.active).toLowerCase() === 'true');
+
+        if (isBcActive) {
+            statusBadge.className = 'status-tag status-selesai';
+            statusBadge.innerText = '● AKTIF TAYANG';
+            btnToggle.style.display = 'inline-block';
+            btnToggle.className = 'btn-dark';
+            btnToggle.style.background = 'var(--alpha-color)';
+            btnToggle.innerText = '🛑 Nonaktifkan Pengumuman';
+        } else {
+            statusBadge.className = 'status-tag status-matikan';
+            statusBadge.innerText = '○ NONAKTIF';
+            btnToggle.style.display = 'inline-block';
+            btnToggle.className = 'btn-primary';
+            btnToggle.innerText = '🟢 Aktifkan Pengumuman';
+        }
+
+        titleEl.innerText = bcData.title || 'Pengumuman Pusat';
+        msgEl.innerText = bcData.message || '-';
+    }
+
+    function fillFormFromCurrentBc() {
+        if (!activeBroadcastData) return alert("Belum ada data pengumuman.");
+        document.getElementById('bc-title').value   = activeBroadcastData.title || '';
+        document.getElementById('bc-message').value = activeBroadcastData.message || '';
+        document.getElementById('bc-type').value    = activeBroadcastData.type || 'info';
+        document.getElementById('bc-active').checked = (activeBroadcastData.active === true || String(activeBroadcastData.active).toLowerCase() === 'true');
+        showToast("Data dimuat ke form!");
+    }
+
+    async function quickToggleBroadcast() {
+        if (!activeBroadcastData) return;
+        let isCurrentlyActive = (activeBroadcastData.active === true || String(activeBroadcastData.active).toLowerCase() === 'true');
+        let newStatus = !isCurrentlyActive;
+
+        showToast(newStatus ? "Mengaktifkan..." : "Memonaktifkan...");
+
+        try {
+            let res = await fetch(APPS_SCRIPT_URL_REKAP, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'updateBroadcast',
+                    broadcast: {
+                        title: activeBroadcastData.title,
+                        message: activeBroadcastData.message,
+                        type: activeBroadcastData.type || 'info',
+                        active: newStatus
+                    }
+                })
+            });
+
+            let jsonRes = await res.json();
+            if (jsonRes.status === 'success') {
+                showToast(newStatus ? "🟢 Pengumuman Berhasil Diaktifkan!" : "🛑 Pengumuman Berhasil Dinonaktifkan!");
+                loadAllRealtimeData(true);
+            } else {
+                showToast("❌ Gagal mengubah status!");
+            }
         } catch(e) {
             console.error(e);
-            if (!isSilent) showToast("Gagal menyambung ke server!");
+            showToast("❌ Kesalahan jaringan!");
         }
     }
 
@@ -542,44 +823,81 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
         showToast("Menyimpan mode koreksi...");
         try {
-            let res = await fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'updateConfig',
-                    filterAbsen: selectedVal
-                })
-            });
-            let data = await res.json();
-            if (data.status === 'success') {
-                currentConfigMode = selectedVal;
-                updateConfigUI(selectedVal);
-                processAndRenderStats();
-                showToast("✅ Pengaturan berhasil disimpan!");
-            } else {
-                showToast("❌ Gagal menyimpan pengaturan!");
-            }
+            await Promise.allSettled([
+                fetch(APPS_SCRIPT_URL_REKAP, { method: 'POST', body: JSON.stringify({ action: 'updateConfig', filterAbsen: selectedVal }) }),
+                fetch(APPS_SCRIPT_URL_MASTER, { method: 'POST', body: JSON.stringify({ action: 'updateConfig', filterAbsen: selectedVal }) })
+            ]);
+
+            currentConfigMode = selectedVal;
+            updateConfigUI(selectedVal);
+            processAndRenderStats();
+            showToast("✅ Pengaturan berhasil disimpan!");
         } catch(e) {
             console.error(e);
             showToast("❌ Gagal terhubung ke server!");
         }
     }
 
+    async function sendBroadcastPusat() {
+        let title = document.getElementById('bc-title').value.trim();
+        let message = document.getElementById('bc-message').value.trim();
+        let type = document.getElementById('bc-type').value;
+        let active = document.getElementById('bc-active').checked;
+
+        if (!title || !message) {
+            return alert("Judul dan Isi Pesan pengumuman wajib diisi!");
+        }
+
+        showToast("Menerbitkan pengumuman...");
+
+        try {
+            let res = await fetch(APPS_SCRIPT_URL_REKAP, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'updateBroadcast',
+                    broadcast: {
+                        title: title,
+                        message: message,
+                        type: type,
+                        active: active
+                    }
+                })
+            });
+
+            let jsonRes = await res.json();
+            if (jsonRes.status === 'success') {
+                showToast("📢 Pengumuman berhasil diterbitkan!");
+                loadAllRealtimeData(true);
+            } else {
+                showToast("❌ Gagal menerbitkan pengumuman!");
+            }
+        } catch (e) {
+            console.error(e);
+            showToast("❌ Terjadi kesalahan koneksi!");
+        }
+    }
+
     function parseDates(val) {
+        if (!val) return [];
         if (Array.isArray(val)) return val.map(x => parseInt(x, 10)).filter(x => !isNaN(x));
         if (typeof val === 'number') return [val];
         if (typeof val === 'string' && val.trim()) {
-            return val.replace(/[/;]/g, ',').split(',').map(x => parseInt(x.trim(), 10)).filter(x => !isNaN(x));
+            let items = val.replace(/[/;\s]+/g, ',').split(',');
+            let res = [];
+            for (let item of items) {
+                let n = parseInt(item.trim(), 10);
+                if (!isNaN(n) && n > 0 && n <= 31) res.push(n);
+            }
+            return res;
         }
         return [];
     }
 
-    /* NORMALISASI MARHALAH MURNI & KATEGORI LAIN */
     function normalizeDimension(val, dimType) {
         let str = String(val || '').trim();
         if (!str || str === '-' || str === 'null' || str === 'undefined') return 'Tidak Terisi';
 
         if (dimType === 'marhalah') {
-            // MURNI AMBIL MARHALAH (misal: 1-A, 1-B, 5-AU, dll. Tanpa di-strip)
             return str.toUpperCase();
         }
 
@@ -608,171 +926,305 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         return str;
     }
 
-	function processAndRenderStats() {
-		let statsPerDaerah = {};
-		'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(ltr => {
-			statsPerDaerah[ltr] = { total: 0, sudah: 0, belum: 0, sakit: 0, izin: 0, alpha: 0, santriList: [] };
-		});
+    function processAndRenderStats() {
+        let statsPerDaerah = {};
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(ltr => {
+            statsPerDaerah[ltr] = { total: 0, sudah: 0, belum: 0, sakit: 0, izin: 0, alpha: 0, santriList: [] };
+        });
 
-		let dimensionData = {
-			marhalah: {},
-			tingkat: {},
-			kelas: {},
-			majliskitab: {}
-		};
+        let dimensionData = { marhalah: {}, tingkat: {}, kelas: {}, majliskitab: {} };
 
-		let mtqMqsStats = {};
-		'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(ltr => {
-			mtqMqsStats[ltr] = { mtqAlpha: 0, mtqTotal: 0, mqsAlpha: 0, mqsTotal: 0 };
-		});
+        let rekapMap = new Map();
+        rawKoreksiData.forEach(r => {
+            let idKey = String(getRowVal(r, 'idpps', 'id', 'idppsantri', 'nis')).trim();
+            if (idKey) rekapMap.set(idKey, r);
+        });
 
-		let totSantri = 0, totSudah = 0, totSakit = 0, totIzin = 0, totAlpha = 0;
+        let mtqGlobal = { masterTotal: 0, hadir: 0, sakit: 0, izin: 0, alpha: 0 };
+        let mqsGlobal = { masterTotal: 0, hadir: 0, sakit: 0, izin: 0, alpha: 0 };
 
-		rawKoreksiData.forEach(row => {
-			let dom = String(row.domisili || row.daerah || row.kamar || '').toUpperCase().trim();
-			let letter = dom.charAt(0);
+        let mtqMqsDaerah = {};
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(ltr => {
+            mtqMqsDaerah[ltr] = {
+                mtqTotal: 0, mtqHadir: 0, mtqSakit: 0, mtqIzin: 0, mtqAlpha: 0,
+                mqsTotal: 0, mqsHadir: 0, mqsSakit: 0, mqsIzin: 0, mqsAlpha: 0
+            };
+        });
 
-			let tAlpha = parseDates(row.tgl_alpha || row.tglalpha || row.tanggal_alpha || row.alpha || row.tanggalalpa);
-			let tIzin  = parseDates(row.tgl_izin || row.tglizin || row.tanggal_izin || row.izin || row.tanggalizin);
-			let tSakit = parseDates(row.tgl_sakit || row.tglsakit || row.tanggal_sakit || row.sakit || row.tanggalsakit);
+        if (rawMasterData.length > 0) {
+            rawMasterData.forEach(m => {
+                let idKey = String(m.idpps).trim();
+                let dom   = String(m.domisili || '').toUpperCase().trim();
+                let letter = extractDaerahLetter(dom);
 
-			let sCount = tSakit.length;
-			let iCount = tIzin.length;
-			let aCount = tAlpha.length;
+                let isMTQ = m.kategoriText.includes('MTQ');
+                let isMQS = m.kategoriText.includes('MQS');
 
-			let statusText = String(row.status_koreksi || row.status || row.koreksi || '').toLowerCase();
-			let isDone = (statusText.includes('sudah') || statusText.includes('sesuai') || statusText.includes('benar') || statusText.includes('dikoreksi')) && !statusText.includes('belum');
+                let rekapObj = rekapMap.get(idKey);
+                let sCount = 0, iCount = 0, aCount = 0;
 
-			// FILTERING BERDASARKAN MODE ADMIN (Sakit, Izin, Alpha)
-			let isIncludedInMode = true;
-			if (currentConfigMode === 'alpha') isIncludedInMode = (aCount > 0 || isDone);
-			else if (currentConfigMode === 'izin') isIncludedInMode = (iCount > 0 || isDone);
-			else if (currentConfigMode === 'sakit') isIncludedInMode = (sCount > 0 || isDone);
+                if (rekapObj) {
+                    sCount = parseDates(getRowVal(rekapObj, 'tglsakit', 'tanggalsakit', 'sakit')).length;
+                    iCount = parseDates(getRowVal(rekapObj, 'tglizin', 'tanggalizin', 'izin')).length;
+                    aCount = parseDates(getRowVal(rekapObj, 'tglalpha', 'tanggalalpha', 'alpha', 'tglalpa')).length;
+                }
 
-			if (!isIncludedInMode) return;
+                let isAbsent = (sCount + iCount + aCount) > 0;
 
-			if (!statsPerDaerah[letter]) {
-				statsPerDaerah[letter] = { total: 0, sudah: 0, belum: 0, sakit: 0, izin: 0, alpha: 0, santriList: [] };
-			}
+                if (isMTQ) {
+                    mtqGlobal.masterTotal++;
+                    mtqGlobal.sakit += sCount;
+                    mtqGlobal.izin  += iCount;
+                    mtqGlobal.alpha += aCount;
+                    if (!isAbsent) mtqGlobal.hadir++;
 
-			let itemObj = {
-				nama: row.nama_santri || row.nama || '-',
-				idPps: row.id_pps || row.idpps || row.id || '-',
-				domisili: dom,
-				sakit: sCount,
-				izin: iCount,
-				alpha: aCount,
-				isDone: isDone,
-				status: statusText
-			};
+                    if (mtqMqsDaerah[letter]) {
+                        mtqMqsDaerah[letter].mtqTotal++;
+                        mtqMqsDaerah[letter].mtqSakit += sCount;
+                        mtqMqsDaerah[letter].mtqIzin  += iCount;
+                        mtqMqsDaerah[letter].mtqAlpha += aCount;
+                        if (!isAbsent) mtqMqsDaerah[letter].mtqHadir++;
+                    }
+                }
 
-			statsPerDaerah[letter].santriList.push(itemObj);
-			statsPerDaerah[letter].total++;
-			if (isDone) statsPerDaerah[letter].sudah++;
-			else statsPerDaerah[letter].belum++;
+                if (isMQS) {
+                    mqsGlobal.masterTotal++;
+                    mqsGlobal.sakit += sCount;
+                    mqsGlobal.izin  += iCount;
+                    mqsGlobal.alpha += aCount;
+                    if (!isAbsent) mqsGlobal.hadir++;
 
-			statsPerDaerah[letter].sakit += sCount;
-			statsPerDaerah[letter].izin += iCount;
-			statsPerDaerah[letter].alpha += aCount;
+                    if (mtqMqsDaerah[letter]) {
+                        mtqMqsDaerah[letter].mqsTotal++;
+                        mtqMqsDaerah[letter].mqsSakit += sCount;
+                        mtqMqsDaerah[letter].mqsIzin  += iCount;
+                        mtqMqsDaerah[letter].mqsAlpha += aCount;
+                        if (!isAbsent) mtqMqsDaerah[letter].mqsHadir++;
+                    }
+                }
+            });
+        }
 
-			// PERBAIKAN UTAMA: PINDAI GABUNGAN KOLOM KATEGORI + TINGKAT + KELAS + MARHALAH
-			let combinedText = `${row.kategori || ''} ${row.tingkat || ''} ${row.kelas || ''} ${row.marhalah || ''}`.toUpperCase();
-			
-			if (mtqMqsStats[letter]) {
-				if (combinedText.includes('MTQ')) {
-					mtqMqsStats[letter].mtqTotal++;
-					mtqMqsStats[letter].mtqAlpha += aCount;
-				} 
-				if (combinedText.includes('MQS')) {
-					mtqMqsStats[letter].mqsTotal++;
-					mtqMqsStats[letter].mqsAlpha += aCount;
-				}
-			}
+        let totSantri = 0, totSudah = 0, totSakit = 0, totIzin = 0, totAlpha = 0;
 
-			// MARHALAH MURNI (AMBIL DARI KOLOM MARHALAH)
-			let rawMarhalah = row.marhalah || row.marhalahjilc || '';
-			let rawTingkat  = row.tingkat || '';
-			let rawKelas    = row.kelas || '';
-			let rawMajlis   = row.majliskitab || row.kelaskitab || '';
+        rawKoreksiData.forEach(row => {
+            let dom = String(getRowVal(row, 'domisili', 'daerah', 'kamar', 'domisilikamar', 'wilayah') || '').toUpperCase().trim();
+            let letter = extractDaerahLetter(dom);
 
-			let dims = {
-				marhalah: normalizeDimension(rawMarhalah, 'marhalah'),
-				tingkat: normalizeDimension(rawTingkat, 'tingkat'),
-				kelas: normalizeDimension(rawKelas, 'kelas'),
-				majliskitab: normalizeDimension(rawMajlis, 'majliskitab')
-			};
+            let tAlpha = parseDates(getRowVal(row, 'tglalpha', 'tanggalalpha', 'alpha', 'tglalpa', 'tanggalalpa'));
+            let tIzin  = parseDates(getRowVal(row, 'tglizin', 'tanggalizin', 'izin'));
+            let tSakit = parseDates(getRowVal(row, 'tglsakit', 'tanggalsakit', 'sakit'));
 
-			Object.keys(dims).forEach(dKey => {
-				let catVal = dims[dKey];
-				if (!dimensionData[dKey][catVal]) {
-					dimensionData[dKey][catVal] = { total: 0, sudah: 0, sakit: 0, izin: 0, alpha: 0 };
-				}
-				dimensionData[dKey][catVal].total++;
-				if (isDone) dimensionData[dKey][catVal].sudah++;
-				dimensionData[dKey][catVal].sakit += sCount;
-				dimensionData[dKey][catVal].izin += iCount;
-				dimensionData[dKey][catVal].alpha += aCount;
-			});
+            let sCount = tSakit.length;
+            let iCount = tIzin.length;
+            let aCount = tAlpha.length;
 
-			totSantri++;
-			if (isDone) totSudah++;
-			totSakit += sCount;
-			totIzin += iCount;
-			totAlpha += aCount;
-		});
+            let statusText = String(getRowVal(row, 'statuskoreksi', 'status', 'koreksi', 'ket') || '').toLowerCase();
+            let isDone = (statusText.includes('sudah') || statusText.includes('sesuai') || statusText.includes('benar')) && !statusText.includes('belum');
 
-		// UPDATE KPI DASHBOARD
-		document.getElementById('dash-total-santri').innerText = totSantri;
-		document.getElementById('dash-total-sudah').innerText = totSudah;
-		document.getElementById('dash-pct-sudah').innerText = `${totSantri ? Math.round((totSudah/totSantri)*100) : 0}% selesai`;
+            let isIncludedInMode = true;
+            if (currentConfigMode === 'alpha') isIncludedInMode = (aCount > 0);
+            else if (currentConfigMode === 'izin') isIncludedInMode = (iCount > 0);
+            else if (currentConfigMode === 'sakit') isIncludedInMode = (sCount > 0);
 
-		document.getElementById('dash-total-sakit').innerText = totSakit;
-		document.getElementById('dash-pct-sakit').innerText = `${totSantri ? ((totSakit/totSantri*100)).toFixed(1) : 0}% total`;
+            if (!isIncludedInMode) return;
 
-		document.getElementById('dash-total-izin').innerText = totIzin;
-		document.getElementById('dash-pct-izin').innerText = `${totSantri ? ((totIzin/totSantri*100)).toFixed(1) : 0}% total`;
+            if (!statsPerDaerah[letter]) {
+                statsPerDaerah[letter] = { total: 0, sudah: 0, belum: 0, sakit: 0, izin: 0, alpha: 0, santriList: [] };
+            }
 
-		document.getElementById('dash-total-alpha').innerText = totAlpha;
-		document.getElementById('dash-pct-alpha').innerText = `${totSantri ? ((totAlpha/totSantri*100)).toFixed(1) : 0}% total`;
+            let namaSantri = getRowVal(row, 'namasantri', 'nama', 'namalengkap') || '-';
+            let idPps = getRowVal(row, 'idpps', 'id', 'idppsantri', 'nis') || '-';
 
-		window.processedStats = statsPerDaerah;
-		window.processedDimension = dimensionData;
-		window.processedMtqMqs = mtqMqsStats;
+            statsPerDaerah[letter].santriList.push({
+                nama: namaSantri, idPps: idPps, domisili: dom,
+                sakit: sCount, izin: iCount, alpha: aCount, isDone: isDone, status: statusText
+            });
+            statsPerDaerah[letter].total++;
+            if (isDone) statsPerDaerah[letter].sudah++;
+            else statsPerDaerah[letter].belum++;
 
-		renderGraphicalChartsAndMatrix(totSakit, totIzin, totAlpha, totSudah);
-		renderMtqMqsTable();
-		renderDimensionChartAndTable();
-		renderMonitoringTable();
-	}
+            statsPerDaerah[letter].sakit += sCount;
+            statsPerDaerah[letter].izin  += iCount;
+            statsPerDaerah[letter].alpha += aCount;
 
-    /* RENDER TABEL KHUSUS MTQ & MQS */
-    function renderMtqMqsTable() {
-        let tbody = document.getElementById('tbody-mtq-mqs');
-        if (!tbody) return;
-        tbody.innerHTML = "";
+            let marhalahVal = getRowVal(row, 'marhalah', 'marhalahjilc');
+            let tingkatVal  = getRowVal(row, 'tingkat', 'tingkatpendidikan');
+            let kelasVal    = getRowVal(row, 'kelas');
+            let majlisVal   = getRowVal(row, 'majliskitab', 'kelaskitab', 'lokasisurau');
 
-        let activeRegions = Object.keys(window.processedMtqMqs || {}).filter(k => {
-            let d = window.processedMtqMqs[k];
-            return (d.mtqTotal > 0 || d.mqsTotal > 0);
-        }).sort();
+            let dims = {
+                marhalah: normalizeDimension(marhalahVal, 'marhalah'),
+                tingkat: normalizeDimension(tingkatVal, 'tingkat'),
+                kelas: normalizeDimension(kelasVal, 'kelas'),
+                majliskitab: normalizeDimension(majlisVal, 'majliskitab')
+            };
+
+            Object.keys(dims).forEach(dKey => {
+                let catVal = dims[dKey];
+                if (!dimensionData[dKey][catVal]) {
+                    dimensionData[dKey][catVal] = { total: 0, sudah: 0, sakit: 0, izin: 0, alpha: 0 };
+                }
+                dimensionData[dKey][catVal].total++;
+                if (isDone) dimensionData[dKey][catVal].sudah++;
+                dimensionData[dKey][catVal].sakit += sCount;
+                dimensionData[dKey][catVal].izin += iCount;
+                dimensionData[dKey][catVal].alpha += aCount;
+            });
+
+            totSantri++;
+            if (isDone) totSudah++;
+            totSakit += sCount;
+            totIzin  += iCount;
+            totAlpha += aCount;
+        });
+
+        document.getElementById('dash-total-santri').innerText = totSantri;
+        document.getElementById('dash-total-sudah').innerText = totSudah;
+        document.getElementById('dash-pct-sudah').innerText = `${totSantri ? Math.round((totSudah/totSantri)*100) : 0}% selesai`;
+
+        document.getElementById('dash-total-sakit').innerText = totSakit;
+        document.getElementById('dash-pct-sakit').innerText = `${totSantri ? ((totSakit/totSantri*100)).toFixed(1) : 0}% total`;
+
+        document.getElementById('dash-total-izin').innerText = totIzin;
+        document.getElementById('dash-pct-izin').innerText = `${totSantri ? ((totIzin/totSantri*100)).toFixed(1) : 0}% total`;
+
+        document.getElementById('dash-total-alpha').innerText = totAlpha;
+        document.getElementById('dash-pct-alpha').innerText = `${totSantri ? ((totAlpha/totSantri*100)).toFixed(1) : 0}% total`;
+
+        window.processedStats = statsPerDaerah;
+        window.processedDimension = dimensionData;
+
+        renderMtqMqsTables(mtqGlobal, mqsGlobal, mtqMqsDaerah);
+        renderMtqMqsCharts(mtqMqsDaerah);
+        renderGraphicalChartsAndMatrix(totSakit, totIzin, totAlpha, totSudah);
+        renderDimensionChartAndTable();
+        renderMonitoringTable();
+    }
+
+    function renderMtqMqsTables(mtqG, mqsG, daerahData) {
+        let tbodyG = document.getElementById('tbody-mtq-mqs-global');
+        if (tbodyG) {
+            tbodyG.innerHTML = `
+                <tr>
+                    <td><b>Kategori MTQ</b></td>
+                    <td style="text-align:center; font-weight:800;">${mtqG.masterTotal}</td>
+                    <td style="text-align:center; font-weight:800; color:var(--accent);">${mtqG.hadir}</td>
+                    <td style="text-align:center; font-weight:800; color:var(--sakit-color);">${mtqG.sakit}</td>
+                    <td style="text-align:center; font-weight:800; color:var(--izin-color);">${mtqG.izin}</td>
+                    <td style="text-align:center; font-weight:800; color:var(--alpha-color);">${mtqG.alpha}</td>
+                </tr>
+                <tr>
+                    <td><b>Kategori MQS</b></td>
+                    <td style="text-align:center; font-weight:800;">${mqsG.masterTotal}</td>
+                    <td style="text-align:center; font-weight:800; color:var(--accent);">${mqsG.hadir}</td>
+                    <td style="text-align:center; font-weight:800; color:var(--sakit-color);">${mqsG.sakit}</td>
+                    <td style="text-align:center; font-weight:800; color:var(--izin-color);">${mqsG.izin}</td>
+                    <td style="text-align:center; font-weight:800; color:var(--alpha-color);">${mqsG.alpha}</td>
+                </tr>
+            `;
+        }
+
+        let tbodyD = document.getElementById('tbody-mtq-mqs-daerah');
+        if (!tbodyD) return;
+        tbodyD.innerHTML = "";
+
+        let activeRegions = Object.keys(daerahData).filter(k => (daerahData[k].mtqTotal > 0 || daerahData[k].mqsTotal > 0)).sort();
 
         if (activeRegions.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:16px;">Tidak ada data santri kategori MTQ/MQS.</td></tr>`;
+            tbodyD.innerHTML = `<tr><td colspan="11" style="text-align:center; color:var(--text-muted); padding:16px;">Data MTQ/MQS per daerah tidak ditemukan.</td></tr>`;
             return;
         }
 
-        activeRegions.forEach(daerah => {
-            let d = window.processedMtqMqs[daerah];
+        activeRegions.forEach(ltr => {
+            let d = daerahData[ltr];
             let tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><b>Daerah ${daerah}</b></td>
-                <td style="color:var(--alpha-color); font-weight:800; text-align:center;">${d.mtqAlpha}</td>
-                <td style="color:var(--alpha-color); font-weight:800; text-align:center;">${d.mqsAlpha}</td>
-                <td style="font-weight:800; text-align:center;">${d.mtqTotal}</td>
-                <td style="font-weight:800; text-align:center;">${d.mqsTotal}</td>
+                <td><b>Daerah ${ltr}</b></td>
+                <td style="text-align:center; font-weight:800; background:#f8fafc;">${d.mtqTotal}</td>
+                <td style="text-align:center; font-weight:800; color:var(--accent); background:#f8fafc;">${d.mtqHadir}</td>
+                <td style="text-align:center; font-weight:800; color:var(--sakit-color); background:#f8fafc;">${d.mtqSakit}</td>
+                <td style="text-align:center; font-weight:800; color:var(--izin-color); background:#f8fafc;">${d.mtqIzin}</td>
+                <td style="text-align:center; font-weight:800; color:var(--alpha-color); background:#f8fafc;">${d.mtqAlpha}</td>
+
+                <td style="text-align:center; font-weight:800;">${d.mqsTotal}</td>
+                <td style="text-align:center; font-weight:800; color:var(--accent);">${d.mqsHadir}</td>
+                <td style="text-align:center; font-weight:800; color:var(--sakit-color);">${d.mqsSakit}</td>
+                <td style="text-align:center; font-weight:800; color:var(--izin-color);">${d.mqsIzin}</td>
+                <td style="text-align:center; font-weight:800; color:var(--alpha-color);">${d.mqsAlpha}</td>
             `;
-            tbody.appendChild(tr);
+            tbodyD.appendChild(tr);
         });
+    }
+
+    /* FUNGSI RENDER DUA GRAFIK BATANG KHUSUS MTQ & MQS */
+    function renderMtqMqsCharts(daerahData) {
+        let activeRegions = Object.keys(daerahData).filter(k => (daerahData[k].mtqTotal > 0 || daerahData[k].mqsTotal > 0)).sort();
+        let labels = activeRegions.map(r => `Daerah ${r}`);
+
+        let mtqHadir = activeRegions.map(r => daerahData[r].mtqHadir);
+        let mtqSakit = activeRegions.map(r => daerahData[r].mtqSakit);
+        let mtqIzin  = activeRegions.map(r => daerahData[r].mtqIzin);
+        let mtqAlpha = activeRegions.map(r => daerahData[r].mtqAlpha);
+
+        let mqsHadir = activeRegions.map(r => daerahData[r].mqsHadir);
+        let mqsSakit = activeRegions.map(r => daerahData[r].mqsSakit);
+        let mqsIzin  = activeRegions.map(r => daerahData[r].mqsIzin);
+        let mqsAlpha = activeRegions.map(r => daerahData[r].mqsAlpha);
+
+        // GRAFIK BATANG MTQ
+        const canvasMtq = document.getElementById('chartBarMtq');
+        if (canvasMtq) {
+            if (mtqChartInstance) mtqChartInstance.destroy();
+            mtqChartInstance = new Chart(canvasMtq.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Hadir', data: mtqHadir, backgroundColor: '#059669', borderRadius: 4 },
+                        { label: 'Sakit (S)', data: mtqSakit, backgroundColor: '#0284c7', borderRadius: 4 },
+                        { label: 'Izin (I)', data: mtqIzin, backgroundColor: '#d97706', borderRadius: 4 },
+                        { label: 'Alpha (A)', data: mtqAlpha, backgroundColor: '#e11d48', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { font: { size: 10, weight: 'bold' } } },
+                        y: { beginAtZero: true, ticks: { precision: 0 } }
+                    },
+                    plugins: { legend: { position: 'bottom', labels: { font: { size: 10, weight: 'bold' }, boxWidth: 12 } } }
+                }
+            });
+        }
+
+        // GRAFIK BATANG MQS
+        const canvasMqs = document.getElementById('chartBarMqs');
+        if (canvasMqs) {
+            if (mqsChartInstance) mqsChartInstance.destroy();
+            mqsChartInstance = new Chart(canvasMqs.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Hadir', data: mqsHadir, backgroundColor: '#059669', borderRadius: 4 },
+                        { label: 'Sakit (S)', data: mqsSakit, backgroundColor: '#0284c7', borderRadius: 4 },
+                        { label: 'Izin (I)', data: mqsIzin, backgroundColor: '#d97706', borderRadius: 4 },
+                        { label: 'Alpha (A)', data: mqsAlpha, backgroundColor: '#e11d48', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { font: { size: 10, weight: 'bold' } } },
+                        y: { beginAtZero: true, ticks: { precision: 0 } }
+                    },
+                    plugins: { legend: { position: 'bottom', labels: { font: { size: 10, weight: 'bold' }, boxWidth: 12 } } }
+                }
+            });
+        }
     }
 
     function renderGraphicalChartsAndMatrix(totSakit, totIzin, totAlpha, totSudah) {
@@ -783,53 +1235,57 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         let dataIzin  = activeRegions.map(r => window.processedStats[r].izin);
         let dataAlpha = activeRegions.map(r => window.processedStats[r].alpha);
 
-        let ctxBar = document.getElementById('chartBarDaerah').getContext('2d');
-        if (barChartInstance) barChartInstance.destroy();
-
-        barChartInstance = new Chart(ctxBar, {
-            type: 'bar',
-            data: {
-                labels: labelsBar,
-                datasets: [
-                    { label: 'Sakit (S)', data: dataSakit, backgroundColor: '#0284c7', borderRadius: 4 },
-                    { label: 'Izin (I)', data: dataIzin, backgroundColor: '#d97706', borderRadius: 4 },
-                    { label: 'Alpha (A)', data: dataAlpha, backgroundColor: '#e11d48', borderRadius: 4 }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { ticks: { font: { size: 10, weight: 'bold' } } },
-                    y: { beginAtZero: true, ticks: { precision: 0 } }
+        const canvasBar = document.getElementById('chartBarDaerah');
+        if (canvasBar) {
+            if (barChartInstance) barChartInstance.destroy();
+            barChartInstance = new Chart(canvasBar.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labelsBar,
+                    datasets: [
+                        { label: 'Sakit (S)', data: dataSakit, backgroundColor: '#0284c7', borderRadius: 4 },
+                        { label: 'Izin (I)', data: dataIzin, backgroundColor: '#d97706', borderRadius: 4 },
+                        { label: 'Alpha (A)', data: dataAlpha, backgroundColor: '#e11d48', borderRadius: 4 }
+                    ]
                 },
-                plugins: { legend: { position: 'bottom', labels: { font: { size: 10, weight: 'bold' }, boxWidth: 12 } } }
-            }
-        });
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { font: { size: 10, weight: 'bold' } } },
+                        y: { beginAtZero: true, ticks: { precision: 0 } }
+                    },
+                    plugins: { legend: { position: 'bottom', labels: { font: { size: 10, weight: 'bold' }, boxWidth: 12 } } }
+                }
+            });
+        }
 
-        let ctxDonut = document.getElementById('chartDonutAbsensi').getContext('2d');
-        if (donutChartInstance) donutChartInstance.destroy();
-
-        donutChartInstance = new Chart(ctxDonut, {
-            type: 'doughnut',
-            data: {
-                labels: ['Sakit (S)', 'Izin (I)', 'Alpha (A)', 'Diverifikasi'],
-                datasets: [{
-                    data: [totSakit, totIzin, totAlpha, totSudah],
-                    backgroundColor: ['#0284c7', '#d97706', '#e11d48', '#059669'],
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom', labels: { font: { size: 10, weight: 'bold' }, boxWidth: 12 } } }
-            }
-        });
+        const canvasDonut = document.getElementById('chartDonutAbsensi');
+        if (canvasDonut) {
+            if (donutChartInstance) donutChartInstance.destroy();
+            donutChartInstance = new Chart(canvasDonut.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Sakit (S)', 'Izin (I)', 'Alpha (A)', 'Diverifikasi'],
+                    datasets: [{
+                        data: [totSakit, totIzin, totAlpha, totSudah],
+                        backgroundColor: ['#0284c7', '#d97706', '#e11d48', '#059669'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { font: { size: 10, weight: 'bold' }, boxWidth: 12 } } }
+                }
+            });
+        }
     }
 
     function renderDimensionChartAndTable() {
-        let dimKey = document.getElementById('select-dimension').value;
+        let selectEl = document.getElementById('select-dimension');
+        if (!selectEl) return;
+        let dimKey = selectEl.value;
         let dimObj = window.processedDimension ? window.processedDimension[dimKey] : {};
 
         let catNames = Object.keys(dimObj || {}).sort();
@@ -837,29 +1293,30 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         let dataI = catNames.map(c => dimObj[c].izin);
         let dataA = catNames.map(c => dimObj[c].alpha);
 
-        let ctxDim = document.getElementById('chartBarDimension').getContext('2d');
-        if (dimensionChartInstance) dimensionChartInstance.destroy();
-
-        dimensionChartInstance = new Chart(ctxDim, {
-            type: 'bar',
-            data: {
-                labels: catNames,
-                datasets: [
-                    { label: 'Sakit (S)', data: dataS, backgroundColor: '#0284c7', borderRadius: 4 },
-                    { label: 'Izin (I)', data: dataI, backgroundColor: '#d97706', borderRadius: 4 },
-                    { label: 'Alpha (A)', data: dataA, backgroundColor: '#e11d48', borderRadius: 4 }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { ticks: { font: { size: 10, weight: 'bold' } } },
-                    y: { beginAtZero: true, ticks: { precision: 0 } }
+        const canvasDim = document.getElementById('chartBarDimension');
+        if (canvasDim) {
+            if (dimensionChartInstance) dimensionChartInstance.destroy();
+            dimensionChartInstance = new Chart(canvasDim.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: catNames,
+                    datasets: [
+                        { label: 'Sakit (S)', data: dataS, backgroundColor: '#0284c7', borderRadius: 4 },
+                        { label: 'Izin (I)', data: dataI, backgroundColor: '#d97706', borderRadius: 4 },
+                        { label: 'Alpha (A)', data: dataA, backgroundColor: '#e11d48', borderRadius: 4 }
+                    ]
                 },
-                plugins: { legend: { position: 'bottom', labels: { font: { size: 10, weight: 'bold' }, boxWidth: 12 } } }
-            }
-        });
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { font: { size: 10, weight: 'bold' } } },
+                        y: { beginAtZero: true, ticks: { precision: 0 } }
+                    },
+                    plugins: { legend: { position: 'bottom', labels: { font: { size: 10, weight: 'bold' }, boxWidth: 12 } } }
+                }
+            });
+        }
 
         let thLabel = document.getElementById('th-dim-label');
         if (thLabel) thLabel.innerText = dimKey.toUpperCase();
@@ -1083,18 +1540,14 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
         showToast("Mengirim sandi baru...");
 
-        fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                action: 'updatePassword',
-                data: { daerah: activePassDaerah, password: newPass }
-            })
-        }).then(res => res.json())
-          .then(data => {
-              showToast("Sandi berhasil diperbarui!");
-              closePassModal();
-              loadAllRealtimeData(false);
-          }).catch(err => console.error(err));
+        Promise.allSettled([
+            fetch(APPS_SCRIPT_URL_REKAP, { method: 'POST', body: JSON.stringify({ action: 'updatePassword', data: { daerah: activePassDaerah, password: newPass } }) }),
+            fetch(APPS_SCRIPT_URL_MASTER, { method: 'POST', body: JSON.stringify({ action: 'updatePassword', data: { daerah: activePassDaerah, password: newPass } }) })
+        ]).then(() => {
+            showToast("Sandi berhasil diperbarui!");
+            closePassModal();
+            loadAllRealtimeData(false);
+        }).catch(err => console.error(err));
     }
     </script>
 </body>
