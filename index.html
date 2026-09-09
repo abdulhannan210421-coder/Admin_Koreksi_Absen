@@ -262,7 +262,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             </select>
         </div>
 
-        <!-- BARIS 3: RENTANG TANGGAL HIJRIAH (1-31) -->
+        <!-- BARIS 3: RENTANG TANGGAL HIJRIAH (1-30) -->
         <div class="filter-date-group">
             <span style="font-size:8px; font-weight:800; color:var(--text-muted);">Tgl Hijriah:</span>
             <input type="number" id="filter-tgl-min" min="1" max="30" placeholder="1" class="input-search" style="padding:4px; text-align:center;" oninput="processAndRenderStats()">
@@ -693,6 +693,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
     let activePassDaerah = "";
     let autoSyncTimer = null;
     let isAutoSyncEnabled = true;
+    let isFetching = false;
     let activeBroadcastData = null;
 
     let barChartInstance = null;
@@ -722,12 +723,23 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         document.getElementById(`view-${menu}`).classList.add('active');
         document.getElementById(`nav-btn-${menu}`).classList.add('active');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        if (menu === 'dashboard') {
+            setTimeout(() => {
+                if (lineTrendChartInstance) lineTrendChartInstance.resize();
+                if (barChartInstance) barChartInstance.resize();
+                if (mtqChartInstance) mtqChartInstance.resize();
+                if (mqsChartInstance) mqsChartInstance.resize();
+                if (donutChartInstance) donutChartInstance.resize();
+                if (dimensionChartInstance) dimensionChartInstance.resize();
+            }, 100);
+        }
     }
 
     function startAutoSync() {
         if (autoSyncTimer) clearInterval(autoSyncTimer);
         autoSyncTimer = setInterval(() => {
-            if (isAutoSyncEnabled && navigator.onLine) {
+            if (isAutoSyncEnabled && navigator.onLine && !isFetching) {
                 loadAllRealtimeData(true);
             }
         }, 15000);
@@ -739,7 +751,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
     }
 
     function manualSync() {
-        loadAllRealtimeData(false);
+        if (!isFetching) loadAllRealtimeData(false);
     }
 
     function openGantiPekanModal() {
@@ -821,153 +833,190 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         return match ? match[0] : 'LAIN';
     }
 
-    async function safeFetchJson(url) {
+    // PERBAIKAN VITAL: Tambahkan Timeout (12 detik) agar fetch tidak menggantung selamanya
+    async function safeFetchJson(url, timeoutMs = 12000) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+
         try {
-            let r = await fetch(url);
-            if (!r.ok) return null;
-            return await r.json();
+            let r = await fetch(url, { 
+                method: 'GET', 
+                redirect: 'follow',
+                signal: controller.signal 
+            });
+            clearTimeout(timer);
+
+            if (!r.ok) {
+                console.error("HTTP Error:", r.status);
+                return null;
+            }
+            let text = await r.text();
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error("Response bukan JSON valid:", text);
+                return null;
+            }
         } catch(e) {
-            console.warn("Fetch Gagal/CORS pada URL:", url, e);
+            clearTimeout(timer);
+            if (e.name === 'AbortError') {
+                console.warn("Fetch Timeout (Google Apps Script Lambat):", url);
+            } else {
+                console.warn("Fetch Gagal/CORS pada URL:", url, e);
+            }
             return null;
         }
     }
 
-    async function loadAllRealtimeData(isSilent = false) {
-        if (!isSilent) showToast("Memuat Data...");
-        try {
-            const parseArray = (res) => {
-                if (Array.isArray(res)) return res;
-                if (res && Array.isArray(res.data)) return res.data;
-                if (res && Array.isArray(res.result)) return res.result;
-                return [];
-            };
+    // PERBAIKAN VITAL: Ambil data ringan dulu, baru data berat secara terpisah agar tidak membenturkan antrean GAS
+	async function loadAllRealtimeData(isSilent = false) {
+	  if (isFetching) return;
+	  isFetching = true;
+	  if (!isSilent) showToast("Memuat Data...");
 
-            let [jsonC, users, bcData, rekapRes, masterRes] = await Promise.all([
-                safeFetchJson(APPS_SCRIPT_URL_REKAP + "?action=getConfig"),
-                safeFetchJson(APPS_SCRIPT_URL_REKAP + "?action=getUsers"),
-                safeFetchJson(APPS_SCRIPT_URL_REKAP + "?action=getBroadcast"),
-                safeFetchJson(APPS_SCRIPT_URL_REKAP),
-                safeFetchJson(APPS_SCRIPT_URL_MASTER)
-            ]);
+	  try {
+		const parseArray = (res) => {
+		  if (Array.isArray(res)) return res;
+		  if (res && Array.isArray(res.data)) return res.data;
+		  if (res && Array.isArray(res.result)) return res.result;
+		  return [];
+		};
 
-            if (jsonC && jsonC.filterAbsen) {
-                currentConfigMode = String(jsonC.filterAbsen).toLowerCase();
-                updateConfigUI(currentConfigMode);
-            }
+		// PANGGIL HANYA 2 ENDPOINT SECARA BERSAMAAN (1x Rekap ALL Init + 1x Master)
+		let [initRes, masterRes] = await Promise.all([
+		  safeFetchJson(APPS_SCRIPT_URL_REKAP + "?action=getAllInitData", 25000),
+		  safeFetchJson(APPS_SCRIPT_URL_MASTER, 25000)
+		]);
 
-            rawUserData = parseArray(users);
-            activeBroadcastData = bcData;
-            renderBroadcastCardUI(bcData);
+		// A. Olah Data Config, Users, & Broadcast dari Rekap
+		if (initRes && initRes.status === 'success') {
+		  if (initRes.config && initRes.config.filterAbsen) {
+			currentConfigMode = String(initRes.config.filterAbsen).toLowerCase();
+			updateConfigUI(currentConfigMode);
+		  }
+		  rawUserData = initRes.users || [];
+		  activeBroadcastData = initRes.broadcast || null;
+		  renderBroadcastCardUI(activeBroadcastData);
+		}
 
-            let listRekap = parseArray(rekapRes);
+		let listRekap = initRes && initRes.rekap ? parseArray(initRes.rekap) : [];
 
-            rawMasterData = [];
-            if (masterRes && masterRes.dataUtama && masterRes.headersUtama) {
-                let headers = masterRes.headersUtama.map(h => String(h).trim());
-                let mutaallimMap = masterRes.mutaallimMap || {};
+		// B. Olah Data Master Santri
+		rawMasterData = [];
+		if (masterRes && masterRes.dataUtama && masterRes.headersUtama) {
+		  let headers = masterRes.headersUtama.map(h => String(h).trim());
+		  let mutaallimMap = masterRes.mutaallimMap || {};
 
-                rawMasterData = masterRes.dataUtama.map(row => {
-                    let item = {};
-                    headers.forEach((h, idx) => {
-                        item[h] = row[idx] !== undefined && row[idx] !== null ? String(row[idx]).trim() : '';
-                    });
+		  rawMasterData = masterRes.dataUtama.map(row => {
+			let item = {};
+			headers.forEach((h, idx) => {
+			  item[h] = row[idx] !== undefined && row[idx] !== null ? String(row[idx]).trim() : '';
+			});
 
-                    let rawId = getRowVal(item, 'idpps', 'id pps', 'id') || row[0] || '';
-                    let idPps = normalizeId(rawId);
-                    let mData = mutaallimMap[idPps] || mutaallimMap[rawId] || {};
+			let rawId = getRowVal(item, 'idpps', 'id pps', 'id') || row[0] || '';
+			let idPps = normalizeId(rawId);
+			let mData = mutaallimMap[idPps] || mutaallimMap[rawId] || {};
+			let extraCat = (item['Kategori'] || '') + " " + (mData['KATEGORI BARU'] || mData['Kategori'] || '');
 
-                    let extraCat = (item['Kategori'] || '') + " " + (mData['KATEGORI BARU'] || mData['Kategori'] || '');
-                    for (let k in mData) {
-                        extraCat += " " + mData[k];
-                    }
+			return {
+			  idpps: idPps,
+			  nama: getRowVal(item, 'nama', 'namasantri') || row[1] || '',
+			  domisili: getRowVal(item, 'domisili', 'statusdomisili') || row[6] || '',
+			  kelas: getRowVal(item, 'kelas') || row[7] || '',
+			  tingkat: getRowVal(item, 'tingkat') || row[8] || '',
+			  kategoriText: extraCat.toUpperCase(),
+			  rawMaster: item
+			};
+		  });
+		}
 
-                    return {
-                        idpps: idPps,
-                        nama: getRowVal(item, 'nama', 'namasantri') || row[1] || '',
-                        domisili: getRowVal(item, 'domisili', 'statusdomisili') || row[6] || '',
-                        kelas: getRowVal(item, 'kelas') || row[7] || '',
-                        tingkat: getRowVal(item, 'tingkat') || row[8] || '',
-                        kategoriText: (extraCat + " " + JSON.stringify(item)).toUpperCase(),
-                        rawMaster: item
-                    };
-                });
-            }
+		// C. Pengolahan & Penggabungan Data Rekap + Master di Browser
+		let masterMap = new Map();
+		rawMasterData.forEach(m => {
+		  if (m.idpps) masterMap.set(m.idpps, m);
+		});
 
-            let masterMap = new Map();
-            rawMasterData.forEach(m => {
-                if (m.idpps) masterMap.set(m.idpps, m);
-            });
+		let mergedMap = new Map();
+		listRekap.forEach((r, idx) => {
+		  let rawId = getRowVal(r, 'idpps', 'id pps', 'id', 'idppsantri', 'nis');
+		  let cleanId = normalizeId(rawId);
+		  let masterInfo = masterMap.get(cleanId) || {};
+		  
+		  let namaVal = getRowVal(r, 'namasantri', 'nama', 'namalengkap') || masterInfo.nama || '';
+		  let domVal  = getRowVal(r, 'domisili', 'daerah', 'kamar', 'wilayah') || masterInfo.domisili || '';
 
-            // MENGGABUNGKAN (MERGE) DATA BANYAK PEKAN / BULAN
-            let mergedMap = new Map();
+		  let idKey = cleanId;
+		  if (!idKey || idKey === '0') {
+			idKey = (namaVal + "_" + domVal + "_" + idx).toLowerCase().replace(/[^a-z0-9_]/g, '');
+		  }
 
-            listRekap.forEach(r => {
-                let rawId = getRowVal(r, 'idpps', 'id pps', 'id', 'idppsantri', 'nis');
-                let masterInfo = masterMap.get(normalizeId(rawId)) || {};
-                let idKey = normalizeId(rawId) || (getRowVal(r, 'namasantri', 'nama') + "_" + getRowVal(r, 'domisili', 'daerah'));
+		  let sDates = getRowVal(r, 'tanggalsakit', 'tglsakit', 'totalsakit', 'sakit');
+		  let iDates = getRowVal(r, 'tanggalizin', 'tglizin', 'totalizin', 'izin');
+		  let aDates = getRowVal(r, 'tanggalalpa', 'tanggalalpha', 'tglalpa', 'tglalpha', 'totalalpa', 'alpha');
+		  let stVal  = getRowVal(r, 'status', 'statuskoreksi', 'koreksi', 'ket');
 
-                let sDates = getRowVal(r, 'tanggalsakit', 'tglsakit', 'totalsakit', 'sakit');
-                let iDates = getRowVal(r, 'tanggalizin', 'tglizin', 'totalizin', 'izin');
-                let aDates = getRowVal(r, 'tanggalalpa', 'tanggalalpha', 'tglalpa', 'tglalpha', 'totalalpa', 'alpha');
-                let stVal  = getRowVal(r, 'status', 'statuskoreksi', 'koreksi', 'ket');
+		  let bulHijri = getRowVal(r, 'bulanhijriah', 'bulanhijri', 'bulan');
+		  let tahHijri = getRowVal(r, 'tahunhijriah', 'tahunhijri', 'tahun');
+		  let timeStamp = getRowVal(r, 'timestamp', 'waktu', 'updatedat', 'tgl') || idx;
 
-                let bulHijri = getRowVal(r, 'bulanhijriah', 'bulanhijri', 'bulan');
-                let tahHijri = getRowVal(r, 'tahunhijriah', 'tahunhijri', 'tahun');
+		  if (!mergedMap.has(idKey)) {
+			mergedMap.set(idKey, {
+			  ...r,
+			  idpps: idKey,
+			  namasantri: namaVal || '-',
+			  domisili:   domVal || '-',
+			  marhalah:   getRowVal(r, 'marhalah/jilid', 'marhalah', 'jilid/marhalahbaru', 'jilid'),
+			  tingkat:    getRowVal(r, 'tingkat', 'tingkatpendidikan') || masterInfo.tingkat || '-',
+			  kelas:      getRowVal(r, 'kelas') || masterInfo.kelas || '-',
+			  kategori:   getRowVal(r, 'kategori', 'kategoribaru') || masterInfo.kategoriText || '',
+			  majliskitab: getRowVal(r, 'majliskitab', 'jalsah', 'jalsahbaru', 'kelaskitab'),
+			  tanggalsakit: sDates,
+			  tanggalizin: iDates,
+			  tanggalalpa: aDates,
+			  bulanhijriah: bulHijri,
+			  tahunhijriah: tahHijri,
+			  status: stVal,
+			  _updateIndex: idx,
+			  _timestamp: timeStamp
+			});
+		  } else {
+			let existing = mergedMap.get(idKey);
+			let concatDates = (d1, d2) => {
+			  let str1 = String(d1 || '').trim();
+			  let str2 = String(d2 || '').trim();
+			  if (!str1 || str1 === '-') return str2;
+			  if (!str2 || str2 === '-') return str1;
+			  return str1 + "," + str2;
+			};
 
-                if (!mergedMap.has(idKey)) {
-                    mergedMap.set(idKey, {
-                        ...r,
-                        idpps: idKey,
-                        namasantri: getRowVal(r, 'namasantri', 'nama', 'namalengkap') || masterInfo.nama || '-',
-                        domisili:   getRowVal(r, 'domisili', 'daerah', 'kamar', 'wilayah') || masterInfo.domisili || '-',
-                        marhalah:   getRowVal(r, 'marhalah/jilid', 'marhalah', 'jilid/marhalahbaru', 'jilid'),
-                        tingkat:    getRowVal(r, 'tingkat', 'tingkatpendidikan') || masterInfo.tingkat || '-',
-                        kelas:      getRowVal(r, 'kelas') || masterInfo.kelas || '-',
-                        kategori:   getRowVal(r, 'kategori', 'kategoribaru') || masterInfo.kategoriText || '',
-                        majliskitab: getRowVal(r, 'majliskitab', 'jalsah', 'jalsahbaru', 'kelaskitab'),
-                        tanggalsakit: sDates,
-                        tanggalizin: iDates,
-                        tanggalalpa: aDates,
-                        bulanhijriah: bulHijri,
-                        tahunhijriah: tahHijri,
-                        status: stVal
-                    });
-                } else {
-                    let existing = mergedMap.get(idKey);
-                    
-                    let concatDates = (d1, d2) => {
-                        let str1 = String(d1 || '').trim();
-                        let str2 = String(d2 || '').trim();
-                        if (!str1 || str1 === '-') return str2;
-                        if (!str2 || str2 === '-') return str1;
-                        return str1 + "," + str2;
-                    };
+			existing.tanggalsakit = concatDates(existing.tanggalsakit, sDates);
+			existing.tanggalizin  = concatDates(existing.tanggalizin, iDates);
+			existing.tanggalalpa  = concatDates(existing.tanggalalpa, aDates);
 
-                    existing.tanggalsakit = concatDates(existing.tanggalsakit, sDates);
-                    existing.tanggalizin  = concatDates(existing.tanggalizin, iDates);
-                    existing.tanggalalpa  = concatDates(existing.tanggalalpa, aDates);
+			if (stVal && (stVal.toLowerCase().includes('sudah') || stVal.toLowerCase().includes('sesuai'))) {
+			  existing.status = stVal;
+			  existing._updateIndex = idx;
+			}
+			if (r._rowIndex) existing._rowIndex = r._rowIndex;
+		  }
+		});
 
-                    if (stVal && (stVal.toLowerCase().includes('sudah') || stVal.toLowerCase().includes('sesuai'))) {
-                        existing.status = stVal;
-                    }
-                    if (r._rowIndex) existing._rowIndex = r._rowIndex;
-                }
-            });
+		rawKoreksiData = Array.from(mergedMap.values());
 
-            rawKoreksiData = Array.from(mergedMap.values());
+		// Render Tampilan UI
+		populateGlobalDaerahDropdown();
+		populateGlobalTahunDropdown();
+		processAndRenderStats();
+		renderUsersTable();
+		if (!isSilent) showToast(`Sync Sukses! (${rawKoreksiData.length} Santri)`);
+	  } catch(e) {
+		console.error("Error Global:", e);
+		if (!isSilent) showToast("Gagal terhubung!");
+	  } finally {
+		isFetching = false;
+	  }
+	}
 
-            populateGlobalDaerahDropdown();
-            populateGlobalTahunDropdown();
-            processAndRenderStats();
-            renderUsersTable();
-            if (!isSilent) showToast(`Sync Sukses! (${rawKoreksiData.length} Santri)`);
-        } catch(e) {
-            console.error("Error Global:", e);
-            if (!isSilent) showToast("Gagal terhubung!");
-        }
-    }
-
-    
     function populateGlobalTahunDropdown() {
         let select = document.getElementById('filter-global-tahun');
         let selectModal = document.getElementById('archive-tahun-hijri');
@@ -984,12 +1033,14 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             }
         });
 
-        // Default jika database masih kosong total
-        if (tahunSet.size === 0) {
-            tahunSet.add("1448");
-        }
+        if (tahunSet.size === 0) tahunSet.add("1448");
 
-        let sortedYears = Array.from(tahunSet).map(Number).sort((a,b) => b - a);
+        let sortedYears = Array.from(tahunSet)
+            .map(n => parseInt(n, 10))
+            .filter(n => !isNaN(n))
+            .sort((a,b) => b - a);
+
+        if (sortedYears.length === 0) sortedYears = [1448];
 
         sortedYears.forEach(y => {
             let opt = document.createElement('option');
@@ -1000,7 +1051,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
         select.value = currVal && select.querySelector(`option[value="${currVal}"]`) ? currVal : "ALL";
 
-        // Update Modal Options (termasuk opsi +1 tahun ke depan)
         if (selectModal) {
             let currModalVal = selectModal.value;
             selectModal.innerHTML = '';
@@ -1047,7 +1097,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         document.getElementById('filter-global-daerah').value = "ALL";
         document.getElementById('filter-global-kategori').value = "ALL";
         document.getElementById('filter-global-bulan').value = "ALL";
-        document.getElementById('filter-global-tahun').value = "1448";
+        document.getElementById('filter-global-tahun').value = "ALL";
         document.getElementById('filter-tgl-min').value = "";
         document.getElementById('filter-tgl-max').value = "";
         processAndRenderStats();
@@ -1207,9 +1257,23 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         if (!val) return [];
         let str = String(val).trim();
         if (!str || str === '-' || str === '0') return [];
-        let matches = str.match(/\b([1-9]|[12]\d|3[01])\b/g);
-        if (!matches) return [];
-        return matches.map(n => parseInt(n, 10)).filter(n => n >= minTgl && n <= maxTgl);
+
+        if (/^\d{4}-\d{2}-\d{2}/.test(str)) return [];
+
+        let tokens = str.split(/[\s,;\/]+/);
+        let results = [];
+
+        tokens.forEach(tok => {
+            let clean = tok.replace(/[^0-9]/g, '');
+            if (clean) {
+                let num = parseInt(clean, 10);
+                if (!isNaN(num) && num >= minTgl && num <= maxTgl) {
+                    results.push(num);
+                }
+            }
+        });
+
+        return results;
     }
 
     function normalizeDimension(val, dimType) {
@@ -1250,8 +1314,17 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         let filterBulan    = document.getElementById('filter-global-bulan')?.value || "ALL";
         let filterTahun    = document.getElementById('filter-global-tahun')?.value || "ALL";
 
-        let tglMin = parseInt(document.getElementById('filter-tgl-min')?.value) || 1;
-        let tglMax = parseInt(document.getElementById('filter-tgl-max')?.value) || 30;
+        let rawMin = parseInt(document.getElementById('filter-tgl-min')?.value, 10);
+        let rawMax = parseInt(document.getElementById('filter-tgl-max')?.value, 10);
+
+        let tglMin = isNaN(rawMin) ? 1 : rawMin;
+        let tglMax = isNaN(rawMax) ? 30 : rawMax;
+
+        if (tglMin > tglMax) {
+            let tmp = tglMin;
+            tglMin = tglMax;
+            tglMax = tmp;
+        }
 
         let statsPerDaerah = {};
         'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(ltr => {
@@ -1366,7 +1439,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
             let tSakit = parseDates(getRowVal(row, 'tanggalsakit', 'tglsakit', 'sakit'), tglMin, tglMax);
             let tIzin  = parseDates(getRowVal(row, 'tanggalizin', 'tglizin', 'izin'), tglMin, tglMax);
-            let tAlpha = parseDates(getRowVal(row, 'tanggalalpa', 'tanggalalpha', 'tglalpa', 'tglalpha', 'alpha'), tglMin, tglMax);
+            let tAlpha = parseDates(getRowVal(row, 'tanggalalpa', 'tanggalalpha', 'tglalpa', 'tglalpha', 'totalalpa', 'alpha'), tglMin, tglMax);
 
             tSakit.forEach(day => { if(day <= 30) dailyTrendData.sakit[day]++; });
             tIzin.forEach(day  => { if(day <= 30) dailyTrendData.izin[day]++; });
@@ -1377,7 +1450,17 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             let aCount = tAlpha.length;
 
             let statusText = String(getRowVal(row, 'status', 'statuskoreksi', 'koreksi', 'ket') || '').toLowerCase();
-            let isDone = (statusText.includes('sudah') || statusText.includes('dikoreksi') || statusText.includes('sesuai') || statusText.includes('benar')) && !statusText.includes('belum');
+            let isDone = (
+                statusText.includes('sudah') || 
+                statusText.includes('dikoreksi') || 
+                statusText.includes('sesuai') || 
+                statusText.includes('benar') ||
+                statusText.includes('selesai') ||
+                statusText.includes('ok') ||
+                statusText.includes('verif') ||
+                statusText.includes('v') ||
+                statusText.includes('✔')
+            ) && !statusText.includes('belum');
 
             let isIncludedInMode = true;
             if (currentConfigMode === 'alpha') {
@@ -1404,7 +1487,14 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             statsPerDaerah[letter].total++;
             if (isDone) {
                 statsPerDaerah[letter].sudah++;
-                auditLogList.push({ nama: namaSantri, daerah: letter, status: statusText || 'Sudah Dikoreksi', s: sCount, i: iCount, a: aCount });
+                auditLogList.push({
+                    nama: namaSantri,
+                    daerah: letter,
+                    status: statusText || 'Sudah Dikoreksi',
+                    s: sCount, i: iCount, a: aCount,
+                    updateIndex: row._updateIndex || 0,
+                    timestamp: row._timestamp || 0
+                });
             } else {
                 statsPerDaerah[letter].belum++;
             }
@@ -1481,7 +1571,15 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             dataA.push(trendData.alpha[d] || 0);
         }
 
-        if (lineTrendChartInstance) lineTrendChartInstance.destroy();
+        if (lineTrendChartInstance) {
+            lineTrendChartInstance.data.labels = labels;
+            lineTrendChartInstance.data.datasets[0].data = dataS;
+            lineTrendChartInstance.data.datasets[1].data = dataI;
+            lineTrendChartInstance.data.datasets[2].data = dataA;
+            if (canvas.offsetWidth > 0) lineTrendChartInstance.update('none');
+            return;
+        }
+
         lineTrendChartInstance = new Chart(canvas.getContext('2d'), {
             type: 'line',
             data: {
@@ -1504,26 +1602,55 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         });
     }
 
+    function parseIndoDate(str) {
+        if (!str) return 0;
+        let s = String(str).trim();
+        
+        let isoTime = Date.parse(s);
+        if (!isNaN(isoTime) && !s.includes('/')) return isoTime;
+
+        let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+        if (m) {
+            return new Date(
+                parseInt(m[3], 10),
+                parseInt(m[2], 10) - 1,
+                parseInt(m[1], 10),
+                parseInt(m[4] || 0, 10),
+                parseInt(m[5] || 0, 10),
+                parseInt(m[6] || 0, 10)
+            ).getTime();
+        }
+
+        return isNaN(isoTime) ? 0 : isoTime;
+    }
+
     function renderAuditLogTable(logs) {
         let tbody = document.getElementById('tbody-audit-log');
         if (!tbody) return;
         tbody.innerHTML = "";
 
-        if (logs.length === 0) {
+        if (!logs || logs.length === 0) {
             tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:10px;">Belum ada verifikasi.</td></tr>`;
             return;
         }
 
+        logs.sort((a, b) => {
+            let tA = parseIndoDate(a.timestamp || a.waktu || a._timestamp);
+            let tB = parseIndoDate(b.timestamp || b.waktu || b._timestamp);
+            if (tA !== tB) return tB - tA;
+            return (b.updateIndex || 0) - (a.updateIndex || 0);
+        });
+
+        let rowsHtml = "";
         logs.slice(0, 30).forEach(item => {
-            let tr = document.createElement('tr');
-            tr.innerHTML = `
+            rowsHtml += `<tr>
                 <td><b>${item.nama}</b></td>
                 <td><span class="status-tag status-selesai">${item.daerah}</span></td>
                 <td><span style="color:var(--accent); font-weight:800;">✔ ${item.status}</span></td>
                 <td style="text-align:center; font-weight:800; font-size:8px;">S:${item.s} I:${item.i} A:${item.a}</td>
-            `;
-            tbody.appendChild(tr);
+            </tr>`;
         });
+        tbody.innerHTML = rowsHtml;
     }
 
     function renderMtqMqsTables(mtqG, mqsG, daerahData) {
@@ -1597,54 +1724,70 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
         const canvasMtq = document.getElementById('chartBarMtq');
         if (canvasMtq) {
-            if (mtqChartInstance) mtqChartInstance.destroy();
-            mtqChartInstance = new Chart(canvasMtq.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Hadir', data: mtqHadir, backgroundColor: '#059669', borderRadius: 3 },
-                        { label: 'Sakit', data: mtqSakit, backgroundColor: '#0284c7', borderRadius: 3 },
-                        { label: 'Izin', data: mtqIzin, backgroundColor: '#d97706', borderRadius: 3 },
-                        { label: 'Alpha', data: mtqAlpha, backgroundColor: '#e11d48', borderRadius: 3 }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { ticks: { font: { size: 7, weight: 'bold' } } },
-                        y: { beginAtZero: true, ticks: { precision: 0 } }
+            if (mtqChartInstance) {
+                mtqChartInstance.data.labels = labels;
+                mtqChartInstance.data.datasets[0].data = mtqHadir;
+                mtqChartInstance.data.datasets[1].data = mtqSakit;
+                mtqChartInstance.data.datasets[2].data = mtqIzin;
+                mtqChartInstance.data.datasets[3].data = mtqAlpha;
+                if (canvasMtq.offsetWidth > 0) mtqChartInstance.update('none');
+            } else {
+                mtqChartInstance = new Chart(canvasMtq.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            { label: 'Hadir', data: mtqHadir, backgroundColor: '#059669', borderRadius: 3 },
+                            { label: 'Sakit', data: mtqSakit, backgroundColor: '#0284c7', borderRadius: 3 },
+                            { label: 'Izin', data: mtqIzin, backgroundColor: '#d97706', borderRadius: 3 },
+                            { label: 'Alpha', data: mtqAlpha, backgroundColor: '#e11d48', borderRadius: 3 }
+                        ]
                     },
-                    plugins: { legend: { position: 'bottom', labels: { font: { size: 8, weight: 'bold' }, boxWidth: 6 } } }
-                }
-            });
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { ticks: { font: { size: 7, weight: 'bold' } } },
+                            y: { beginAtZero: true, ticks: { precision: 0 } }
+                        },
+                        plugins: { legend: { position: 'bottom', labels: { font: { size: 8, weight: 'bold' }, boxWidth: 6 } } }
+                    }
+                });
+            }
         }
 
         const canvasMqs = document.getElementById('chartBarMqs');
         if (canvasMqs) {
-            if (mqsChartInstance) mqsChartInstance.destroy();
-            mqsChartInstance = new Chart(canvasMqs.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Hadir', data: mqsHadir, backgroundColor: '#059669', borderRadius: 3 },
-                        { label: 'Sakit', data: mqsSakit, backgroundColor: '#0284c7', borderRadius: 3 },
-                        { label: 'Izin', data: mqsIzin, backgroundColor: '#d97706', borderRadius: 3 },
-                        { label: 'Alpha', data: mqsAlpha, backgroundColor: '#e11d48', borderRadius: 3 }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { ticks: { font: { size: 7, weight: 'bold' } } },
-                        y: { beginAtZero: true, ticks: { precision: 0 } }
+            if (mqsChartInstance) {
+                mqsChartInstance.data.labels = labels;
+                mqsChartInstance.data.datasets[0].data = mqsHadir;
+                mqsChartInstance.data.datasets[1].data = mqsSakit;
+                mqsChartInstance.data.datasets[2].data = mqsIzin;
+                mqsChartInstance.data.datasets[3].data = mqsAlpha;
+                if (canvasMqs.offsetWidth > 0) mqsChartInstance.update('none');
+            } else {
+                mqsChartInstance = new Chart(canvasMqs.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            { label: 'Hadir', data: mqsHadir, backgroundColor: '#059669', borderRadius: 3 },
+                            { label: 'Sakit', data: mqsSakit, backgroundColor: '#0284c7', borderRadius: 3 },
+                            { label: 'Izin', data: mqsIzin, backgroundColor: '#d97706', borderRadius: 3 },
+                            { label: 'Alpha', data: mqsAlpha, backgroundColor: '#e11d48', borderRadius: 3 }
+                        ]
                     },
-                    plugins: { legend: { position: 'bottom', labels: { font: { size: 8, weight: 'bold' }, boxWidth: 6 } } }
-                }
-            });
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { ticks: { font: { size: 7, weight: 'bold' } } },
+                            y: { beginAtZero: true, ticks: { precision: 0 } }
+                        },
+                        plugins: { legend: { position: 'bottom', labels: { font: { size: 8, weight: 'bold' }, boxWidth: 6 } } }
+                    }
+                });
+            }
         }
     }
 
@@ -1658,48 +1801,59 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
         const canvasBar = document.getElementById('chartBarDaerah');
         if (canvasBar) {
-            if (barChartInstance) barChartInstance.destroy();
-            barChartInstance = new Chart(canvasBar.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: labelsBar,
-                    datasets: [
-                        { label: 'Sakit', data: dataSakit, backgroundColor: '#0284c7', borderRadius: 3 },
-                        { label: 'Izin', data: dataIzin, backgroundColor: '#d97706', borderRadius: 3 },
-                        { label: 'Alpha', data: dataAlpha, backgroundColor: '#e11d48', borderRadius: 3 }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { ticks: { font: { size: 7, weight: 'bold' } } },
-                        y: { beginAtZero: true, ticks: { precision: 0 } }
+            if (barChartInstance) {
+                barChartInstance.data.labels = labelsBar;
+                barChartInstance.data.datasets[0].data = dataSakit;
+                barChartInstance.data.datasets[1].data = dataIzin;
+                barChartInstance.data.datasets[2].data = dataAlpha;
+                if (canvasBar.offsetWidth > 0) barChartInstance.update('none');
+            } else {
+                barChartInstance = new Chart(canvasBar.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: labelsBar,
+                        datasets: [
+                            { label: 'Sakit', data: dataSakit, backgroundColor: '#0284c7', borderRadius: 3 },
+                            { label: 'Izin', data: dataIzin, backgroundColor: '#d97706', borderRadius: 3 },
+                            { label: 'Alpha', data: dataAlpha, backgroundColor: '#e11d48', borderRadius: 3 }
+                        ]
                     },
-                    plugins: { legend: { position: 'bottom', labels: { font: { size: 8, weight: 'bold' }, boxWidth: 6 } } }
-                }
-            });
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { ticks: { font: { size: 7, weight: 'bold' } } },
+                            y: { beginAtZero: true, ticks: { precision: 0 } }
+                        },
+                        plugins: { legend: { position: 'bottom', labels: { font: { size: 8, weight: 'bold' }, boxWidth: 6 } } }
+                    }
+                });
+            }
         }
 
         const canvasDonut = document.getElementById('chartDonutAbsensi');
         if (canvasDonut) {
-            if (donutChartInstance) donutChartInstance.destroy();
-            donutChartInstance = new Chart(canvasDonut.getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Sakit', 'Izin', 'Alpha', 'Verified'],
-                    datasets: [{
-                        data: [totSakit, totIzin, totAlpha, totSudah],
-                        backgroundColor: ['#0284c7', '#d97706', '#e11d48', '#059669'],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { font: { size: 8, weight: 'bold' }, boxWidth: 8 } } }
-                }
-            });
+            if (donutChartInstance) {
+                donutChartInstance.data.datasets[0].data = [totSakit, totIzin, totAlpha, totSudah];
+                if (canvasDonut.offsetWidth > 0) donutChartInstance.update('none');
+            } else {
+                donutChartInstance = new Chart(canvasDonut.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Sakit', 'Izin', 'Alpha', 'Verified'],
+                        datasets: [{
+                            data: [totSakit, totIzin, totAlpha, totSudah],
+                            backgroundColor: ['#0284c7', '#d97706', '#e11d48', '#059669'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { font: { size: 8, weight: 'bold' }, boxWidth: 8 } } }
+                    }
+                });
+            }
         }
     }
 
@@ -1859,6 +2013,8 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
         let sortedRooms = Object.keys(groupedByRoom).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
 
+        let fragment = document.createDocumentFragment();
+
         sortedRooms.forEach(roomName => {
             let list = groupedByRoom[roomName];
             let doneCount = list.filter(x => x.isDone).length;
@@ -1894,9 +2050,10 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                     ${santriRows}
                 </div>
             `;
-            container.appendChild(roomCard);
+            fragment.appendChild(roomCard);
         });
 
+        container.appendChild(fragment);
         document.getElementById('modal-detail-daerah').style.display = 'flex';
     }
 
