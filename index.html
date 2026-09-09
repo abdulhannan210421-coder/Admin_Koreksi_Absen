@@ -298,19 +298,19 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             <div class="kpi-card">
                 <div class="kpi-title">Sakit (S)</div>
                 <div class="kpi-value" style="color:var(--sakit-color);" id="dash-total-sakit">0</div>
-                <div class="kpi-subtext" id="dash-pct-sakit">0 Hari (0)</div>
+                <div class="kpi-subtext" id="dash-pct-sakit">0 Santri (0 Hari)</div>
             </div>
 
             <div class="kpi-card">
                 <div class="kpi-title">Izin (I)</div>
                 <div class="kpi-value" style="color:var(--izin-color);" id="dash-total-izin">0</div>
-                <div class="kpi-subtext" id="dash-pct-izin">0 Hari (0)</div>
+                <div class="kpi-subtext" id="dash-pct-izin">0 Santri (0 Hari)</div>
             </div>
 
             <div class="kpi-card">
                 <div class="kpi-title">Alpha (A)</div>
                 <div class="kpi-value" style="color:var(--alpha-color);" id="dash-total-alpha">0</div>
-                <div class="kpi-subtext" id="dash-pct-alpha">0 Hari (0)</div>
+                <div class="kpi-subtext" id="dash-pct-alpha">0 Santri (0 Hari)</div>
             </div>
         </div>
 
@@ -343,7 +343,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             </div>
 
             <div class="panel">
-                <div class="panel-title"><span>📜 Log Verifikasi Realtime</span></div>
+                <div class="panel-title"><span>📜 Log Verifikasi Realtime Pekan Ini</span></div>
                 <div class="table-container" style="max-height: 150px; overflow-y: auto;">
                     <table>
                         <thead>
@@ -363,7 +363,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         </div>
 
         <div class="panel">
-            <div class="panel-title"><span>📍 Breakdown MTQ & MQS Per Daerah</span></div>
+            <div class="panel-title"><span>📍 Breakdown MTQ & MQS Per Daerah (Jumlah Santri)</span></div>
             <div class="table-container">
                 <table>
                     <thead>
@@ -689,6 +689,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
     let rawKoreksiData = [];
     let rawMasterData = [];
     let rawUserData = [];
+    let memoryMasterCache = null;
     let currentConfigMode = "all";
     let activePassDaerah = "";
     let autoSyncTimer = null;
@@ -702,6 +703,67 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
     let dimensionChartInstance = null;
     let donutChartInstance = null;
     let lineTrendChartInstance = null;
+
+    // --- HELPER INDEXEDDB (VERSI 2 PERBAIKAN) ---
+    const DB_NAME = "TaklimdaDB";
+    const DB_VERSION = 2;
+    const STORE_NAME = "master_cache";
+
+    function openIDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.createObjectStore(STORE_NAME);
+                }
+            };
+            request.onsuccess = (e) => resolve(e.target.result);
+            request.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    async function getCacheIDB(key) {
+        try {
+            const db = await openIDB();
+            if (!db.objectStoreNames.contains(STORE_NAME)) return null;
+            return new Promise((resolve) => {
+                const tx = db.transaction(STORE_NAME, "readonly");
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.get(key);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => resolve(null);
+            });
+        } catch (e) { return null; }
+    }
+
+    async function setCacheIDB(key, val) {
+        try {
+            const db = await openIDB();
+            if (!db.objectStoreNames.contains(STORE_NAME)) return false;
+            return new Promise((resolve) => {
+                const tx = db.transaction(STORE_NAME, "readwrite");
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.put(val, key);
+                req.onsuccess = () => resolve(true);
+                req.onerror = () => resolve(false);
+            });
+        } catch (e) { return false; }
+    }
+
+    async function removeCacheIDB(key) {
+        try {
+            const db = await openIDB();
+            if (!db.objectStoreNames.contains(STORE_NAME)) return false;
+            return new Promise((resolve) => {
+                const tx = db.transaction(STORE_NAME, "readwrite");
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.delete(key);
+                req.onsuccess = () => resolve(true);
+                req.onerror = () => resolve(false);
+            });
+        } catch (e) { return false; }
+    }
 
     document.addEventListener("DOMContentLoaded", () => {
         loadAllRealtimeData(false);
@@ -736,22 +798,33 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         }
     }
 
-    function startAutoSync() {
-        if (autoSyncTimer) clearInterval(autoSyncTimer);
-        autoSyncTimer = setInterval(() => {
-            if (isAutoSyncEnabled && navigator.onLine && !isFetching) {
-                loadAllRealtimeData(true);
-            }
-        }, 15000);
-    }
+	function startAutoSync() {
+		if (autoSyncTimer) clearTimeout(autoSyncTimer);
+
+		async function scheduleNext() {
+			if (isAutoSyncEnabled && navigator.onLine && !isFetching) {
+				await loadAllRealtimeData(true);
+			}
+			// Jeda 15 detik dihitung SETELAH proses fetch selesai sepenuhnya
+			autoSyncTimer = setTimeout(scheduleNext, 15000);
+		}
+
+		// Jalankan siklus pertama setelah 15 detik
+		autoSyncTimer = setTimeout(scheduleNext, 15000);
+	}
 
     function toggleAutoSync(enabled) {
         isAutoSyncEnabled = enabled;
         showToast(enabled ? "✅ Auto-Refresh (15s)" : "⏸️ Auto-Refresh Nonaktif");
     }
 
-    function manualSync() {
-        if (!isFetching) loadAllRealtimeData(false);
+    async function manualSync() {
+        if (!isFetching) {
+            memoryMasterCache = null;
+            await removeCacheIDB('MASTER_DATA_CACHE');
+            await removeCacheIDB('MASTER_DATA_TIME');
+            loadAllRealtimeData(false);
+        }
     }
 
     function openGantiPekanModal() {
@@ -833,8 +906,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         return match ? match[0] : 'LAIN';
     }
 
-    // PERBAIKAN VITAL: Tambahkan Timeout (12 detik) agar fetch tidak menggantung selamanya
-    async function safeFetchJson(url, timeoutMs = 12000) {
+    async function safeFetchJson(url, timeoutMs = 50000) {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -846,175 +918,125 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             });
             clearTimeout(timer);
 
-            if (!r.ok) {
-                console.error("HTTP Error:", r.status);
-                return null;
-            }
+            if (!r.ok) return null;
             let text = await r.text();
-            try {
-                return JSON.parse(text);
-            } catch (e) {
-                console.error("Response bukan JSON valid:", text);
-                return null;
-            }
+            try { return JSON.parse(text); } catch (e) { return null; }
         } catch(e) {
             clearTimeout(timer);
-            if (e.name === 'AbortError') {
-                console.warn("Fetch Timeout (Google Apps Script Lambat):", url);
-            } else {
-                console.warn("Fetch Gagal/CORS pada URL:", url, e);
-            }
             return null;
         }
     }
 
-    // PERBAIKAN VITAL: Ambil data ringan dulu, baru data berat secara terpisah agar tidak membenturkan antrean GAS
+    // PROSES LOAD UTAMA TERISOLASI
 	async function loadAllRealtimeData(isSilent = false) {
-	  if (isFetching) return;
-	  isFetching = true;
-	  if (!isSilent) showToast("Memuat Data...");
+		if (isFetching) return;
+		isFetching = true;
+		if (!isSilent) showToast("Memuat Data...");
 
-	  try {
-		const parseArray = (res) => {
-		  if (Array.isArray(res)) return res;
-		  if (res && Array.isArray(res.data)) return res.data;
-		  if (res && Array.isArray(res.result)) return res.result;
-		  return [];
-		};
-
-		// PANGGIL HANYA 2 ENDPOINT SECARA BERSAMAAN (1x Rekap ALL Init + 1x Master)
-		let [initRes, masterRes] = await Promise.all([
-		  safeFetchJson(APPS_SCRIPT_URL_REKAP + "?action=getAllInitData", 25000),
-		  safeFetchJson(APPS_SCRIPT_URL_MASTER, 25000)
-		]);
-
-		// A. Olah Data Config, Users, & Broadcast dari Rekap
-		if (initRes && initRes.status === 'success') {
-		  if (initRes.config && initRes.config.filterAbsen) {
-			currentConfigMode = String(initRes.config.filterAbsen).toLowerCase();
-			updateConfigUI(currentConfigMode);
-		  }
-		  rawUserData = initRes.users || [];
-		  activeBroadcastData = initRes.broadcast || null;
-		  renderBroadcastCardUI(activeBroadcastData);
-		}
-
-		let listRekap = initRes && initRes.rekap ? parseArray(initRes.rekap) : [];
-
-		// B. Olah Data Master Santri
-		rawMasterData = [];
-		if (masterRes && masterRes.dataUtama && masterRes.headersUtama) {
-		  let headers = masterRes.headersUtama.map(h => String(h).trim());
-		  let mutaallimMap = masterRes.mutaallimMap || {};
-
-		  rawMasterData = masterRes.dataUtama.map(row => {
-			let item = {};
-			headers.forEach((h, idx) => {
-			  item[h] = row[idx] !== undefined && row[idx] !== null ? String(row[idx]).trim() : '';
-			});
-
-			let rawId = getRowVal(item, 'idpps', 'id pps', 'id') || row[0] || '';
-			let idPps = normalizeId(rawId);
-			let mData = mutaallimMap[idPps] || mutaallimMap[rawId] || {};
-			let extraCat = (item['Kategori'] || '') + " " + (mData['KATEGORI BARU'] || mData['Kategori'] || '');
-
-			return {
-			  idpps: idPps,
-			  nama: getRowVal(item, 'nama', 'namasantri') || row[1] || '',
-			  domisili: getRowVal(item, 'domisili', 'statusdomisili') || row[6] || '',
-			  kelas: getRowVal(item, 'kelas') || row[7] || '',
-			  tingkat: getRowVal(item, 'tingkat') || row[8] || '',
-			  kategoriText: extraCat.toUpperCase(),
-			  rawMaster: item
-			};
-		  });
-		}
-
-		// C. Pengolahan & Penggabungan Data Rekap + Master di Browser
-		let masterMap = new Map();
-		rawMasterData.forEach(m => {
-		  if (m.idpps) masterMap.set(m.idpps, m);
-		});
-
-		let mergedMap = new Map();
-		listRekap.forEach((r, idx) => {
-		  let rawId = getRowVal(r, 'idpps', 'id pps', 'id', 'idppsantri', 'nis');
-		  let cleanId = normalizeId(rawId);
-		  let masterInfo = masterMap.get(cleanId) || {};
-		  
-		  let namaVal = getRowVal(r, 'namasantri', 'nama', 'namalengkap') || masterInfo.nama || '';
-		  let domVal  = getRowVal(r, 'domisili', 'daerah', 'kamar', 'wilayah') || masterInfo.domisili || '';
-
-		  let idKey = cleanId;
-		  if (!idKey || idKey === '0') {
-			idKey = (namaVal + "_" + domVal + "_" + idx).toLowerCase().replace(/[^a-z0-9_]/g, '');
-		  }
-
-		  let sDates = getRowVal(r, 'tanggalsakit', 'tglsakit', 'totalsakit', 'sakit');
-		  let iDates = getRowVal(r, 'tanggalizin', 'tglizin', 'totalizin', 'izin');
-		  let aDates = getRowVal(r, 'tanggalalpa', 'tanggalalpha', 'tglalpa', 'tglalpha', 'totalalpa', 'alpha');
-		  let stVal  = getRowVal(r, 'status', 'statuskoreksi', 'koreksi', 'ket');
-
-		  let bulHijri = getRowVal(r, 'bulanhijriah', 'bulanhijri', 'bulan');
-		  let tahHijri = getRowVal(r, 'tahunhijriah', 'tahunhijri', 'tahun');
-		  let timeStamp = getRowVal(r, 'timestamp', 'waktu', 'updatedat', 'tgl') || idx;
-
-		  if (!mergedMap.has(idKey)) {
-			mergedMap.set(idKey, {
-			  ...r,
-			  idpps: idKey,
-			  namasantri: namaVal || '-',
-			  domisili:   domVal || '-',
-			  marhalah:   getRowVal(r, 'marhalah/jilid', 'marhalah', 'jilid/marhalahbaru', 'jilid'),
-			  tingkat:    getRowVal(r, 'tingkat', 'tingkatpendidikan') || masterInfo.tingkat || '-',
-			  kelas:      getRowVal(r, 'kelas') || masterInfo.kelas || '-',
-			  kategori:   getRowVal(r, 'kategori', 'kategoribaru') || masterInfo.kategoriText || '',
-			  majliskitab: getRowVal(r, 'majliskitab', 'jalsah', 'jalsahbaru', 'kelaskitab'),
-			  tanggalsakit: sDates,
-			  tanggalizin: iDates,
-			  tanggalalpa: aDates,
-			  bulanhijriah: bulHijri,
-			  tahunhijriah: tahHijri,
-			  status: stVal,
-			  _updateIndex: idx,
-			  _timestamp: timeStamp
-			});
-		  } else {
-			let existing = mergedMap.get(idKey);
-			let concatDates = (d1, d2) => {
-			  let str1 = String(d1 || '').trim();
-			  let str2 = String(d2 || '').trim();
-			  if (!str1 || str1 === '-') return str2;
-			  if (!str2 || str2 === '-') return str1;
-			  return str1 + "," + str2;
+		try {
+			const parseArray = (res) => {
+				if (Array.isArray(res)) return res;
+				if (res && Array.isArray(res.data)) return res.data;
+				if (res && Array.isArray(res.result)) return res.result;
+				return [];
 			};
 
-			existing.tanggalsakit = concatDates(existing.tanggalsakit, sDates);
-			existing.tanggalizin  = concatDates(existing.tanggalizin, iDates);
-			existing.tanggalalpa  = concatDates(existing.tanggalalpa, aDates);
+			// 1. FETCH REKAP REALTIME PEKAN INI (KINI SANGAT RINGAN & INSTAN)
+			let initRes = await safeFetchJson(APPS_SCRIPT_URL_REKAP + "?action=getAllInitData", 15000);
 
-			if (stVal && (stVal.toLowerCase().includes('sudah') || stVal.toLowerCase().includes('sesuai'))) {
-			  existing.status = stVal;
-			  existing._updateIndex = idx;
+			if (initRes && initRes.status === 'success') {
+				if (initRes.config && initRes.config.filterAbsen) {
+					currentConfigMode = String(initRes.config.filterAbsen).toLowerCase();
+					updateConfigUI(currentConfigMode);
+				}
+				rawUserData = initRes.users || [];
+				activeBroadcastData = initRes.broadcast || null;
+				renderBroadcastCardUI(activeBroadcastData);
 			}
-			if (r._rowIndex) existing._rowIndex = r._rowIndex;
-		  }
-		});
 
-		rawKoreksiData = Array.from(mergedMap.values());
+			let listRekap = initRes && initRes.rekap ? parseArray(initRes.rekap) : [];
 
-		// Render Tampilan UI
-		populateGlobalDaerahDropdown();
-		populateGlobalTahunDropdown();
-		processAndRenderStats();
-		renderUsersTable();
-		if (!isSilent) showToast(`Sync Sukses! (${rawKoreksiData.length} Santri)`);
-	  } catch(e) {
-		console.error("Error Global:", e);
-		if (!isSilent) showToast("Gagal terhubung!");
-	  } finally {
-		isFetching = false;
-	  }
+			// RENDER TAMPILAN DASHBOARD PERTAMA DENGAN CEPAT
+			rawKoreksiData = listRekap.map((r, idx) => {
+				let rawId = getRowVal(r, 'idpps', 'id pps', 'id', 'idppsantri', 'nis');
+				let cleanId = normalizeId(rawId);
+				return {
+					...r,
+					idpps: cleanId || `id_${idx}`,
+					namasantri: getRowVal(r, 'namasantri', 'nama', 'namalengkap') || '-',
+					domisili: getRowVal(r, 'domisili', 'daerah', 'kamar', 'wilayah') || '-',
+					marhalah: getRowVal(r, 'marhalah/jilid', 'marhalah', 'jilid'),
+					tingkat: getRowVal(r, 'tingkat', 'tingkatpendidikan') || '-',
+					kelas: getRowVal(r, 'kelas') || '-',
+					kategori: getRowVal(r, 'kategori', 'kategoribaru') || '',
+					majliskitab: getRowVal(r, 'majliskitab', 'jalsah'),
+					tanggalsakit: getRowVal(r, 'tanggalsakit', 'tglsakit', 'sakit'),
+					tanggalizin: getRowVal(r, 'tanggalizin', 'tglizin', 'izin'),
+					tanggalalpa: getRowVal(r, 'tanggalalpa', 'tanggalalpha', 'tglalpa', 'alpha'),
+					status: getRowVal(r, 'status', 'statuskoreksi', 'koreksi', 'ket'),
+					_timestamp: getRowVal(r, 'timestamp', 'waktu', 'updatedat', 'tgl') || new Date().toISOString(),
+					_source: 'koreksi',
+					_updateIndex: idx
+				};
+			});
+
+			populateGlobalDaerahDropdown();
+			populateGlobalTahunDropdown();
+			processAndRenderStats();
+			renderUsersTable();
+
+			if (!isSilent) showToast("Dashboard Siap!");
+
+			// 2. LOAD MASTER SANTRI DI BACKGROUND (JIKA KOSONG / KEDALUWARSA)
+			const NOW = new Date().getTime();
+			let masterRes = memoryMasterCache || await getCacheIDB('MASTER_DATA_CACHE');
+			let cacheTime = await getCacheIDB('MASTER_DATA_TIME');
+
+			if (!masterRes || !cacheTime || (NOW - parseInt(cacheTime, 10) >= 3600000)) {
+				masterRes = await safeFetchJson(APPS_SCRIPT_URL_MASTER, 30000);
+				if (masterRes && masterRes.dataUtama) {
+					memoryMasterCache = masterRes;
+					await setCacheIDB('MASTER_DATA_CACHE', masterRes);
+					await setCacheIDB('MASTER_DATA_TIME', NOW.toString());
+				}
+			}
+
+			// 3. UPDATE TAMPILAN JIKA MASTER SANTRI BERHASIL DIMUAT
+			if (masterRes && masterRes.dataUtama && masterRes.headersUtama) {
+				let headers = masterRes.headersUtama.map(h => String(h).trim());
+				let mutaallimMap = masterRes.mutaallimMap || {};
+
+				rawMasterData = masterRes.dataUtama.map(row => {
+					let item = {};
+					headers.forEach((h, idx) => {
+						item[h] = row[idx] !== undefined && row[idx] !== null ? String(row[idx]).trim() : '';
+					});
+
+					let rawId = getRowVal(item, 'idpps', 'id pps', 'id') || row[0] || '';
+					let idPps = normalizeId(rawId);
+					let mData = mutaallimMap[idPps] || mutaallimMap[rawId] || {};
+					let extraCat = (item['Kategori'] || '') + " " + (mData['KATEGORI BARU'] || mData['Kategori'] || '');
+
+					return {
+						idpps: idPps,
+						nama: getRowVal(item, 'nama', 'namasantri') || row[1] || '',
+						domisili: getRowVal(item, 'domisili', 'statusdomisili') || row[6] || '',
+						kelas: getRowVal(item, 'kelas') || row[7] || '',
+						tingkat: getRowVal(item, 'tingkat') || row[8] || '',
+						kategoriText: extraCat.toUpperCase(),
+						rawMaster: item
+					};
+				});
+
+				processAndRenderStats();
+			}
+
+		} catch(e) {
+			console.error("Error Global:", e);
+			if (!isSilent) showToast("Gagal terhubung!");
+		} finally {
+			isFetching = false;
+		}
 	}
 
     function populateGlobalTahunDropdown() {
@@ -1040,8 +1062,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             .filter(n => !isNaN(n))
             .sort((a,b) => b - a);
 
-        if (sortedYears.length === 0) sortedYears = [1448];
-
         sortedYears.forEach(y => {
             let opt = document.createElement('option');
             opt.value = y;
@@ -1054,7 +1074,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         if (selectModal) {
             let currModalVal = selectModal.value;
             selectModal.innerHTML = '';
-            
             let maxYear = Math.max(...sortedYears);
             let nextYear = maxYear + 1;
             let modalYears = [...sortedYears];
@@ -1066,7 +1085,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                 opt.innerText = `${y} H`;
                 selectModal.appendChild(opt);
             });
-
             selectModal.value = currModalVal && selectModal.querySelector(`option[value="${currModalVal}"]`) ? currModalVal : maxYear;
         }
     }
@@ -1078,8 +1096,8 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         select.innerHTML = '<option value="ALL">📍 Semua Daerah</option>';
 
         let daerahSet = new Set();
-        rawKoreksiData.forEach(r => {
-            let ltr = extractDaerahLetter(r.domisili);
+        rawMasterData.forEach(m => {
+            let ltr = extractDaerahLetter(m.domisili);
             if (ltr && ltr !== 'LAIN') daerahSet.add(ltr);
         });
 
@@ -1196,9 +1214,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         }
 
         const radios = document.getElementsByName('optFilterAbsen');
-        radios.forEach(r => {
-            r.checked = (r.value === mode);
-        });
+        radios.forEach(r => { r.checked = (r.value === mode); });
     }
 
     async function saveAppConfig() {
@@ -1257,7 +1273,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         if (!val) return [];
         let str = String(val).trim();
         if (!str || str === '-' || str === '0') return [];
-
         if (/^\d{4}-\d{2}-\d{2}/.test(str)) return [];
 
         let tokens = str.split(/[\s,;\/]+/);
@@ -1308,6 +1323,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         return str;
     }
 
+    // FUNGSI HITUNG MATEMATIKA PRESISI & KONSISTEN
     function processAndRenderStats() {
         let filterDaerah   = document.getElementById('filter-global-daerah')?.value || "ALL";
         let filterKategori = document.getElementById('filter-global-kategori')?.value || "ALL";
@@ -1321,9 +1337,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         let tglMax = isNaN(rawMax) ? 30 : rawMax;
 
         if (tglMin > tglMax) {
-            let tmp = tglMin;
-            tglMin = tglMax;
-            tglMax = tmp;
+            let tmp = tglMin; tglMin = tglMax; tglMax = tmp;
         }
 
         let statsPerDaerah = {};
@@ -1350,6 +1364,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             };
         });
 
+        // 1. PERHITUNGAN REKAP BERBASIS KONSISTENSI INDUK SANTRI
         if (rawMasterData.length > 0) {
             rawMasterData.forEach(m => {
                 let idKey = m.idpps;
@@ -1375,49 +1390,55 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                     let matchTahun = (filterTahun === "ALL") || !rTahun || (rTahun.toString() === filterTahun.toString());
 
                     if (matchBulan && matchTahun) {
-                        sCount = parseDates(getRowVal(rekapObj, 'tanggalsakit', 'tglsakit', 'totalsakit', 'sakit'), tglMin, tglMax).length;
-                        iCount = parseDates(getRowVal(rekapObj, 'tanggalizin', 'tglizin', 'totalizin', 'izin'), tglMin, tglMax).length;
-                        aCount = parseDates(getRowVal(rekapObj, 'tanggalalpa', 'tanggalalpha', 'tglalpa', 'tglalpha', 'totalalpa', 'alpha'), tglMin, tglMax).length;
+                        sCount = parseDates(getRowVal(rekapObj, 'tanggalsakit', 'tglsakit', 'sakit'), tglMin, tglMax).length;
+                        iCount = parseDates(getRowVal(rekapObj, 'tanggalizin', 'tglizin', 'izin'), tglMin, tglMax).length;
+                        aCount = parseDates(getRowVal(rekapObj, 'tanggalalpa', 'tanggalalpha', 'tglalpa', 'alpha'), tglMin, tglMax).length;
                     }
                 }
 
-                let isAbsent = (sCount + iCount + aCount) > 0;
+                // HIRARKI STATUS UNTUK HITUNGAN UNIK PER SANTRI
+                let isSakit = sCount > 0;
+                let isIzin  = !isSakit && iCount > 0;
+                let isAlpha = !isSakit && !isIzin && aCount > 0;
+                let isHadir = !isSakit && !isIzin && !isAlpha;
 
                 if (isMTQ) {
                     mtqGlobal.masterTotal++;
-                    mtqGlobal.sakit += sCount;
-                    mtqGlobal.izin  += iCount;
-                    mtqGlobal.alpha += aCount;
-                    if (!isAbsent) mtqGlobal.hadir++;
+                    if (isHadir) mtqGlobal.hadir++;
+                    if (isSakit) mtqGlobal.sakit++;
+                    if (isIzin)  mtqGlobal.izin++;
+                    if (isAlpha) mtqGlobal.alpha++;
 
                     if (mtqMqsDaerah[letter]) {
                         mtqMqsDaerah[letter].mtqTotal++;
-                        mtqMqsDaerah[letter].mtqSakit += sCount;
-                        mtqMqsDaerah[letter].mtqIzin  += iCount;
-                        mtqMqsDaerah[letter].mtqAlpha += aCount;
-                        if (!isAbsent) mtqMqsDaerah[letter].mtqHadir++;
+                        if (isHadir) mtqMqsDaerah[letter].mtqHadir++;
+                        if (isSakit) mtqMqsDaerah[letter].mtqSakit++;
+                        if (isIzin)  mtqMqsDaerah[letter].mtqIzin++;
+                        if (isAlpha) mtqMqsDaerah[letter].mtqAlpha++;
                     }
                 }
 
                 if (isMQS) {
                     mqsGlobal.masterTotal++;
-                    mqsGlobal.sakit += sCount;
-                    mqsGlobal.izin  += iCount;
-                    mqsGlobal.alpha += aCount;
-                    if (!isAbsent) mqsGlobal.hadir++;
+                    if (isHadir) mqsGlobal.hadir++;
+                    if (isSakit) mqsGlobal.sakit++;
+                    if (isIzin)  mqsGlobal.izin++;
+                    if (isAlpha) mqsGlobal.alpha++;
 
                     if (mtqMqsDaerah[letter]) {
                         mtqMqsDaerah[letter].mqsTotal++;
-                        mtqMqsDaerah[letter].mqsSakit += sCount;
-                        mtqMqsDaerah[letter].mqsIzin  += iCount;
-                        mtqMqsDaerah[letter].mqsAlpha += aCount;
-                        if (!isAbsent) mtqMqsDaerah[letter].mqsHadir++;
+                        if (isHadir) mtqMqsDaerah[letter].mqsHadir++;
+                        if (isSakit) mtqMqsDaerah[letter].mqsSakit++;
+                        if (isIzin)  mtqMqsDaerah[letter].mqsIzin++;
+                        if (isAlpha) mtqMqsDaerah[letter].mqsAlpha++;
                     }
                 }
             });
         }
 
-        let totSantri = 0, totSudah = 0, totSakitHari = 0, totIzinHari = 0, totAlphaHari = 0;
+        // 2. HITUNG KOREKSI DAN KPI PEKAN BERJALAN
+        let totSantri = 0, totSudah = 0;
+        let totSakitHari = 0, totIzinHari = 0, totAlphaHari = 0;
         let countSakitSantri = 0, countIzinSantri = 0, countAlphaSantri = 0;
         let auditLogList = [];
 
@@ -1439,7 +1460,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
             let tSakit = parseDates(getRowVal(row, 'tanggalsakit', 'tglsakit', 'sakit'), tglMin, tglMax);
             let tIzin  = parseDates(getRowVal(row, 'tanggalizin', 'tglizin', 'izin'), tglMin, tglMax);
-            let tAlpha = parseDates(getRowVal(row, 'tanggalalpa', 'tanggalalpha', 'tglalpa', 'tglalpha', 'totalalpa', 'alpha'), tglMin, tglMax);
+            let tAlpha = parseDates(getRowVal(row, 'tanggalalpa', 'tanggalalpha', 'tglalpa', 'alpha'), tglMin, tglMax);
 
             tSakit.forEach(day => { if(day <= 30) dailyTrendData.sakit[day]++; });
             tIzin.forEach(day  => { if(day <= 30) dailyTrendData.izin[day]++; });
@@ -1456,20 +1477,14 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                 statusText.includes('sesuai') || 
                 statusText.includes('benar') ||
                 statusText.includes('selesai') ||
-                statusText.includes('ok') ||
-                statusText.includes('verif') ||
                 statusText.includes('v') ||
                 statusText.includes('✔')
             ) && !statusText.includes('belum');
 
             let isIncludedInMode = true;
-            if (currentConfigMode === 'alpha') {
-                isIncludedInMode = (aCount > 0) || isDone;
-            } else if (currentConfigMode === 'izin') {
-                isIncludedInMode = (iCount > 0) || isDone;
-            } else if (currentConfigMode === 'sakit') {
-                isIncludedInMode = (sCount > 0) || isDone;
-            }
+            if (currentConfigMode === 'alpha') isIncludedInMode = (aCount > 0) || isDone;
+            else if (currentConfigMode === 'izin') isIncludedInMode = (iCount > 0) || isDone;
+            else if (currentConfigMode === 'sakit') isIncludedInMode = (sCount > 0) || isDone;
 
             if (!isIncludedInMode) return;
 
@@ -1484,24 +1499,29 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                 nama: namaSantri, idPps: idPps, domisili: dom,
                 sakit: sCount, izin: iCount, alpha: aCount, isDone: isDone, status: statusText
             });
+
             statsPerDaerah[letter].total++;
             if (isDone) {
                 statsPerDaerah[letter].sudah++;
-                auditLogList.push({
-                    nama: namaSantri,
-                    daerah: letter,
-                    status: statusText || 'Sudah Dikoreksi',
-                    s: sCount, i: iCount, a: aCount,
-                    updateIndex: row._updateIndex || 0,
-                    timestamp: row._timestamp || 0
-                });
+                // LOG REALTIME HANYA DIAMBIL DARI TRANSAKSI PEKAN AKTIF
+                if (row._source === 'koreksi' || !row._source) {
+                    auditLogList.push({
+                        nama: namaSantri,
+                        daerah: letter,
+                        status: statusText || 'Sudah Dikoreksi',
+                        s: sCount, i: iCount, a: aCount,
+                        updateIndex: row._updateIndex || 0,
+                        timestamp: row._timestamp || 0
+                    });
+                }
             } else {
                 statsPerDaerah[letter].belum++;
             }
 
-            statsPerDaerah[letter].sakit += sCount;
-            statsPerDaerah[letter].izin  += iCount;
-            statsPerDaerah[letter].alpha += aCount;
+            // HITUNGAN ORANG PER DAERAH
+            if (sCount > 0) statsPerDaerah[letter].sakit++;
+            if (iCount > 0) statsPerDaerah[letter].izin++;
+            if (aCount > 0) statsPerDaerah[letter].alpha++;
 
             let dims = {
                 marhalah: normalizeDimension(row.marhalah, 'marhalah'),
@@ -1517,9 +1537,9 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                 }
                 dimensionData[dKey][catVal].total++;
                 if (isDone) dimensionData[dKey][catVal].sudah++;
-                dimensionData[dKey][catVal].sakit += sCount;
-                dimensionData[dKey][catVal].izin += iCount;
-                dimensionData[dKey][catVal].alpha += aCount;
+                if (sCount > 0) dimensionData[dKey][catVal].sakit++;
+                if (iCount > 0) dimensionData[dKey][catVal].izin++;
+                if (aCount > 0) dimensionData[dKey][catVal].alpha++;
             });
 
             totSantri++;
@@ -1533,18 +1553,19 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             totAlphaHari += aCount;
         });
 
+        // TAMPILKAN KPI UTAMA DENGAN PERSENTASE DAN TERTULIS
         document.getElementById('dash-total-santri').innerText = totSantri;
         document.getElementById('dash-total-sudah').innerText = totSudah;
         document.getElementById('dash-pct-sudah').innerText = `${totSantri ? Math.round((totSudah/totSantri)*100) : 0}% selesai`;
 
-        document.getElementById('dash-total-sakit').innerText = totSakitHari;
-        document.getElementById('dash-pct-sakit').innerText = `${totSakitHari} Hari (${countSakitSantri})`;
+        document.getElementById('dash-total-sakit').innerText = countSakitSantri;
+        document.getElementById('dash-pct-sakit').innerText = `${countSakitSantri} Santri (${totSakitHari} Hari)`;
 
-        document.getElementById('dash-total-izin').innerText = totIzinHari;
-        document.getElementById('dash-pct-izin').innerText = `${totIzinHari} Hari (${countIzinSantri})`;
+        document.getElementById('dash-total-izin').innerText = countIzinSantri;
+        document.getElementById('dash-pct-izin').innerText = `${countIzinSantri} Santri (${totIzinHari} Hari)`;
 
-        document.getElementById('dash-total-alpha').innerText = totAlphaHari;
-        document.getElementById('dash-pct-alpha').innerText = `${totAlphaHari} Hari (${countAlphaSantri})`;
+        document.getElementById('dash-total-alpha').innerText = countAlphaSantri;
+        document.getElementById('dash-pct-alpha').innerText = `${countAlphaSantri} Santri (${totAlphaHari} Hari)`;
 
         window.processedStats = statsPerDaerah;
         window.processedDimension = dimensionData;
@@ -1553,7 +1574,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         renderAuditLogTable(auditLogList);
         renderMtqMqsTables(mtqGlobal, mqsGlobal, mtqMqsDaerah);
         renderMtqMqsCharts(mtqMqsDaerah);
-        renderGraphicalChartsAndMatrix(totSakitHari, totIzinHari, totAlphaHari, totSudah);
+        renderGraphicalChartsAndMatrix(countSakitSantri, countIzinSantri, countAlphaSantri, totSudah);
         renderDimensionChartAndTable();
         renderMonitoringTable();
     }
@@ -1605,23 +1626,21 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
     function parseIndoDate(str) {
         if (!str) return 0;
         let s = String(str).trim();
-        
-        let isoTime = Date.parse(s);
-        if (!isNaN(isoTime) && !s.includes('/')) return isoTime;
+        if (!s || s === '-' || s === '0') return 0;
+        if (/^\d+$/.test(s)) return parseInt(s, 10);
+
+        let isoFormatted = s.replace(' ', 'T');
+        let parsed = Date.parse(isoFormatted);
+        if (!isNaN(parsed)) return parsed;
 
         let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
         if (m) {
             return new Date(
-                parseInt(m[3], 10),
-                parseInt(m[2], 10) - 1,
-                parseInt(m[1], 10),
-                parseInt(m[4] || 0, 10),
-                parseInt(m[5] || 0, 10),
-                parseInt(m[6] || 0, 10)
+                parseInt(m[3], 10), parseInt(m[2], 10) - 1, parseInt(m[1], 10),
+                parseInt(m[4] || 0, 10), parseInt(m[5] || 0, 10), parseInt(m[6] || 0, 10)
             ).getTime();
         }
-
-        return isNaN(isoTime) ? 0 : isoTime;
+        return 0;
     }
 
     function renderAuditLogTable(logs) {
@@ -1630,13 +1649,13 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         tbody.innerHTML = "";
 
         if (!logs || logs.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:10px;">Belum ada verifikasi.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:10px;">Belum ada verifikasi pekan ini.</td></tr>`;
             return;
         }
 
         logs.sort((a, b) => {
-            let tA = parseIndoDate(a.timestamp || a.waktu || a._timestamp);
-            let tB = parseIndoDate(b.timestamp || b.waktu || b._timestamp);
+            let tA = parseIndoDate(a.timestamp);
+            let tB = parseIndoDate(b.timestamp);
             if (tA !== tB) return tB - tA;
             return (b.updateIndex || 0) - (a.updateIndex || 0);
         });
