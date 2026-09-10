@@ -682,7 +682,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         </div>
     </div>
 
-    <script>
+<script>
     const APPS_SCRIPT_URL_REKAP  = "https://script.google.com/macros/s/AKfycbz1ecMJ8KBdbsNhuJCm_eYrRH2ATxZH7sn73GV-B19JoxKLNMrS8BCS8fZNnHBcqjM/exec";
     const APPS_SCRIPT_URL_MASTER = "https://script.google.com/macros/s/AKfycbzV_l5rAXgnapi2c3ZH90WOusrHgN-Ny9wjaFJ9tczCl1mkz1pURw_sZUYhEF4YY6byRg/exec";
 
@@ -798,24 +798,22 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         }
     }
 
-	function startAutoSync() {
-		if (autoSyncTimer) clearTimeout(autoSyncTimer);
+    function startAutoSync() {
+        if (autoSyncTimer) clearTimeout(autoSyncTimer);
 
-		async function scheduleNext() {
-			if (isAutoSyncEnabled && navigator.onLine && !isFetching) {
-				await loadAllRealtimeData(true);
-			}
-			// Jeda 15 detik dihitung SETELAH proses fetch selesai sepenuhnya
-			autoSyncTimer = setTimeout(scheduleNext, 15000);
-		}
+        async function scheduleNext() {
+            if (isAutoSyncEnabled && navigator.onLine && !isFetching) {
+                await loadAllRealtimeData(true);
+            }
+            autoSyncTimer = setTimeout(scheduleNext, 35000);
+        }
 
-		// Jalankan siklus pertama setelah 15 detik
-		autoSyncTimer = setTimeout(scheduleNext, 15000);
-	}
+        autoSyncTimer = setTimeout(scheduleNext, 35000);
+    }
 
     function toggleAutoSync(enabled) {
         isAutoSyncEnabled = enabled;
-        showToast(enabled ? "✅ Auto-Refresh (15s)" : "⏸️ Auto-Refresh Nonaktif");
+        showToast(enabled ? "✅ Auto-Refresh (35s)" : "⏸️ Auto-Refresh Nonaktif");
     }
 
     async function manualSync() {
@@ -849,6 +847,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         try {
             let res = await fetch(APPS_SCRIPT_URL_REKAP, {
                 method: 'POST',
+				headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({
                     action: 'archiveAndResetWeek',
                     bulanHijri: bHijri,
@@ -906,7 +905,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         return match ? match[0] : 'LAIN';
     }
 
-    async function safeFetchJson(url, timeoutMs = 50000) {
+    async function safeFetchJson(url, timeoutMs = 45000) {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -929,115 +928,132 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
     // PROSES LOAD UTAMA TERISOLASI
 	async function loadAllRealtimeData(isSilent = false) {
-		if (isFetching) return;
-		isFetching = true;
-		if (!isSilent) showToast("Memuat Data...");
+			if (isFetching) return;
+			isFetching = true;
+			if (!isSilent) showToast("Memuat Data...");
 
-		try {
-			const parseArray = (res) => {
-				if (Array.isArray(res)) return res;
-				if (res && Array.isArray(res.data)) return res.data;
-				if (res && Array.isArray(res.result)) return res.result;
-				return [];
-			};
-
-			// 1. FETCH REKAP REALTIME PEKAN INI (KINI SANGAT RINGAN & INSTAN)
-			let initRes = await safeFetchJson(APPS_SCRIPT_URL_REKAP + "?action=getAllInitData", 15000);
-
-			if (initRes && initRes.status === 'success') {
-				if (initRes.config && initRes.config.filterAbsen) {
-					currentConfigMode = String(initRes.config.filterAbsen).toLowerCase();
-					updateConfigUI(currentConfigMode);
-				}
-				rawUserData = initRes.users || [];
-				activeBroadcastData = initRes.broadcast || null;
-				renderBroadcastCardUI(activeBroadcastData);
-			}
-
-			let listRekap = initRes && initRes.rekap ? parseArray(initRes.rekap) : [];
-
-			// RENDER TAMPILAN DASHBOARD PERTAMA DENGAN CEPAT
-			rawKoreksiData = listRekap.map((r, idx) => {
-				let rawId = getRowVal(r, 'idpps', 'id pps', 'id', 'idppsantri', 'nis');
-				let cleanId = normalizeId(rawId);
-				return {
-					...r,
-					idpps: cleanId || `id_${idx}`,
-					namasantri: getRowVal(r, 'namasantri', 'nama', 'namalengkap') || '-',
-					domisili: getRowVal(r, 'domisili', 'daerah', 'kamar', 'wilayah') || '-',
-					marhalah: getRowVal(r, 'marhalah/jilid', 'marhalah', 'jilid'),
-					tingkat: getRowVal(r, 'tingkat', 'tingkatpendidikan') || '-',
-					kelas: getRowVal(r, 'kelas') || '-',
-					kategori: getRowVal(r, 'kategori', 'kategoribaru') || '',
-					majliskitab: getRowVal(r, 'majliskitab', 'jalsah'),
-					tanggalsakit: getRowVal(r, 'tanggalsakit', 'tglsakit', 'sakit'),
-					tanggalizin: getRowVal(r, 'tanggalizin', 'tglizin', 'izin'),
-					tanggalalpa: getRowVal(r, 'tanggalalpa', 'tanggalalpha', 'tglalpa', 'alpha'),
-					status: getRowVal(r, 'status', 'statuskoreksi', 'koreksi', 'ket'),
-					_timestamp: getRowVal(r, 'timestamp', 'waktu', 'updatedat', 'tgl') || new Date().toISOString(),
-					_source: 'koreksi',
-					_updateIndex: idx
+			try {
+				const parseArray = (res) => {
+					if (Array.isArray(res)) return res;
+					if (res && Array.isArray(res.data)) return res.data;
+					if (res && Array.isArray(res.result)) return res.result;
+					return [];
 				};
-			});
 
-			populateGlobalDaerahDropdown();
-			populateGlobalTahunDropdown();
-			processAndRenderStats();
-			renderUsersTable();
-
-			if (!isSilent) showToast("Dashboard Siap!");
-
-			// 2. LOAD MASTER SANTRI DI BACKGROUND (JIKA KOSONG / KEDALUWARSA)
-			const NOW = new Date().getTime();
-			let masterRes = memoryMasterCache || await getCacheIDB('MASTER_DATA_CACHE');
-			let cacheTime = await getCacheIDB('MASTER_DATA_TIME');
-
-			if (!masterRes || !cacheTime || (NOW - parseInt(cacheTime, 10) >= 3600000)) {
-				masterRes = await safeFetchJson(APPS_SCRIPT_URL_MASTER, 30000);
-				if (masterRes && masterRes.dataUtama) {
-					memoryMasterCache = masterRes;
-					await setCacheIDB('MASTER_DATA_CACHE', masterRes);
-					await setCacheIDB('MASTER_DATA_TIME', NOW.toString());
+				// Ambil master data dari cache IDB dulu di awal
+				if (!memoryMasterCache) {
+					let cachedMaster = await getCacheIDB('MASTER_DATA_CACHE');
+					if (cachedMaster && cachedMaster.dataUtama) {
+						memoryMasterCache = cachedMaster;
+						parseAndSetMasterData(cachedMaster);
+					}
 				}
+
+				// Fetch rekap realtime pekan ini
+				let initRes = await safeFetchJson(APPS_SCRIPT_URL_REKAP + "?action=getAllInitData", 45000);
+
+				if (initRes && initRes.status === 'success') {
+					if (initRes.config && initRes.config.filterAbsen) {
+						currentConfigMode = String(initRes.config.filterAbsen).toLowerCase();
+						updateConfigUI(currentConfigMode);
+					}
+					rawUserData = initRes.users || [];
+					activeBroadcastData = initRes.broadcast || null;
+					renderBroadcastCardUI(activeBroadcastData);
+
+					let listRekap = parseArray(initRes.rekap);
+
+					// Update memori rekap HANYA jika server mengembalikan data valid
+					if (listRekap.length > 0) {
+						rawKoreksiData = listRekap.map((r, idx) => {
+							let rawId = getRowVal(r, 'idpps', 'id pps', 'id', 'idppsantri', 'nis');
+							let cleanId = normalizeId(rawId);
+
+							// --- KODE TIMESTAMP YANG BARU DITARUH DI SINI ---
+							let rawTs = getRowVal(r, 'timestamp', 'waktu', 'updatedat', 'tgl');
+							let cleanTs = (rawTs && rawTs !== '-') ? rawTs : '';
+
+							return {
+								...r,
+								idpps: cleanId || `id_${idx}`,
+								namasantri: getRowVal(r, 'namasantri', 'nama', 'namalengkap') || '-',
+								domisili: getRowVal(r, 'domisili', 'daerah', 'kamar', 'wilayah') || '-',
+								marhalah: getRowVal(r, 'marhalah/jilid', 'marhalah', 'jilid'),
+								tingkat: getRowVal(r, 'tingkat', 'tingkatpendidikan') || '-',
+								kelas: getRowVal(r, 'kelas') || '-',
+								kategori: getRowVal(r, 'kategori', 'kategoribaru') || '',
+								majliskitab: getRowVal(r, 'majliskitab', 'jalsah'),
+								tanggalsakit: getRowVal(r, 'tanggalsakit', 'tglsakit', 'sakit'),
+								tanggalizin: getRowVal(r, 'tanggalizin', 'tglizin', 'izin'),
+								tanggalalpa: getRowVal(r, 'tanggalalpa', 'tanggalalpha', 'tglalpa', 'alpha'),
+								status: getRowVal(r, 'status', 'statuskoreksi', 'koreksi', 'ket'),
+								_timestamp: cleanTs, // Gunakan cleanTs di sini
+								_source: 'koreksi',
+								_updateIndex: idx
+							};
+						});
+					}
+
+					populateGlobalDaerahDropdown();
+					populateGlobalTahunDropdown();
+					processAndRenderStats();
+					renderUsersTable();
+				}
+
+				if (!isSilent) showToast("Dashboard Siap!");
+
+				// Background update untuk Master Data jika sudah telat 1 jam
+				const NOW = new Date().getTime();
+				let cacheTime = await getCacheIDB('MASTER_DATA_TIME');
+
+				if (!memoryMasterCache || !cacheTime || (NOW - parseInt(cacheTime, 10) >= 3600000)) {
+					let masterRes = await safeFetchJson(APPS_SCRIPT_URL_MASTER, 45000);
+					if (masterRes && masterRes.dataUtama) {
+						memoryMasterCache = masterRes;
+						await setCacheIDB('MASTER_DATA_CACHE', masterRes);
+						await setCacheIDB('MASTER_DATA_TIME', NOW.toString());
+						parseAndSetMasterData(masterRes);
+						processAndRenderStats();
+					}
+				}
+
+			} catch(e) {
+				console.error("Error Global:", e);
+				if (!isSilent) showToast("Gagal terhubung!");
+			} finally {
+				isFetching = false;
 			}
-
-			// 3. UPDATE TAMPILAN JIKA MASTER SANTRI BERHASIL DIMUAT
-			if (masterRes && masterRes.dataUtama && masterRes.headersUtama) {
-				let headers = masterRes.headersUtama.map(h => String(h).trim());
-				let mutaallimMap = masterRes.mutaallimMap || {};
-
-				rawMasterData = masterRes.dataUtama.map(row => {
-					let item = {};
-					headers.forEach((h, idx) => {
-						item[h] = row[idx] !== undefined && row[idx] !== null ? String(row[idx]).trim() : '';
-					});
-
-					let rawId = getRowVal(item, 'idpps', 'id pps', 'id') || row[0] || '';
-					let idPps = normalizeId(rawId);
-					let mData = mutaallimMap[idPps] || mutaallimMap[rawId] || {};
-					let extraCat = (item['Kategori'] || '') + " " + (mData['KATEGORI BARU'] || mData['Kategori'] || '');
-
-					return {
-						idpps: idPps,
-						nama: getRowVal(item, 'nama', 'namasantri') || row[1] || '',
-						domisili: getRowVal(item, 'domisili', 'statusdomisili') || row[6] || '',
-						kelas: getRowVal(item, 'kelas') || row[7] || '',
-						tingkat: getRowVal(item, 'tingkat') || row[8] || '',
-						kategoriText: extraCat.toUpperCase(),
-						rawMaster: item
-					};
-				});
-
-				processAndRenderStats();
-			}
-
-		} catch(e) {
-			console.error("Error Global:", e);
-			if (!isSilent) showToast("Gagal terhubung!");
-		} finally {
-			isFetching = false;
 		}
-	}
+
+    // FUNGSI INI YANG DITARUH DI SINI:
+    function parseAndSetMasterData(masterRes) {
+        if (!masterRes || !masterRes.dataUtama || !masterRes.headersUtama) return;
+        let headers = masterRes.headersUtama.map(h => String(h).trim());
+        let mutaallimMap = masterRes.mutaallimMap || {};
+
+        rawMasterData = masterRes.dataUtama.map(row => {
+            let item = {};
+            headers.forEach((h, idx) => {
+                item[h] = row[idx] !== undefined && row[idx] !== null ? String(row[idx]).trim() : '';
+            });
+
+            let rawId = getRowVal(item, 'idpps', 'id pps', 'id') || row[0] || '';
+            let idPps = normalizeId(rawId);
+            let mData = mutaallimMap[idPps] || mutaallimMap[rawId] || {};
+            let extraCat = (item['Kategori'] || '') + " " + (mData['KATEGORI BARU'] || mData['Kategori'] || '');
+
+            return {
+                idpps: idPps,
+                nama: getRowVal(item, 'nama', 'namasantri') || row[1] || '',
+                domisili: getRowVal(item, 'domisili', 'statusdomisili') || row[6] || '',
+                kelas: getRowVal(item, 'kelas') || row[7] || '',
+                tingkat: getRowVal(item, 'tingkat') || row[8] || '',
+                kategoriText: extraCat.toUpperCase(),
+                rawMaster: item
+            };
+        });
+		populateGlobalDaerahDropdown();
+    }
 
     function populateGlobalTahunDropdown() {
         let select = document.getElementById('filter-global-tahun');
@@ -1177,6 +1193,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         try {
             let res = await fetch(APPS_SCRIPT_URL_REKAP, {
                 method: 'POST',
+				headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({
                     action: 'updateBroadcast',
                     broadcast: {
@@ -1223,11 +1240,19 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         radios.forEach(r => { if (r.checked) selectedVal = r.value; });
 
         showToast("Menyimpan...");
-        try {
-            await Promise.allSettled([
-                fetch(APPS_SCRIPT_URL_REKAP, { method: 'POST', body: JSON.stringify({ action: 'updateConfig', filterAbsen: selectedVal }) }),
-                fetch(APPS_SCRIPT_URL_MASTER, { method: 'POST', body: JSON.stringify({ action: 'updateConfig', filterAbsen: selectedVal }) })
-            ]);
+		try {
+				await Promise.allSettled([
+					fetch(APPS_SCRIPT_URL_REKAP, { 
+						method: 'POST', 
+						headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+						body: JSON.stringify({ action: 'updateConfig', filterAbsen: selectedVal }) 
+					}),
+					fetch(APPS_SCRIPT_URL_MASTER, { 
+						method: 'POST', 
+						headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+						body: JSON.stringify({ action: 'updateConfig', filterAbsen: selectedVal }) 
+					})
+				]);
 
             currentConfigMode = selectedVal;
             updateConfigUI(selectedVal);
@@ -1252,6 +1277,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         try {
             let res = await fetch(APPS_SCRIPT_URL_REKAP, {
                 method: 'POST',
+				headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({
                     action: 'updateBroadcast',
                     broadcast: { title, message, type, active }
@@ -1275,7 +1301,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         if (!str || str === '-' || str === '0') return [];
         if (/^\d{4}-\d{2}-\d{2}/.test(str)) return [];
 
-        let tokens = str.split(/[\s,;\/]+/);
+        let tokens = str.split(/[\s,;\/\-]+/);
         let results = [];
 
         tokens.forEach(tok => {
@@ -1350,7 +1376,9 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
         let rekapMap = new Map();
         rawKoreksiData.forEach(r => {
-            if (r.idpps) rekapMap.set(r.idpps, r);
+		if (r.idpps && r.idpps !== '0' && !r.idpps.startsWith('id_')) {
+				rekapMap.set(r.idpps, r);
+			}
         });
 
         let mtqGlobal = { masterTotal: 0, hadir: 0, sakit: 0, izin: 0, alpha: 0 };
@@ -1623,25 +1651,44 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         });
     }
 
-    function parseIndoDate(str) {
-        if (!str) return 0;
-        let s = String(str).trim();
-        if (!s || s === '-' || s === '0') return 0;
-        if (/^\d+$/.test(s)) return parseInt(s, 10);
+	function parseIndoDate(str) {
+		if (!str) return 0;
+		let s = String(str).trim();
+		if (!s || s === '-' || s === '0') return 0;
+		if (/^\d+$/.test(s)) return parseInt(s, 10);
 
-        let isoFormatted = s.replace(' ', 'T');
-        let parsed = Date.parse(isoFormatted);
-        if (!isNaN(parsed)) return parsed;
+		// 1. Coba parse standar ISO / Date JS
+		let parsed = Date.parse(s);
+		if (!isNaN(parsed)) return parsed;
 
-        let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
-        if (m) {
-            return new Date(
-                parseInt(m[3], 10), parseInt(m[2], 10) - 1, parseInt(m[1], 10),
-                parseInt(m[4] || 0, 10), parseInt(m[5] || 0, 10), parseInt(m[6] || 0, 10)
-            ).getTime();
-        }
-        return 0;
-    }
+		// 2. Format YYYY-MM-DD HH:mm:ss atau YYYY-MM-DD H:mm (Format Google Sheets Kamu)
+		let mYMD = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+		if (mYMD) {
+			return new Date(
+				parseInt(mYMD[1], 10),
+				parseInt(mYMD[2], 10) - 1,
+				parseInt(mYMD[3], 10),
+				parseInt(mYMD[4] || 0, 10),
+				parseInt(mYMD[5] || 0, 10),
+				parseInt(mYMD[6] || 0, 10)
+			).getTime();
+		}
+
+		// 3. Format DD-MM-YYYY HH:mm:ss atau DD/MM/YYYY H:mm
+		let mDMY = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+		if (mDMY) {
+			return new Date(
+				parseInt(mDMY[3], 10),
+				parseInt(mDMY[2], 10) - 1,
+				parseInt(mDMY[1], 10),
+				parseInt(mDMY[4] || 0, 10),
+				parseInt(mDMY[5] || 0, 10),
+				parseInt(mDMY[6] || 0, 10)
+			).getTime();
+		}
+
+		return 0;
+	}
 
     function renderAuditLogTable(logs) {
         let tbody = document.getElementById('tbody-audit-log');
@@ -1889,27 +1936,34 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
         const canvasDim = document.getElementById('chartBarDimension');
         if (canvasDim) {
-            if (dimensionChartInstance) dimensionChartInstance.destroy();
-            dimensionChartInstance = new Chart(canvasDim.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: catNames,
-                    datasets: [
-                        { label: 'Sakit', data: dataS, backgroundColor: '#0284c7', borderRadius: 3 },
-                        { label: 'Izin', data: dataI, backgroundColor: '#d97706', borderRadius: 3 },
-                        { label: 'Alpha', data: dataA, backgroundColor: '#e11d48', borderRadius: 3 }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { ticks: { font: { size: 7, weight: 'bold' } } },
-                        y: { beginAtZero: true, ticks: { precision: 0 } }
+            if (dimensionChartInstance) {
+                dimensionChartInstance.data.labels = catNames;
+                dimensionChartInstance.data.datasets[0].data = dataS;
+                dimensionChartInstance.data.datasets[1].data = dataI;
+                dimensionChartInstance.data.datasets[2].data = dataA;
+                if (canvasDim.offsetWidth > 0) dimensionChartInstance.update('none');
+            } else {
+                dimensionChartInstance = new Chart(canvasDim.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: catNames,
+                        datasets: [
+                            { label: 'Sakit', data: dataS, backgroundColor: '#0284c7', borderRadius: 3 },
+                            { label: 'Izin', data: dataI, backgroundColor: '#d97706', borderRadius: 3 },
+                            { label: 'Alpha', data: dataA, backgroundColor: '#e11d48', borderRadius: 3 }
+                        ]
                     },
-                    plugins: { legend: { position: 'bottom', labels: { font: { size: 8, weight: 'bold' }, boxWidth: 6 } } }
-                }
-            });
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { ticks: { font: { size: 7, weight: 'bold' } } },
+                            y: { beginAtZero: true, ticks: { precision: 0 } }
+                        },
+                        plugins: { legend: { position: 'bottom', labels: { font: { size: 8, weight: 'bold' }, boxWidth: 6 } } }
+                    }
+                });
+            }
         }
 
         let thLabel = document.getElementById('th-dim-label');
@@ -1918,7 +1972,11 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         let tbody = document.getElementById('dash-matrix-tbody');
         let tfoot = document.getElementById('dash-matrix-tfoot');
         tbody.innerHTML = "";
-
+		if (catNames.length === 0) {
+			tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:10px;">Data tidak ditemukan.</td></tr>`;
+			tfoot.innerHTML = "";
+			return;
+		}
         let sumS = 0, sumI = 0, sumA = 0, sumSudah = 0, sumTot = 0;
 
         catNames.forEach(cat => {
@@ -2099,7 +2157,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                         <button onclick="togglePassVisibility('${u.daerah}')" class="btn-outline" style="padding:2px 4px;" id="btn-toggle-${u.daerah}">👁️</button>
                     </div>
                 </td>
-                <td style="text-align:center;"><button class="btn-dark" onclick="openPassModal('${u.daerah}', '${u.password}')" style="padding:4px 6px; font-size:8px;">Ubah</button></td>
+                <td style="text-align:center;"><button class="btn-dark" onclick="openPassModal('${u.daerah}',\`${u.password.replace(/`/g, '\\`')}\`)" style="padding:4px 6px; font-size:8px;">Ubah</button></td>
             `;
             tbody.appendChild(tr);
         });
@@ -2128,21 +2186,29 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         document.getElementById('modal-pass').style.display = 'none';
     }
 
-    function submitNewPassword() {
-        let newPass = document.getElementById('input-new-pass').value.trim();
-        if (!newPass) return alert("Sandi tidak boleh kosong!");
+	function submitNewPassword() {
+		let newPass = document.getElementById('input-new-pass').value.trim();
+		if (!newPass) return alert("Sandi tidak boleh kosong!");
 
-        showToast("Mengirim...");
+		showToast("Mengirim...");
 
-        Promise.allSettled([
-            fetch(APPS_SCRIPT_URL_REKAP, { method: 'POST', body: JSON.stringify({ action: 'updatePassword', data: { daerah: activePassDaerah, password: newPass } }) }),
-            fetch(APPS_SCRIPT_URL_MASTER, { method: 'POST', body: JSON.stringify({ action: 'updatePassword', data: { daerah: activePassDaerah, password: newPass } }) })
-        ]).then(() => {
-            showToast("Sandi diperbarui!");
-            closePassModal();
-            loadAllRealtimeData(false);
-        }).catch(err => console.error(err));
-    }
+		Promise.allSettled([
+			fetch(APPS_SCRIPT_URL_REKAP, { 
+				method: 'POST', 
+				headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+				body: JSON.stringify({ action: 'updatePassword', data: { daerah: activePassDaerah, password: newPass } }) 
+			}),
+			fetch(APPS_SCRIPT_URL_MASTER, { 
+				method: 'POST', 
+				headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+				body: JSON.stringify({ action: 'updatePassword', data: { daerah: activePassDaerah, password: newPass } }) 
+			})
+		]).then(() => {
+			showToast("Sandi diperbarui!");
+			closePassModal();
+			loadAllRealtimeData(false);
+		}).catch(err => console.error(err));
+	}
     </script>
 </body>
 </html>
