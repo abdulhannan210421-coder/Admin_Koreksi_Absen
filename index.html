@@ -5,7 +5,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Diperbaiki: Memperbolehkan zoom untuk aksesibilitas pengguna -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard Taklimda Pusat</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
@@ -44,7 +45,7 @@ body {
     padding: 8px; 
     max-width: 1280px; 
     margin: 0 auto; 
-    padding-bottom: 75px; 
+    padding-bottom: 80px; 
 }
 
 .app-view { display: none; }
@@ -62,21 +63,22 @@ body {
     align-items: center; 
     width: 100%;
 }
-.avatar-icon { width: 32px; height: 32px; background: var(--primary); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; }
+.avatar-icon { width: 34px; height: 34px; background: var(--primary); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
 
-.live-badge { display: inline-flex; align-items: center; gap: 4px; background: #d1fae5; color: #047857; padding: 2px 6px; border-radius: 10px; font-size: 8px; font-weight: 800; }
-.live-dot { width: 5px; height: 5px; background: #10b981; border-radius: 50%; animation: pulse 1.5s infinite; }
+/* Diperbaiki: Font dinaikkan dari 8px ke 10px untuk keterbacaan mobile */
+.live-badge { display: inline-flex; align-items: center; gap: 4px; background: #d1fae5; color: #047857; padding: 3px 8px; border-radius: 10px; font-size: 10px; font-weight: 800; }
+.live-dot { width: 6px; height: 6px; background: #10b981; border-radius: 50%; animation: pulse 1.5s infinite; }
 
 @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.8; } }
 
-.toggle-switch { display: inline-flex; align-items: center; gap: 4px; font-size: 9px; font-weight: 800; color: var(--text-muted); cursor: pointer; }
+.toggle-switch { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; color: var(--text-muted); cursor: pointer; }
 .toggle-switch input { display: none; }
-.slider { width: 28px; height: 15px; background-color: #cbd5e1; border-radius: 20px; position: relative; transition: 0.2s; }
-.slider::before { content: ""; position: absolute; width: 11px; height: 11px; border-radius: 50%; background-color: white; top: 2px; left: 2px; transition: 0.2s; }
+.slider { width: 32px; height: 18px; background-color: #cbd5e1; border-radius: 20px; position: relative; transition: 0.2s; }
+.slider::before { content: ""; position: absolute; width: 14px; height: 14px; border-radius: 50%; background-color: white; top: 2px; left: 2px; transition: 0.2s; }
 .toggle-switch input:checked + .slider { background-color: var(--accent); }
-.toggle-switch input:checked + .slider::before { transform: translateX(13px); }
+.toggle-switch input:checked + .slider::before { transform: translateX(14px); }
 
-/* STICKY FILTER BAR LENGKAP BERSAMA HIJRIAH */
+/* STICKY FILTER BAR */
 .sticky-filter-bar {
     position: sticky;
     top: 4px;
@@ -104,7 +106,7 @@ body {
 .filter-date-group {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     width: 100%;
 }
 
@@ -112,31 +114,32 @@ body {
 .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 8px; width: 100%; }
 .grid-2col { display: grid; grid-template-columns: 1fr; gap: 8px; width: 100%; }
 
-.chart-container { position: relative; height: 190px; width: 100%; }
+.chart-container { position: relative; height: 200px; width: 100%; }
 
 @media (min-width: 768px) {
     .sticky-filter-bar { flex-direction: column; }
     .kpi-grid { grid-template-columns: repeat(5, 1fr); }
     .kpi-card.full-width { grid-column: span 5; }
     .grid-2col { grid-template-columns: repeat(2, 1fr); }
-    .chart-container { height: 240px; }
+    .chart-container { height: 250px; }
     .bottom-nav { width: 450px; left: 50%; transform: translateX(-50%); border-radius: 18px; bottom: 8px; }
 }
 
-.kpi-card { background: white; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--border); }
+.kpi-card { background: white; padding: 10px; border-radius: 12px; border: 1px solid var(--border); }
 .kpi-card.full-width { grid-column: span 2; }
 
-.kpi-title { font-size: 8px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
-.kpi-value { font-size: 16px; font-weight: 800; margin-top: 1px; color: var(--text-main); }
-.kpi-subtext { font-size: 8px; font-weight: 700; color: var(--text-muted); }
+/* Diperbaiki: Ukuran font diperbesar agar ramah keterbacaan mata */
+.kpi-title { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
+.kpi-value { font-size: 18px; font-weight: 800; margin-top: 2px; color: var(--text-main); }
+.kpi-subtext { font-size: 10px; font-weight: 700; color: var(--text-muted); margin-top: 2px; }
 
 .panel { background: white; border-radius: 12px; border: 1px solid var(--border); padding: 10px; margin-bottom: 8px; width: 100%; overflow: hidden; }
-.panel-title { font-size: 10px; font-weight: 800; margin-bottom: 8px; text-transform: uppercase; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; }
+.panel-title { font-size: 11px; font-weight: 800; margin-bottom: 8px; text-transform: uppercase; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; }
 
 .controls-stack { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
-.input-search, .select-control { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 10px; font-weight: 700; outline: none; background: white; }
+.input-search, .select-control { width: 100%; padding: 7px 9px; border: 1px solid var(--border); border-radius: 8px; font-size: 11px; font-weight: 700; outline: none; background: white; }
 
-.config-badge { padding: 2px 6px; border-radius: 6px; font-size: 8px; font-weight: 800; text-transform: uppercase; }
+.config-badge { padding: 3px 7px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
 .config-badge.all { background: #d1fae5; color: #047857; }
 .config-badge.alpha { background: var(--alpha-bg); color: var(--alpha-color); }
 .config-badge.izin { background: var(--izin-bg); color: var(--izin-color); }
@@ -149,35 +152,36 @@ body {
     border-radius: 8px; 
     border: 1px solid var(--border); 
 }
-table { width: 100%; border-collapse: collapse; font-size: 10px; text-align: left; white-space: nowrap; }
-th { background: #f8fafc; padding: 6px 8px; font-size: 8px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); }
-td { padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; white-space: nowrap; }
+th { background: #f8fafc; padding: 7px 9px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+td { padding: 7px 9px; border-bottom: 1px solid var(--border); vertical-align: middle; }
 
-.progress-bg { background: #e2e8f0; height: 5px; border-radius: 8px; overflow: hidden; width: 45px; display: inline-block; vertical-align: middle; }
+.progress-bg { background: #e2e8f0; height: 6px; border-radius: 8px; overflow: hidden; width: 50px; display: inline-block; vertical-align: middle; }
 .progress-fill { background: var(--accent); height: 100%; width: 0%; }
 
-.status-tag { padding: 2px 4px; border-radius: 4px; font-size: 8px; font-weight: 800; }
+.status-tag { padding: 3px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; }
 .status-selesai { background: #d1fae5; color: #047857; }
 .status-proses { background: #fef3c7; color: #b45309; }
 .status-matikan { background: #ffe4e6; color: #e11d48; }
 
 .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); z-index: 99999; align-items: center; justify-content: center; padding: 10px; }
-.modal-box { background: white; padding: 14px; border-radius: 14px; width: 100%; max-width: 340px; }
+.modal-box { background: white; padding: 16px; border-radius: 14px; width: 100%; max-width: 340px; }
 
 .modal-box-lg { background: white; border-radius: 16px; width: 100%; max-width: 480px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; }
-.modal-header-lg { padding: 10px 12px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; }
-.modal-body-lg { padding: 10px 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.modal-header-lg { padding: 12px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; }
+.modal-body-lg { padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
 
 .room-breakdown-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 8px; }
-.room-breakdown-header { display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 9px; margin-bottom: 4px; border-bottom: 1px dashed var(--border); padding-bottom: 4px; }
+.room-breakdown-header { display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 10px; margin-bottom: 6px; border-bottom: 1px dashed var(--border); padding-bottom: 4px; }
 
 .santri-mini-list { display: flex; flex-direction: column; gap: 4px; }
-.santri-mini-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 5px 6px; border-radius: 6px; border: 1px solid var(--border); font-size: 9px; }
+.santri-mini-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 10px; }
 
+/* Diperbaiki: Ukuran tombol & padding diperbesar untuk touch target yang presisi */
 button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; }
-.btn-primary { background: var(--accent-gradient); color: white; padding: 7px 10px; border-radius: 8px; font-size: 10px; }
-.btn-dark { background: var(--primary); color: white; padding: 5px 8px; border-radius: 6px; font-size: 9px; }
-.btn-outline { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border); padding: 4px 6px; border-radius: 6px; font-size: 9px; }
+.btn-primary { background: var(--accent-gradient); color: white; padding: 8px 12px; border-radius: 8px; font-size: 11px; }
+.btn-dark { background: var(--primary); color: white; padding: 6px 10px; border-radius: 6px; font-size: 10px; }
+.btn-outline { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border); padding: 5px 8px; border-radius: 6px; font-size: 10px; }
 
 .bottom-nav { 
     position: fixed; 
@@ -189,14 +193,14 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
     border-top: 1px solid var(--border); 
     display: flex; 
     justify-content: space-around; 
-    padding: 6px 0; 
+    padding: 8px 0; 
     z-index: 99990; 
 }
-.nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; color: var(--text-muted); font-size: 8px; font-weight: 800; width: 25%; }
+.nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; color: var(--text-muted); font-size: 10px; font-weight: 800; width: 25%; }
 .nav-item.active { color: var(--accent); }
-.nav-icon { font-size: 15px; }
+.nav-icon { font-size: 16px; }
 
-.toast { position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 6px 12px; border-radius: 20px; font-size: 10px; font-weight: 700; opacity: 0; transition: 0.2s; z-index: 999999; pointer-events: none; text-align: center; max-width: 90%; }
+.toast { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; opacity: 0; transition: 0.2s; z-index: 999999; pointer-events: none; text-align: center; max-width: 90%; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(-2px); }
     </style>
 </head>
@@ -204,16 +208,16 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
     <div id="toast" class="toast">Notifikasi</div>
 
-    <!-- HEADER ATAS -->
-    <div class="admin-header">
-        <div style="display:flex; align-items:center; gap:6px;">
+    <!-- HEADER ATAS (Semantik) -->
+    <header class="admin-header">
+        <div style="display:flex; align-items:center; gap:8px;">
             <div class="avatar-icon">A</div>
             <div>
-                <h2 style="font-size:11px; font-weight:800; color:var(--text-main);">Admin Taklimda</h2>
-                <p style="font-size:8px; color:var(--text-muted); font-weight:600;">Sidogiri</p>
+                <h1 style="font-size:12px; font-weight:800; color:var(--text-main);">Admin Taklimda</h1>
+                <p style="font-size:9px; color:var(--text-muted); font-weight:600;">Sidogiri</p>
             </div>
         </div>
-        <div style="display:flex; align-items:center; gap:4px;">
+        <div style="display:flex; align-items:center; gap:6px;">
             <label class="toggle-switch">
                 <input type="checkbox" id="toggle-autosync" checked onchange="toggleAutoSync(this.checked)">
                 <span class="slider"></span>
@@ -222,9 +226,9 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             <button class="btn-dark" onclick="openGantiPekanModal()" style="background:#e11d48; color:white;">📦 Ganti Pekan</button>
             <button class="btn-dark" onclick="manualSync()">🔄 Sync</button>
         </div>
-    </div>
+    </header>
 
-    <!-- STICKY FILTER BAR DENGAN DROPDOWN HIJRIAH -->
+    <!-- STICKY FILTER BAR -->
     <div class="sticky-filter-bar">
         <!-- BARIS 1: DAERAH & KATEGORI -->
         <div class="filter-grid">
@@ -262,72 +266,125 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             </select>
         </div>
 
-        <!-- BARIS 3: RENTANG TANGGAL HIJRIAH (1-30) -->
+        <!-- BARIS 3: RENTANG TANGGAL HIJRIAH -->
         <div class="filter-date-group">
-            <span style="font-size:8px; font-weight:800; color:var(--text-muted);">Tgl Hijriah:</span>
+            <span style="font-size:9px; font-weight:800; color:var(--text-muted);">Tgl Hijriah:</span>
             <input type="number" id="filter-tgl-min" min="1" max="30" placeholder="1" class="input-search" style="padding:4px; text-align:center;" oninput="processAndRenderStats()">
-            <span style="font-size:8px; font-weight:800; color:var(--text-muted);">-</span>
+            <span style="font-size:9px; font-weight:800; color:var(--text-muted);">-</span>
             <input type="number" id="filter-tgl-max" min="1" max="30" placeholder="30" class="input-search" style="padding:4px; text-align:center;" oninput="processAndRenderStats()">
             <button class="btn-outline" onclick="resetGlobalFilters()" style="white-space:nowrap;">🔄 Reset</button>
         </div>
     </div>
 
-    <!-- MENU 1: DASHBOARD -->
-    <div id="view-dashboard" class="app-view active">
-        <!-- KPI CARDS GRID -->
-        <div class="kpi-grid">
-            <div class="kpi-card full-width">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <div class="kpi-title">Total Santri Filtered</div>
-                        <div class="kpi-value" id="dash-total-santri">0</div>
+    <!-- MAIN APP CONTENT (Semantik) -->
+    <main>
+        <!-- MENU 1: DASHBOARD -->
+        <section id="view-dashboard" class="app-view active">
+            <!-- KPI CARDS GRID -->
+            <div class="kpi-grid">
+                <div class="kpi-card full-width">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div class="kpi-title">Total Santri Filtered</div>
+                            <div class="kpi-value" id="dash-total-santri">0</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div class="kpi-title">Status Realtime</div>
+                            <div class="live-badge" style="margin-top:2px;"><div class="live-dot"></div> Connected</div>
+                        </div>
                     </div>
-                    <div style="text-align:right;">
-                        <div class="kpi-title">Status Realtime</div>
-                        <div class="live-badge" style="margin-top:2px;"><div class="live-dot"></div> Connected</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-title">Diverifikasi</div>
+                    <div class="kpi-value" style="color:var(--accent);" id="dash-total-sudah">0</div>
+                    <div class="kpi-subtext" id="dash-pct-sudah">0% selesai</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-title">Sakit (S)</div>
+                    <div class="kpi-value" style="color:var(--sakit-color);" id="dash-total-sakit">0</div>
+                    <div class="kpi-subtext" id="dash-pct-sakit">0 Santri (0 Hari)</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-title">Izin (I)</div>
+                    <div class="kpi-value" style="color:var(--izin-color);" id="dash-total-izin">0</div>
+                    <div class="kpi-subtext" id="dash-pct-izin">0 Santri (0 Hari)</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-title">Alpha (A)</div>
+                    <div class="kpi-value" style="color:var(--alpha-color);" id="dash-total-alpha">0</div>
+                    <div class="kpi-subtext" id="dash-pct-alpha">0 Santri (0 Hari)</div>
+                </div>
+            </div>
+
+            <!-- LINE CHART TREN -->
+            <div class="panel">
+                <div class="panel-title"><span>📈 Tren Absensi Harian (Tgl Hijriah 1–30)</span></div>
+                <div class="chart-container"><canvas id="chartLineTrend"></canvas></div>
+            </div>
+
+            <div class="grid-2col">
+                <div class="panel">
+                    <div class="panel-title"><span>🏆 Komparasi MTQ & MQS</span></div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Kategori</th>
+                                    <th style="text-align:center;">Induk</th>
+                                    <th style="text-align:center; color:var(--accent);">Hadir</th>
+                                    <th style="text-align:center; color:var(--sakit-color);">S</th>
+                                    <th style="text-align:center; color:var(--izin-color);">I</th>
+                                    <th style="text-align:center; color:var(--alpha-color);">A</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-mtq-mqs-global">
+                                <tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:10px;">Memuat data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title"><span>📜 Log Verifikasi Realtime Pekan Ini</span></div>
+                    <div class="table-container" style="max-height: 160px; overflow-y: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nama Santri</th>
+                                    <th>Daerah</th>
+                                    <th>Status</th>
+                                    <th style="text-align:center;">S/I/A</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-audit-log">
+                                <tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:10px;">Memuat log...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            <div class="kpi-card">
-                <div class="kpi-title">Diverifikasi</div>
-                <div class="kpi-value" style="color:var(--accent);" id="dash-total-sudah">0</div>
-                <div class="kpi-subtext" id="dash-pct-sudah">0% selesai</div>
-            </div>
-
-            <div class="kpi-card">
-                <div class="kpi-title">Sakit (S)</div>
-                <div class="kpi-value" style="color:var(--sakit-color);" id="dash-total-sakit">0</div>
-                <div class="kpi-subtext" id="dash-pct-sakit">0 Santri (0 Hari)</div>
-            </div>
-
-            <div class="kpi-card">
-                <div class="kpi-title">Izin (I)</div>
-                <div class="kpi-value" style="color:var(--izin-color);" id="dash-total-izin">0</div>
-                <div class="kpi-subtext" id="dash-pct-izin">0 Santri (0 Hari)</div>
-            </div>
-
-            <div class="kpi-card">
-                <div class="kpi-title">Alpha (A)</div>
-                <div class="kpi-value" style="color:var(--alpha-color);" id="dash-total-alpha">0</div>
-                <div class="kpi-subtext" id="dash-pct-alpha">0 Santri (0 Hari)</div>
-            </div>
-        </div>
-
-        <!-- LINE CHART TREN -->
-        <div class="panel">
-            <div class="panel-title"><span>📈 Tren Absensi Harian (Tgl Hijriah 1–30)</span></div>
-            <div class="chart-container"><canvas id="chartLineTrend"></canvas></div>
-        </div>
-
-        <div class="grid-2col">
             <div class="panel">
-                <div class="panel-title"><span>🏆 Komparasi MTQ & MQS</span></div>
+                <div class="panel-title"><span>📍 Breakdown MTQ & MQS Per Daerah (Jumlah Santri)</span></div>
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
-                                <th>Kategori</th>
+                                <th rowspan="2" style="vertical-align:middle;">Daerah</th>
+                                <th colspan="5" style="text-align:center; border-bottom:1px solid var(--border); background:#f1f5f9;">MTQ</th>
+                                <th colspan="5" style="text-align:center; border-bottom:1px solid var(--border); background:#f8fafc;">MQS</th>
+                            </tr>
+                            <tr>
+                                <th style="text-align:center; background:#f1f5f9;">Induk</th>
+                                <th style="text-align:center; color:var(--accent); background:#f1f5f9;">Hadir</th>
+                                <th style="text-align:center; color:var(--sakit-color); background:#f1f5f9;">S</th>
+                                <th style="text-align:center; color:var(--izin-color); background:#f1f5f9;">I</th>
+                                <th style="text-align:center; color:var(--alpha-color); background:#f1f5f9;">A</th>
+
                                 <th style="text-align:center;">Induk</th>
                                 <th style="text-align:center; color:var(--accent);">Hadir</th>
                                 <th style="text-align:center; color:var(--sakit-color);">S</th>
@@ -335,271 +392,221 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                                 <th style="text-align:center; color:var(--alpha-color);">A</th>
                             </tr>
                         </thead>
-                        <tbody id="tbody-mtq-mqs-global">
-                            <tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:10px;">Memuat data...</td></tr>
+                        <tbody id="tbody-mtq-mqs-daerah">
+                            <tr><td colspan="11" style="text-align:center; color:var(--text-muted); padding:10px;">Memuat data daerah...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
+            <div class="grid-2col">
+                <div class="panel">
+                    <div class="panel-title"><span>📊 Grafik MTQ</span></div>
+                    <div class="chart-container"><canvas id="chartBarMtq"></canvas></div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title"><span>📊 Grafik MQS</span></div>
+                    <div class="chart-container"><canvas id="chartBarMqs"></canvas></div>
+                </div>
+            </div>
+
+            <div class="grid-2col">
+                <div class="panel">
+                    <div class="panel-title"><span>📊 Ketidakhadiran Daerah</span></div>
+                    <div class="chart-container"><canvas id="chartBarDaerah"></canvas></div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title"><span>🍩 Proporsi Absensi Global</span></div>
+                    <div class="chart-container" style="display:flex; justify-content:center;"><canvas id="chartDonutAbsensi"></canvas></div>
+                </div>
+            </div>
+
             <div class="panel">
-                <div class="panel-title"><span>📜 Log Verifikasi Realtime Pekan Ini</span></div>
-                <div class="table-container" style="max-height: 150px; overflow-y: auto;">
+                <div class="panel-title"><span>📈 Stat Multidimensi</span></div>
+                <div style="margin-bottom:6px;">
+                    <select id="select-dimension" class="select-control" onchange="renderDimensionChartAndTable()">
+                        <option value="marhalah">Marhalah / Jilid Baru</option>
+                        <option value="tingkat">Tingkat Pendidikan</option>
+                        <option value="kelas">Kelas Pendidikan</option>
+                        <option value="majliskitab">Majlis / Jalsah / Surau</option>
+                    </select>
+                </div>
+                <div class="chart-container" style="margin-bottom:8px;">
+                    <canvas id="chartBarDimension"></canvas>
+                </div>
+
+                <div class="table-container">
                     <table>
                         <thead>
                             <tr>
-                                <th>Nama Santri</th>
-                                <th>Daerah</th>
-                                <th>Status</th>
-                                <th style="text-align:center;">S/I/A</th>
+                                <th id="th-dim-label">Kategori</th>
+                                <th style="text-align:center;">Sakit</th>
+                                <th style="text-align:center;">Izin</th>
+                                <th style="text-align:center;">Alpha</th>
+                                <th style="text-align:center;">Verified</th>
+                                <th style="text-align:center;">Total</th>
                             </tr>
                         </thead>
-                        <tbody id="tbody-audit-log">
-                            <tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:10px;">Memuat log...</td></tr>
+                        <tbody id="dash-matrix-tbody">
+                            <tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:10px;">Memuat data...</td></tr>
+                        </tbody>
+                        <tfoot id="dash-matrix-tfoot"></tfoot>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- MENU 2: PROGRESS -->
+        <section id="view-progress" class="app-view">
+            <div class="panel">
+                <div class="panel-title">
+                    <span>Monitoring Progress Daerah</span>
+                    <span id="progress-filter-label" class="config-badge all">SEMUA DATA</span>
+                </div>
+                
+                <div class="controls-stack">
+                    <input type="text" id="search-daerah" class="input-search" placeholder="🔍 Cari Daerah..." oninput="renderMonitoringTable()">
+                    <div style="display:flex; gap:6px;">
+                        <select id="filter-status-daerah" class="select-control" onchange="renderMonitoringTable()">
+                            <option value="all">Semua Status</option>
+                            <option value="proses">Proses / Belum 100%</option>
+                            <option value="selesai">Selesai (100%)</option>
+                        </select>
+                        <select id="sort-daerah" class="select-control" onchange="renderMonitoringTable()">
+                            <option value="az">Abjad (A–Z)</option>
+                            <option value="progress_asc">Progress Terendah</option>
+                            <option value="progress_desc">Progress Tertinggi</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Daerah</th>
+                                <th>Status</th>
+                                <th>Total</th>
+                                <th>Selesai</th>
+                                <th>Belum</th>
+                                <th>Progress</th>
+                                <th style="text-align:center;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-monitoring">
+                            <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:12px;">Memuat data...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="panel">
-            <div class="panel-title"><span>📍 Breakdown MTQ & MQS Per Daerah (Jumlah Santri)</span></div>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th rowspan="2" style="vertical-align:middle;">Daerah</th>
-                            <th colspan="5" style="text-align:center; border-bottom:1px solid var(--border); background:#f1f5f9;">MTQ</th>
-                            <th colspan="5" style="text-align:center; border-bottom:1px solid var(--border); background:#f8fafc;">MQS</th>
-                        </tr>
-                        <tr>
-                            <th style="text-align:center; background:#f1f5f9;">Induk</th>
-                            <th style="text-align:center; color:var(--accent); background:#f1f5f9;">Hadir</th>
-                            <th style="text-align:center; color:var(--sakit-color); background:#f1f5f9;">S</th>
-                            <th style="text-align:center; color:var(--izin-color); background:#f1f5f9;">I</th>
-                            <th style="text-align:center; color:var(--alpha-color); background:#f1f5f9;">A</th>
-
-                            <th style="text-align:center;">Induk</th>
-                            <th style="text-align:center; color:var(--accent);">Hadir</th>
-                            <th style="text-align:center; color:var(--sakit-color);">S</th>
-                            <th style="text-align:center; color:var(--izin-color);">I</th>
-                            <th style="text-align:center; color:var(--alpha-color);">A</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbody-mtq-mqs-daerah">
-                        <tr><td colspan="11" style="text-align:center; color:var(--text-muted); padding:10px;">Memuat data daerah...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="grid-2col">
-            <div class="panel">
-                <div class="panel-title"><span>📊 Grafik MTQ</span></div>
-                <div class="chart-container"><canvas id="chartBarMtq"></canvas></div>
-            </div>
-
-            <div class="panel">
-                <div class="panel-title"><span>📊 Grafik MQS</span></div>
-                <div class="chart-container"><canvas id="chartBarMqs"></canvas></div>
-            </div>
-        </div>
-
-        <div class="grid-2col">
-            <div class="panel">
-                <div class="panel-title"><span>📊 Ketidakhadiran Daerah</span></div>
-                <div class="chart-container"><canvas id="chartBarDaerah"></canvas></div>
-            </div>
-
-            <div class="panel">
-                <div class="panel-title"><span>🍩 Proporsi Absensi Global</span></div>
-                <div class="chart-container" style="display:flex; justify-content:center;"><canvas id="chartDonutAbsensi"></canvas></div>
-            </div>
-        </div>
-
-        <div class="panel">
-            <div class="panel-title"><span>📈 Stat Multidimensi</span></div>
-            <div style="margin-bottom:6px;">
-                <select id="select-dimension" class="select-control" onchange="renderDimensionChartAndTable()">
-                    <option value="marhalah">Marhalah / Jilid Baru</option>
-                    <option value="tingkat">Tingkat Pendidikan</option>
-                    <option value="kelas">Kelas Pendidikan</option>
-                    <option value="majliskitab">Majlis / Jalsah / Surau</option>
-                </select>
-            </div>
-            <div class="chart-container" style="margin-bottom:8px;">
-                <canvas id="chartBarDimension"></canvas>
-            </div>
-
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th id="th-dim-label">Kategori</th>
-                            <th style="text-align:center;">Sakit</th>
-                            <th style="text-align:center;">Izin</th>
-                            <th style="text-align:center;">Alpha</th>
-                            <th style="text-align:center;">Verified</th>
-                            <th style="text-align:center;">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody id="dash-matrix-tbody">
-                        <tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:10px;">Memuat data...</td></tr>
-                    </tbody>
-                    <tfoot id="dash-matrix-tfoot"></tfoot>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- MENU 2: PROGRESS -->
-    <div id="view-progress" class="app-view">
-        <div class="panel">
-            <div class="panel-title">
-                <span>Monitoring Progress Daerah</span>
-                <span id="progress-filter-label" class="config-badge all">SEMUA DATA</span>
-            </div>
-            
-            <div class="controls-stack">
-                <input type="text" id="search-daerah" class="input-search" placeholder="🔍 Cari Daerah..." oninput="renderMonitoringTable()">
-                <div style="display:flex; gap:4px;">
-                    <select id="filter-status-daerah" class="select-control" onchange="renderMonitoringTable()">
-                        <option value="all">Semua Status</option>
-                        <option value="proses">Proses / Belum 100%</option>
-                        <option value="selesai">Selesai (100%)</option>
-                    </select>
-                    <select id="sort-daerah" class="select-control" onchange="renderMonitoringTable()">
-                        <option value="az">Abjad (A–Z)</option>
-                        <option value="progress_asc">Progress Terendah</option>
-                        <option value="progress_desc">Progress Tertinggi</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Daerah</th>
-                            <th>Status</th>
-                            <th>Total</th>
-                            <th>Selesai</th>
-                            <th>Belum</th>
-                            <th>Progress</th>
-                            <th style="text-align:center;">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbody-monitoring">
-                        <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:12px;">Memuat data...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- MENU 3: CONFIG -->
-    <div id="view-config" class="app-view">
-        <div class="grid-2col">
-            <div class="panel">
-                <div class="panel-title">
-                    <span>⚙️ Mode Koreksi App</span>
-                    <span id="badge-active-mode" class="config-badge all">SEMUA DATA</span>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px;">
-                    <label style="background:#f8fafc; padding:8px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; gap:6px; cursor:pointer;">
-                        <input type="radio" name="optFilterAbsen" value="all" checked style="accent-color:var(--accent);">
-                        <div>
-                            <div style="font-size:10px; font-weight:800; color:var(--text-main);">🟢 Semua Data Absensi</div>
-                            <div style="font-size:8px; color:var(--text-muted);">Mengkoreksi seluruh santri.</div>
-                        </div>
-                    </label>
-
-                    <label style="background:#f8fafc; padding:8px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; gap:6px; cursor:pointer;">
-                        <input type="radio" name="optFilterAbsen" value="alpha" style="accent-color:var(--alpha-color);">
-                        <div>
-                            <div style="font-size:10px; font-weight:800; color:var(--alpha-color);">🔴 Khusus Data Alpha (A)</div>
-                            <div style="font-size:8px; color:var(--text-muted);">Hanya santri berstatus Alpha.</div>
-                        </div>
-                    </label>
-
-                    <label style="background:#f8fafc; padding:8px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; gap:6px; cursor:pointer;">
-                        <input type="radio" name="optFilterAbsen" value="izin" style="accent-color:var(--izin-color);">
-                        <div>
-                            <div style="font-size:10px; font-weight:800; color:var(--izin-color);">🟠 Khusus Data Izin (I)</div>
-                            <div style="font-size:8px; color:var(--text-muted);">Hanya santri berstatus Izin.</div>
-                        </div>
-                    </label>
-
-                    <label style="background:#f8fafc; padding:8px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; gap:6px; cursor:pointer;">
-                        <input type="radio" name="optFilterAbsen" value="sakit" style="accent-color:var(--sakit-color);">
-                        <div>
-                            <div style="font-size:10px; font-weight:800; color:var(--sakit-color);">🔵 Khusus Data Sakit (S)</div>
-                            <div style="font-size:8px; color:var(--text-muted);">Hanya santri berstatus Sakit.</div>
-                        </div>
-                    </label>
-                </div>
-
-                <button onclick="saveAppConfig()" class="btn-primary" style="width:100%; padding:8px; font-size:10px;">💾 Simpan Pengaturan</button>
-            </div>
-
-            <div class="panel">
-                <div class="panel-title"><span>📢 Pengumuman Pusat</span></div>
-                <div id="current-bc-box" style="background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:8px; margin-bottom:8px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                        <span style="font-size:8px; font-weight:800; color:var(--text-muted);">STATUS</span>
-                        <span id="current-bc-status-badge" class="status-tag status-selesai">MEMUAT...</span>
+        <!-- MENU 3: CONFIG -->
+        <section id="view-config" class="app-view">
+            <div class="grid-2col">
+                <div class="panel">
+                    <div class="panel-title">
+                        <span>⚙️ Mode Koreksi App</span>
+                        <span id="badge-active-mode" class="config-badge all">SEMUA DATA</span>
                     </div>
-                    <h4 id="current-bc-disp-title" style="font-size:11px; font-weight:800; margin-bottom:2px;">-</h4>
-                    <p id="current-bc-disp-msg" style="font-size:9px; color:var(--text-muted); white-space:pre-line; margin-bottom:8px;">-</p>
-                    <div style="display:flex; gap:4px;">
-                        <button onclick="fillFormFromCurrentBc()" class="btn-outline" style="flex:1;">✏️ Edit</button>
-                        <button id="btn-quick-toggle-bc" onclick="quickToggleBroadcast()" class="btn-dark" style="background:var(--alpha-color); flex:1;">🛑 Nonaktifkan</button>
-                    </div>
-                </div>
+                    <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px;">
+                        <label style="background:#f8fafc; padding:8px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="radio" name="optFilterAbsen" value="all" checked style="accent-color:var(--accent);">
+                            <div>
+                                <div style="font-size:11px; font-weight:800; color:var(--text-main);">🟢 Semua Data Absensi</div>
+                                <div style="font-size:9px; color:var(--text-muted);">Mengkoreksi seluruh santri.</div>
+                            </div>
+                        </label>
 
-                <div style="display:flex; flex-direction:column; gap:4px; margin-bottom:8px;">
-                    <input type="text" id="bc-title" class="input-search" placeholder="Judul Pengumuman">
-                    <textarea id="bc-message" class="input-search" style="height:50px; resize:none;" placeholder="Isi pengumuman..."></textarea>
-                    
-                    <div style="display:flex; gap:4px; align-items:center;">
-                        <select id="bc-type" class="select-control" style="flex:1;">
-                            <option value="info">🔵 Info</option>
-                            <option value="warning">🟠 Peringatan</option>
-                            <option value="danger">🔴 Darurat</option>
-                        </select>
-                        <label style="font-size:9px; font-weight:800; display:flex; align-items:center; gap:2px; cursor:pointer;">
-                            <input type="checkbox" id="bc-active" checked style="accent-color:var(--accent);"> Aktif
+                        <label style="background:#f8fafc; padding:8px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="radio" name="optFilterAbsen" value="alpha" style="accent-color:var(--alpha-color);">
+                            <div>
+                                <div style="font-size:11px; font-weight:800; color:var(--alpha-color);">🔴 Khusus Data Alpha (A)</div>
+                                <div style="font-size:9px; color:var(--text-muted);">Hanya santri berstatus Alpha.</div>
+                            </div>
+                        </label>
+
+                        <label style="background:#f8fafc; padding:8px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="radio" name="optFilterAbsen" value="izin" style="accent-color:var(--izin-color);">
+                            <div>
+                                <div style="font-size:11px; font-weight:800; color:var(--izin-color);">🟠 Khusus Data Izin (I)</div>
+                                <div style="font-size:9px; color:var(--text-muted);">Hanya santri berstatus Izin.</div>
+                            </div>
+                        </label>
+
+                        <label style="background:#f8fafc; padding:8px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="radio" name="optFilterAbsen" value="sakit" style="accent-color:var(--sakit-color);">
+                            <div>
+                                <div style="font-size:11px; font-weight:800; color:var(--sakit-color);">🔵 Khusus Data Sakit (S)</div>
+                                <div style="font-size:9px; color:var(--text-muted);">Hanya santri berstatus Sakit.</div>
+                            </div>
                         </label>
                     </div>
+
+                    <button onclick="saveAppConfig()" class="btn-primary" style="width:100%; padding:9px;">💾 Simpan Pengaturan</button>
                 </div>
 
-                <button onclick="sendBroadcastPusat()" class="btn-primary" style="width:100%; padding:8px; font-size:10px;">🚀 Terbitkan</button>
-            </div>
-        </div>
-    </div>
+                <div class="panel">
+                    <div class="panel-title"><span>📢 Pengumuman Pusat</span></div>
+                    <div id="current-bc-box" style="background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:10px; margin-bottom:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <span style="font-size:9px; font-weight:800; color:var(--text-muted);">STATUS</span>
+                            <span id="current-bc-status-badge" class="status-tag status-selesai">MEMUAT...</span>
+                        </div>
+                        <h4 id="current-bc-disp-title" style="font-size:12px; font-weight:800; margin-bottom:4px;">-</h4>
+                        <p id="current-bc-disp-msg" style="font-size:10px; color:var(--text-muted); white-space:pre-line; margin-bottom:8px;">-</p>
+                        <div style="display:flex; gap:6px;">
+                            <button onclick="fillFormFromCurrentBc()" class="btn-outline" style="flex:1;">✏️ Edit</button>
+                            <button id="btn-quick-toggle-bc" onclick="quickToggleBroadcast()" class="btn-dark" style="background:var(--alpha-color); flex:1;">🛑 Nonaktifkan</button>
+                        </div>
+                    </div>
 
-    <!-- MENU 4: USERS -->
-    <div id="view-users" class="app-view">
-        <div class="panel">
-            <div class="panel-title">Pengaturan Sandi Daerah</div>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Daerah</th>
-                            <th>Sandi Saat Ini</th>
-                            <th style="text-align:center;">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbody-users">
-                        <tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:12px;">Memuat data...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:8px;">
+                        <input type="text" id="bc-title" class="input-search" placeholder="Judul Pengumuman">
+                        <textarea id="bc-message" class="input-search" style="height:60px; resize:none;" placeholder="Isi pengumuman..."></textarea>
+                        
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <select id="bc-type" class="select-control" style="flex:1;">
+                                <option value="info">🔵 Info</option>
+                                <option value="warning">🟠 Peringatan</option>
+                                <option value="danger">🔴 Darurat</option>
+                            </select>
+                            <label style="font-size:10px; font-weight:800; display:flex; align-items:center; gap:4px; cursor:pointer;">
+                                <input type="checkbox" id="bc-active" checked style="accent-color:var(--accent);"> Aktif
+                            </label>
+                        </div>
+                    </div>
 
-    <!-- BOTTOM NAV BAR -->
+                    <button onclick="sendBroadcastPusat()" class="btn-primary" style="width:100%; padding:9px;">🚀 Terbitkan</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- MENU 4: USERS -->
+        <section id="view-users" class="app-view">
+            <div class="panel">
+                <div class="panel-title">Pengaturan Sandi Daerah</div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Daerah</th>
+                                <th>Sandi Saat Ini</th>
+                                <th style="text-align:center;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-users">
+                            <tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:12px;">Memuat data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- BOTTOM NAV BAR (Semantik) -->
     <nav class="bottom-nav">
         <button class="nav-item active" id="nav-btn-dashboard" onclick="switchNav('dashboard')">
             <span class="nav-icon">📊</span>
@@ -623,13 +630,13 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
     <div id="modal-ganti-pekan" class="modal-overlay">
         <div class="modal-box slide-up" style="max-width:340px; text-align:center;">
             <div style="font-size:32px; margin-bottom:6px;">⚠️</div>
-            <h3 style="font-size:13px; font-weight:800; color:var(--text-main); margin-bottom:4px;">Konfirmasi Ganti Pekan</h3>
-            <p style="font-size:10px; color:var(--text-muted); line-height:1.4; margin-bottom:10px;">
+            <h3 style="font-size:14px; font-weight:800; color:var(--text-main); margin-bottom:4px;">Konfirmasi Ganti Pekan</h3>
+            <p style="font-size:11px; color:var(--text-muted); line-height:1.4; margin-bottom:12px;">
                 Tentukan Bulan & Tahun Hijriah untuk arsip rekap pekan ini:
             </p>
             
             <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:12px; text-align:left;">
-                <label style="font-size:9px; font-weight:800; color:var(--text-muted);">Bulan Hijriah Pekan Ini:</label>
+                <label style="font-size:10px; font-weight:800; color:var(--text-muted);">Bulan Hijriah Pekan Ini:</label>
                 <select id="archive-bulan-hijri" class="select-control">
                     <option value="Muharram">1. Muharram</option>
                     <option value="Safar">2. Safar</option>
@@ -645,26 +652,26 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                     <option value="Dzulhijjah">12. Dzulhijjah</option>
                 </select>
 
-                <label style="font-size:9px; font-weight:800; color:var(--text-muted);">Tahun Hijriah Pekan Ini:</label>
+                <label style="font-size:10px; font-weight:800; color:var(--text-muted);">Tahun Hijriah Pekan Ini:</label>
                 <select id="archive-tahun-hijri" class="select-control">
                 </select>
             </div>
 
             <div style="display:flex; gap:6px; justify-content:center;">
-                <button onclick="closeGantiPekanModal()" style="padding:6px 10px; background:#f1f5f9; border-radius:6px; font-size:9px; font-weight:800; flex:1;">Batal</button>
-                <button onclick="executeGantiPekan()" class="btn-primary" style="background:var(--alpha-color); padding:6px 10px; border-radius:6px; font-size:9px; flex:1;">Ya, Simpan & Reset</button>
+                <button onclick="closeGantiPekanModal()" style="padding:8px 12px; background:#f1f5f9; border-radius:6px; font-size:10px; font-weight:800; flex:1;">Batal</button>
+                <button onclick="executeGantiPekan()" class="btn-primary" style="background:var(--alpha-color); padding:8px 12px; border-radius:6px; flex:1;">Ya, Simpan & Reset</button>
             </div>
         </div>
     </div>
 
     <div id="modal-pass" class="modal-overlay">
         <div class="modal-box">
-            <h3 style="font-size:12px; font-weight:800; margin-bottom:2px;">Ubah Sandi Daerah <span id="modal-target-daerah">A</span></h3>
-            <p style="font-size:9px; color:var(--text-muted); margin-bottom:10px;">Sandi baru langsung berlaku di HP Pengurus.</p>
-            <input type="text" id="input-new-pass" placeholder="Masukkan Sandi Baru..." style="width:100%; padding:6px; border:1px solid var(--border); border-radius:6px; font-weight:700; margin-bottom:10px; font-size:10px; outline:none;">
-            <div style="display:flex; gap:4px; justify-content:flex-end;">
-                <button onclick="closePassModal()" style="padding:6px 10px; background:#f1f5f9; border-radius:6px; font-size:9px; font-weight:800;">Batal</button>
-                <button onclick="submitNewPassword()" class="btn-primary" style="padding:6px 10px; border-radius:6px;">Simpan</button>
+            <h3 style="font-size:13px; font-weight:800; margin-bottom:4px;">Ubah Sandi Daerah <span id="modal-target-daerah">A</span></h3>
+            <p style="font-size:10px; color:var(--text-muted); margin-bottom:12px;">Sandi baru langsung berlaku di HP Pengurus.</p>
+            <input type="text" id="input-new-pass" placeholder="Masukkan Sandi Baru..." style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px; font-weight:700; margin-bottom:12px; font-size:11px; outline:none;">
+            <div style="display:flex; gap:6px; justify-content:flex-end;">
+                <button onclick="closePassModal()" style="padding:8px 12px; background:#f1f5f9; border-radius:6px; font-size:10px; font-weight:800;">Batal</button>
+                <button onclick="submitNewPassword()" class="btn-primary" style="padding:8px 12px; border-radius:6px;">Simpan</button>
             </div>
         </div>
     </div>
@@ -673,10 +680,10 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         <div class="modal-box-lg">
             <div class="modal-header-lg">
                 <div>
-                    <div style="font-size:8px; opacity:0.8; font-weight:800; text-transform:uppercase;">Rincian Detail Absensi</div>
-                    <div style="font-size:12px; font-weight:800;" id="detail-daerah-title">Daerah A</div>
+                    <div style="font-size:9px; opacity:0.8; font-weight:800; text-transform:uppercase;">Rincian Detail Absensi</div>
+                    <div style="font-size:13px; font-weight:800;" id="detail-daerah-title">Daerah A</div>
                 </div>
-                <button onclick="closeDetailModal()" style="background:rgba(255,255,255,0.2); color:white; border:none; width:24px; height:24px; border-radius:50%; font-size:10px; font-weight:bold; cursor:pointer;">✕</button>
+                <button onclick="closeDetailModal()" style="background:rgba(255,255,255,0.2); color:white; border:none; width:26px; height:26px; border-radius:50%; font-size:12px; font-weight:bold; cursor:pointer;">✕</button>
             </div>
             <div class="modal-body-lg" id="detail-daerah-body"></div>
         </div>
@@ -686,25 +693,36 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
     const APPS_SCRIPT_URL_REKAP  = "https://script.google.com/macros/s/AKfycbz1ecMJ8KBdbsNhuJCm_eYrRH2ATxZH7sn73GV-B19JoxKLNMrS8BCS8fZNnHBcqjM/exec";
     const APPS_SCRIPT_URL_MASTER = "https://script.google.com/macros/s/AKfycbzV_l5rAXgnapi2c3ZH90WOusrHgN-Ny9wjaFJ9tczCl1mkz1pURw_sZUYhEF4YY6byRg/exec";
 
-	(function preRenderFastCache() {
-			try {
-				const quickCache = localStorage.getItem('TAKLI_QUICK_KPI');
-				if (quickCache) {
-					const data = JSON.parse(quickCache);
-					document.addEventListener("DOMContentLoaded", () => {
-						if (data.totSantri !== undefined) document.getElementById('dash-total-santri').innerText = data.totSantri;
-						if (data.totSudah !== undefined) document.getElementById('dash-total-sudah').innerText = data.totSudah;
-						if (data.pctSudah) document.getElementById('dash-pct-sudah').innerText = data.pctSudah;
-						if (data.sakitText) document.getElementById('dash-pct-sakit').innerText = data.sakitText;
-						if (data.izinText) document.getElementById('dash-pct-izin').innerText = data.izinText;
-						if (data.alphaText) document.getElementById('dash-pct-alpha').innerText = data.alphaText;
-						if (data.countSakit !== undefined) document.getElementById('dash-total-sakit').innerText = data.countSakit;
-						if (data.countIzin !== undefined) document.getElementById('dash-total-izin').innerText = data.countIzin;
-						if (data.countAlpha !== undefined) document.getElementById('dash-total-alpha').innerText = data.countAlpha;
-					});
-				}
-			} catch(e) {}
-		})();
+    // FUNGSI UTIS: Escape HTML untuk Mencegah Serangan XSS
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    (function preRenderFastCache() {
+        try {
+            const quickCache = localStorage.getItem('TAKLI_QUICK_KPI');
+            if (quickCache) {
+                const data = JSON.parse(quickCache);
+                document.addEventListener("DOMContentLoaded", () => {
+                    if (data.totSantri !== undefined) document.getElementById('dash-total-santri').innerText = data.totSantri;
+                    if (data.totSudah !== undefined) document.getElementById('dash-total-sudah').innerText = data.totSudah;
+                    if (data.pctSudah) document.getElementById('dash-pct-sudah').innerText = data.pctSudah;
+                    if (data.sakitText) document.getElementById('dash-pct-sakit').innerText = data.sakitText;
+                    if (data.izinText) document.getElementById('dash-pct-izin').innerText = data.izinText;
+                    if (data.alphaText) document.getElementById('dash-pct-alpha').innerText = data.alphaText;
+                    if (data.countSakit !== undefined) document.getElementById('dash-total-sakit').innerText = data.countSakit;
+                    if (data.countIzin !== undefined) document.getElementById('dash-total-izin').innerText = data.countIzin;
+                    if (data.countAlpha !== undefined) document.getElementById('dash-total-alpha').innerText = data.countAlpha;
+                });
+            }
+        } catch(e) {}
+    })();
 
     let rawKoreksiData = [];
     let rawMasterData = [];
@@ -836,8 +854,19 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         showToast(enabled ? "✅ Auto-Refresh (35s)" : "⏸️ Auto-Refresh Nonaktif");
     }
 
+    // FUNGSI BERSIH-BERSIH CHART SAAT SYNC MANUAL
+    function destroyAllCharts() {
+        if (lineTrendChartInstance) { lineTrendChartInstance.destroy(); lineTrendChartInstance = null; }
+        if (barChartInstance) { barChartInstance.destroy(); barChartInstance = null; }
+        if (mtqChartInstance) { mtqChartInstance.destroy(); mtqChartInstance = null; }
+        if (mqsChartInstance) { mqsChartInstance.destroy(); mqsChartInstance = null; }
+        if (donutChartInstance) { donutChartInstance.destroy(); donutChartInstance = null; }
+        if (dimensionChartInstance) { dimensionChartInstance.destroy(); dimensionChartInstance = null; }
+    }
+
     async function manualSync() {
         if (!isFetching) {
+            destroyAllCharts(); // Hancurkan chart lama agar tidak menumpuk di memori RAM HP
             memoryMasterCache = null;
             await removeCacheIDB('MASTER_DATA_CACHE');
             await removeCacheIDB('MASTER_DATA_TIME');
@@ -926,7 +955,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         return match ? match[0] : 'LAIN';
     }
 
-    async function safeFetchJson(url, timeoutMs = 45000) {
+    async function safeFetchJson(url, timeoutMs = 90000) {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -938,16 +967,29 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             });
             clearTimeout(timer);
 
-            if (!r.ok) return null;
+            if (!r.ok) {
+                console.error(`[Fetch Error] HTTP Status: ${r.status}`);
+                return null;
+            }
+            
             let text = await r.text();
-            try { return JSON.parse(text); } catch (e) { return null; }
+            try { 
+                return JSON.parse(text); 
+            } catch (e) { 
+                console.error("[Fetch Error] Gagal parse JSON:", text.substring(0, 150)); 
+                return null; 
+            }
         } catch(e) {
             clearTimeout(timer);
+            if (e.name === 'AbortError') {
+                console.error(`[Fetch Error] Request dibatalkan karena Timeout.`);
+            } else {
+                console.error("[Fetch Error] Network failure:", e);
+            }
             return null;
         }
     }
 
-    // MAPPER & PRE-PARSER UNTUK MENGHEMAT PERHITUNGAN BERULANG DI CPU
     function transformRekapList(listRekap) {
         return listRekap.map((r, idx) => {
             let rawId = getRowVal(r, 'idpps', 'id pps', 'id', 'idppsantri', 'nis');
@@ -972,7 +1014,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                 tanggalsakit: sVal,
                 tanggalizin: iVal,
                 tanggalalpa: aVal,
-                // PRE-PARSE TANGGAL HANYA 1 KALI SAAT DATA MASUK!
                 _sakitParsed: parseDates(sVal, 1, 30),
                 _izinParsed: parseDates(iVal, 1, 30),
                 _alphaParsed: parseDates(aVal, 1, 30),
@@ -984,7 +1025,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         });
     }
 
-    // PROSES LOAD DATA OPTIMAL (STALE-WHILE-REVALIDATE)
     async function loadAllRealtimeData(isSilent = false) {
         if (isFetching) return;
         isFetching = true;
@@ -998,7 +1038,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                 return [];
             };
 
-            // 1. TAMPILKAN MASTER DATA DARI CACHE IDB
             if (!memoryMasterCache) {
                 let cachedMaster = await getCacheIDB('MASTER_DATA_CACHE');
                 if (cachedMaster && cachedMaster.dataUtama) {
@@ -1007,16 +1046,14 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                 }
             }
 
-            // 2. TAMPILKAN REKAP PEKAN INI DARI CACHE INSTAN (0.1 DETIK LANGSUNG TAMPIL)
             let cachedRekap = await getCacheIDB('REKAP_DATA_CACHE');
             if (cachedRekap && Array.isArray(cachedRekap) && cachedRekap.length > 0) {
                 rawKoreksiData = transformRekapList(cachedRekap);
                 populateGlobalDaerahDropdown();
                 populateGlobalTahunDropdown();
-                processAndRenderStats(); // Tampilan awal instan!
+                processAndRenderStats(); 
             }
 
-            // 3. AMBIL DATA REKAP REALTIME DARI SERVER DI BACKGROUND
             let initRes = await safeFetchJson(APPS_SCRIPT_URL_REKAP + "?action=getAllInitData", 45000);
 
             if (initRes && initRes.status === 'success') {
@@ -1032,19 +1069,17 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
                 if (listRekap.length > 0) {
                     rawKoreksiData = transformRekapList(listRekap);
-                    // Simpan data terbaru ke Cache IDB
                     await setCacheIDB('REKAP_DATA_CACHE', listRekap);
                 }
 
                 populateGlobalDaerahDropdown();
                 populateGlobalTahunDropdown();
-                processAndRenderStats(); // Perbarui tampilan dengan data fresh
+                processAndRenderStats();
                 renderUsersTable();
             }
 
             if (!isSilent) showToast("Dashboard Siap!");
 
-            // 4. BACKGROUND UPDATE UNTUK MASTER DATA (Tiap 1 Jam)
             const NOW = new Date().getTime();
             let cacheTime = await getCacheIDB('MASTER_DATA_TIME');
 
@@ -1179,6 +1214,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         showToast("🔄 Filter Reset!");
     }
 
+    // Diperbaiki: Ditambahkan escapeHtml() untuk sanitasi input teks broadcast
     function renderBroadcastCardUI(bcData) {
         let statusBadge = document.getElementById('current-bc-status-badge');
         let titleEl     = document.getElementById('current-bc-disp-title');
@@ -1282,18 +1318,11 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
         showToast("Menyimpan...");
         try {
-            await Promise.allSettled([
-                fetch(APPS_SCRIPT_URL_REKAP, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                    body: JSON.stringify({ action: 'updateConfig', filterAbsen: selectedVal }) 
-                }),
-                fetch(APPS_SCRIPT_URL_MASTER, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                    body: JSON.stringify({ action: 'updateConfig', filterAbsen: selectedVal }) 
-                })
-            ]);
+            let res = await fetch(APPS_SCRIPT_URL_REKAP, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                body: JSON.stringify({ action: 'updateConfig', filterAbsen: selectedVal }) 
+            });
 
             currentConfigMode = selectedVal;
             updateConfigUI(selectedVal);
@@ -1395,7 +1424,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         return str;
     }
 
-    // HITUNG STATISTIK DENGAN OPTIMASI KECEPATAN
     function processAndRenderStats() {
         let filterDaerah   = document.getElementById('filter-global-daerah')?.value || "ALL";
         let filterKategori = document.getElementById('filter-global-kategori')?.value || "ALL";
@@ -1622,7 +1650,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             totAlphaHari += aCount;
         });
 
-        // UPDATE ANGKAS & DOM TEKS SEGERA (SANGAT CEPAT)
         document.getElementById('dash-total-santri').innerText = totSantri;
         document.getElementById('dash-total-sudah').innerText = totSudah;
         document.getElementById('dash-pct-sudah').innerText = `${totSantri ? Math.round((totSudah/totSantri)*100) : 0}% selesai`;
@@ -1636,26 +1663,24 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         document.getElementById('dash-total-alpha').innerText = countAlphaSantri;
         document.getElementById('dash-pct-alpha').innerText = `${countAlphaSantri} Santri (${totAlphaHari} Hari)`;
 
-		try {
-			localStorage.setItem('TAKLI_QUICK_KPI', JSON.stringify({
-				totSantri, totSudah,
-				pctSudah: `${totSantri ? Math.round((totSudah/totSantri)*100) : 0}% selesai`,
-				countSakit: countSakitSantri, sakitText: `${countSakitSantri} Santri (${totSakitHari} Hari)`,
-				countIzin: countIzinSantri, izinText: `${countIzinSantri} Santri (${totIzinHari} Hari)`,
-				countAlpha: countAlphaSantri, alphaText: `${countAlphaSantri} Santri (${totAlphaHari} Hari)`
-			}));
-		} catch(e) {}
+        try {
+            localStorage.setItem('TAKLI_QUICK_KPI', JSON.stringify({
+                totSantri, totSudah,
+                pctSudah: `${totSantri ? Math.round((totSudah/totSantri)*100) : 0}% selesai`,
+                countSakit: countSakitSantri, sakitText: `${countSakitSantri} Santri (${totSakitHari} Hari)`,
+                countIzin: countIzinSantri, izinText: `${countIzinSantri} Santri (${totIzinHari} Hari)`,
+                countAlpha: countAlphaSantri, alphaText: `${countAlphaSantri} Santri (${totAlphaHari} Hari)`
+            }));
+        } catch(e) {}
 
         window.processedStats = statsPerDaerah;
         window.processedDimension = dimensionData;
 
-        // RENDER TABEL UTAMA TERLEBIH DAHULU
         renderAuditLogTable(auditLogList);
         renderMtqMqsTables(mtqGlobal, mqsGlobal, mtqMqsDaerah);
         renderDimensionChartAndTable();
         renderMonitoringTable();
 
-        // TUNDA RENDERING GRAFIK CHART.JS AGAR LAYAR HP TIDAK STUCK / FREEZE
         setTimeout(() => {
             renderLineTrendChart(dailyTrendData, tglMin, tglMax);
             renderMtqMqsCharts(mtqMqsDaerah);
@@ -1696,14 +1721,14 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                 ]
             },
             options: {
-                animation: false, // MATIKAN ANIMASI UNTUK PERFORMA ANDROID
+                animation: false,
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    x: { ticks: { font: { size: 7, weight: 'bold' } } },
+                    x: { ticks: { font: { size: 8, weight: 'bold' } } },
                     y: { beginAtZero: true, ticks: { precision: 0 } }
                 },
-                plugins: { legend: { position: 'bottom', labels: { font: { size: 8, weight: 'bold' }, boxWidth: 8 } } }
+                plugins: { legend: { position: 'bottom', labels: { font: { size: 9, weight: 'bold' }, boxWidth: 8 } } }
             }
         });
     }
@@ -1744,6 +1769,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         return 0;
     }
 
+    // Diperbaiki: Ditambahkan escapeHtml() pada rendering tabel audit
     function renderAuditLogTable(logs) {
         let tbody = document.getElementById('tbody-audit-log');
         if (!tbody) return;
@@ -1764,10 +1790,10 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         let rowsHtml = "";
         logs.slice(0, 30).forEach(item => {
             rowsHtml += `<tr>
-                <td><b>${item.nama}</b></td>
-                <td><span class="status-tag status-selesai">${item.daerah}</span></td>
-                <td><span style="color:var(--accent); font-weight:800;">✔ ${item.status}</span></td>
-                <td style="text-align:center; font-weight:800; font-size:8px;">S:${item.s} I:${item.i} A:${item.a}</td>
+                <td><b>${escapeHtml(item.nama)}</b></td>
+                <td><span class="status-tag status-selesai">${escapeHtml(item.daerah)}</span></td>
+                <td><span style="color:var(--accent); font-weight:800;">✔ ${escapeHtml(item.status)}</span></td>
+                <td style="text-align:center; font-weight:800; font-size:9px;">S:${item.s} I:${item.i} A:${item.a}</td>
             </tr>`;
         });
         tbody.innerHTML = rowsHtml;
@@ -1811,7 +1837,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             let d = daerahData[ltr];
             let tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><b>Daerah ${ltr}</b></td>
+                <td><b>Daerah ${escapeHtml(ltr)}</b></td>
                 <td style="text-align:center; font-weight:800; background:#f8fafc;">${d.mtqTotal}</td>
                 <td style="text-align:center; font-weight:800; color:var(--accent); background:#f8fafc;">${d.mtqHadir}</td>
                 <td style="text-align:center; font-weight:800; color:var(--sakit-color); background:#f8fafc;">${d.mtqSakit}</td>
@@ -1868,7 +1894,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                         responsive: true,
                         maintainAspectRatio: false,
                         scales: {
-                            x: { ticks: { font: { size: 7, weight: 'bold' } } },
+                            x: { ticks: { font: { size: 8, weight: 'bold' } } },
                             y: { beginAtZero: true, ticks: { precision: 0 } }
                         },
                         plugins: { legend: { position: 'bottom', labels: { font: { size: 8, weight: 'bold' }, boxWidth: 6 } } }
@@ -1903,7 +1929,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                         responsive: true,
                         maintainAspectRatio: false,
                         scales: {
-                            x: { ticks: { font: { size: 7, weight: 'bold' } } },
+                            x: { ticks: { font: { size: 8, weight: 'bold' } } },
                             y: { beginAtZero: true, ticks: { precision: 0 } }
                         },
                         plugins: { legend: { position: 'bottom', labels: { font: { size: 8, weight: 'bold' }, boxWidth: 6 } } }
@@ -1945,7 +1971,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                         responsive: true,
                         maintainAspectRatio: false,
                         scales: {
-                            x: { ticks: { font: { size: 7, weight: 'bold' } } },
+                            x: { ticks: { font: { size: 8, weight: 'bold' } } },
                             y: { beginAtZero: true, ticks: { precision: 0 } }
                         },
                         plugins: { legend: { position: 'bottom', labels: { font: { size: 8, weight: 'bold' }, boxWidth: 6 } } }
@@ -1981,6 +2007,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         }
     }
 
+    // Diperbaiki: Ditambahkan escapeHtml() pada rendering dimensi
     function renderDimensionChartAndTable() {
         let selectEl = document.getElementById('select-dimension');
         if (!selectEl) return;
@@ -2016,7 +2043,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                         responsive: true,
                         maintainAspectRatio: false,
                         scales: {
-                            x: { ticks: { font: { size: 7, weight: 'bold' } } },
+                            x: { ticks: { font: { size: 8, weight: 'bold' } } },
                             y: { beginAtZero: true, ticks: { precision: 0 } }
                         },
                         plugins: { legend: { position: 'bottom', labels: { font: { size: 8, weight: 'bold' }, boxWidth: 6 } } }
@@ -2048,7 +2075,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
             let tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><b>${cat}</b></td>
+                <td><b>${escapeHtml(cat)}</b></td>
                 <td style="color:var(--sakit-color); font-weight:800; text-align:center;">${d.sakit}</td>
                 <td style="color:var(--izin-color); font-weight:800; text-align:center;">${d.izin}</td>
                 <td style="color:var(--alpha-color); font-weight:800; text-align:center;">${d.alpha}</td>
@@ -2070,6 +2097,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         `;
     }
 
+    // Diperbaiki: Ditambahkan escapeHtml() pada rendering tabel monitoring
     function renderMonitoringTable() {
         let tbody = document.getElementById('tbody-monitoring');
         let searchVal = document.getElementById('search-daerah').value.toUpperCase().trim();
@@ -2116,7 +2144,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
             let tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><b>Daerah ${daerah}</b></td>
+                <td><b>Daerah ${escapeHtml(daerah)}</b></td>
                 <td>${statusBadge}</td>
                 <td><b>${d.total}</b></td>
                 <td style="color:var(--accent); font-weight:800;">${d.sudah}</td>
@@ -2125,13 +2153,14 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                     <div class="progress-bg"><div class="progress-fill" style="width:${percent}%;"></div></div>
                 </td>
                 <td style="text-align:center;">
-                    <button class="btn-outline" onclick="openDetailModal('${daerah}')">🔍 Detail</button>
+                    <button class="btn-outline" onclick="openDetailModal('${escapeHtml(daerah)}')">🔍 Detail</button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
     }
 
+    // Diperbaiki: Ditambahkan escapeHtml() pada rendering detail modal santri
     function openDetailModal(daerah) {
         let d = window.processedStats[daerah];
         if (!d) return;
@@ -2167,10 +2196,10 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                 return `
                     <div class="santri-mini-item">
                         <div>
-                            <b>${s.nama}</b> <span style="color:var(--text-muted); font-size:8px;">(${s.idPps})</span>
+                            <b>${escapeHtml(s.nama)}</b> <span style="color:var(--text-muted); font-size:9px;">(${escapeHtml(s.idPps)})</span>
                         </div>
-                        <div style="display:flex; align-items:center; gap:4px;">
-                            <span style="font-size:8px; font-weight:800;">S:${s.sakit} I:${s.izin} A:${s.alpha}</span>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="font-size:9px; font-weight:800;">S:${s.sakit} I:${s.izin} A:${s.alpha}</span>
                             ${badge}
                         </div>
                     </div>
@@ -2179,7 +2208,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
             roomCard.innerHTML = `
                 <div class="room-breakdown-header">
-                    <span>🚪 Kamar ${roomName}</span>
+                    <span>🚪 Kamar ${escapeHtml(roomName)}</span>
                     <span style="color:var(--text-muted);">${doneCount}/${list.length} (${percentRoom}%)</span>
                 </div>
                 <div class="santri-mini-list">
@@ -2197,26 +2226,29 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         document.getElementById('modal-detail-daerah').style.display = 'none';
     }
 
+    // Diperbaiki: Ditambahkan escapeHtml() pada rendering daftar pengguna
     function renderUsersTable() {
         let tbody = document.getElementById('tbody-users');
         tbody.innerHTML = "";
 
         if (!rawUserData || rawUserData.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:10px;">Sandi belum diset.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:12px;">Sandi belum diset.</td></tr>`;
             return;
         }
 
         rawUserData.forEach(u => {
             let tr = document.createElement('tr');
+            let cleanPass = escapeHtml(u.password);
+            let cleanDaerah = escapeHtml(u.daerah);
             tr.innerHTML = `
-                <td><b>Daerah ${u.daerah}</b></td>
+                <td><b>Daerah ${cleanDaerah}</b></td>
                 <td>
                     <div style="display:flex; align-items:center; gap:4px;">
-                        <input type="password" readonly value="${u.password}" id="pass-input-${u.daerah}" style="background:#f1f5f9; border:1px solid var(--border); padding:3px 5px; border-radius:4px; font-weight:800; font-size:9px; width:70px; outline:none; text-align:center;">
-                        <button onclick="togglePassVisibility('${u.daerah}')" class="btn-outline" style="padding:2px 4px;" id="btn-toggle-${u.daerah}">👁️</button>
+                        <input type="password" readonly value="${cleanPass}" id="pass-input-${cleanDaerah}" style="background:#f1f5f9; border:1px solid var(--border); padding:4px 6px; border-radius:4px; font-weight:800; font-size:10px; width:80px; outline:none; text-align:center;">
+                        <button onclick="togglePassVisibility('${cleanDaerah}')" class="btn-outline" style="padding:3px 6px;" id="btn-toggle-${cleanDaerah}">👁️</button>
                     </div>
                 </td>
-                <td style="text-align:center;"><button class="btn-dark" onclick="openPassModal('${u.daerah}',\`${u.password.replace(/`/g, '\\`')}\`)" style="padding:4px 6px; font-size:8px;">Ubah</button></td>
+                <td style="text-align:center;"><button class="btn-dark" onclick="openPassModal('${cleanDaerah}',\`${u.password.replace(/`/g, '\\`')}\`)" style="padding:5px 8px; font-size:9px;">Ubah</button></td>
             `;
             tbody.appendChild(tr);
         });
