@@ -5,7 +5,6 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <!-- Diperbaiki: Memperbolehkan zoom untuk aksesibilitas pengguna -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard Taklimda Pusat</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -65,7 +64,6 @@ body {
 }
 .avatar-icon { width: 34px; height: 34px; background: var(--primary); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
 
-/* Diperbaiki: Font dinaikkan dari 8px ke 10px untuk keterbacaan mobile */
 .live-badge { display: inline-flex; align-items: center; gap: 4px; background: #d1fae5; color: #047857; padding: 3px 8px; border-radius: 10px; font-size: 10px; font-weight: 800; }
 .live-dot { width: 6px; height: 6px; background: #10b981; border-radius: 50%; animation: pulse 1.5s infinite; }
 
@@ -128,7 +126,6 @@ body {
 .kpi-card { background: white; padding: 10px; border-radius: 12px; border: 1px solid var(--border); }
 .kpi-card.full-width { grid-column: span 2; }
 
-/* Diperbaiki: Ukuran font diperbesar agar ramah keterbacaan mata */
 .kpi-title { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
 .kpi-value { font-size: 18px; font-weight: 800; margin-top: 2px; color: var(--text-main); }
 .kpi-subtext { font-size: 10px; font-weight: 700; color: var(--text-muted); margin-top: 2px; }
@@ -177,7 +174,6 @@ td { padding: 7px 9px; border-bottom: 1px solid var(--border); vertical-align: m
 .santri-mini-list { display: flex; flex-direction: column; gap: 4px; }
 .santri-mini-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 10px; }
 
-/* Diperbaiki: Ukuran tombol & padding diperbesar untuk touch target yang presisi */
 button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; }
 .btn-primary { background: var(--accent-gradient); color: white; padding: 8px 12px; border-radius: 8px; font-size: 11px; }
 .btn-dark { background: var(--primary); color: white; padding: 6px 10px; border-radius: 6px; font-size: 10px; }
@@ -208,7 +204,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
     <div id="toast" class="toast">Notifikasi</div>
 
-    <!-- HEADER ATAS (Semantik) -->
+    <!-- HEADER ATAS -->
     <header class="admin-header">
         <div style="display:flex; align-items:center; gap:8px;">
             <div class="avatar-icon">A</div>
@@ -276,7 +272,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         </div>
     </div>
 
-    <!-- MAIN APP CONTENT (Semantik) -->
+    <!-- MAIN APP CONTENT -->
     <main>
         <!-- MENU 1: DASHBOARD -->
         <section id="view-dashboard" class="app-view active">
@@ -606,7 +602,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         </section>
     </main>
 
-    <!-- BOTTOM NAV BAR (Semantik) -->
+    <!-- BOTTOM NAV BAR -->
     <nav class="bottom-nav">
         <button class="nav-item active" id="nav-btn-dashboard" onclick="switchNav('dashboard')">
             <span class="nav-icon">📊</span>
@@ -653,8 +649,8 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                 </select>
 
                 <label style="font-size:10px; font-weight:800; color:var(--text-muted);">Tahun Hijriah Pekan Ini:</label>
-                <select id="archive-tahun-hijri" class="select-control">
-                </select>
+                <!-- KETIK MANUAL TAHUN HIJRIAH -->
+                <input type="number" id="archive-tahun-hijri" class="input-search" placeholder="Contoh: 1448" value="1448">
             </div>
 
             <div style="display:flex; gap:6px; justify-content:center;">
@@ -854,7 +850,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         showToast(enabled ? "✅ Auto-Refresh (35s)" : "⏸️ Auto-Refresh Nonaktif");
     }
 
-    // FUNGSI BERSIH-BERSIH CHART SAAT SYNC MANUAL
     function destroyAllCharts() {
         if (lineTrendChartInstance) { lineTrendChartInstance.destroy(); lineTrendChartInstance = null; }
         if (barChartInstance) { barChartInstance.destroy(); barChartInstance = null; }
@@ -866,7 +861,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
     async function manualSync() {
         if (!isFetching) {
-            destroyAllCharts(); // Hancurkan chart lama agar tidak menumpuk di memori RAM HP
+            destroyAllCharts();
             memoryMasterCache = null;
             await removeCacheIDB('MASTER_DATA_CACHE');
             await removeCacheIDB('MASTER_DATA_TIME');
@@ -879,7 +874,13 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         let selBulan = document.getElementById('filter-global-bulan')?.value;
         let selTahun = document.getElementById('filter-global-tahun')?.value;
         if (selBulan && selBulan !== 'ALL') document.getElementById('archive-bulan-hijri').value = selBulan;
-        if (selTahun && selTahun !== 'ALL') document.getElementById('archive-tahun-hijri').value = selTahun;
+        
+        if (selTahun && selTahun !== 'ALL') {
+            document.getElementById('archive-tahun-hijri').value = selTahun;
+        } else {
+            document.getElementById('archive-tahun-hijri').value = "1448";
+        }
+
         document.getElementById('modal-ganti-pekan').style.display = 'flex';
     }
 
@@ -889,7 +890,9 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
     async function executeGantiPekan() {
         let bHijri = document.getElementById('archive-bulan-hijri').value;
-        let tHijri = document.getElementById('archive-tahun-hijri').value;
+        let tHijri = document.getElementById('archive-tahun-hijri').value.trim();
+
+        if (!tHijri) return alert("Tahun Hijriah wajib diisi!");
 
         closeGantiPekanModal();
         showToast(`Memproses arsip ${bHijri} ${tHijri}...`);
@@ -994,7 +997,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         return listRekap.map((r, idx) => {
             let rawId = getRowVal(r, 'idpps', 'id pps', 'id', 'idppsantri', 'nis');
             let cleanId = normalizeId(rawId);
-            let rawTs = getRowVal(r, 'timestamp', 'waktu', 'updatedat', 'tgl');
+            let rawTs = getRowVal(r, 'timestamp', 'waktu', 'updatedat', 'tgl', 'tanggalarchive');
             let cleanTs = (rawTs && rawTs !== '-') ? rawTs : '';
 
             let sVal = getRowVal(r, 'tanggalsakit', 'tglsakit', 'sakit');
@@ -1011,6 +1014,8 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                 kelas: getRowVal(r, 'kelas') || '-',
                 kategori: getRowVal(r, 'kategori', 'kategoribaru') || '',
                 majliskitab: getRowVal(r, 'majliskitab', 'jalsah'),
+                bulanhijriah: getRowVal(r, 'bulanhijriah', 'bulan'),
+                tahunhijriah: getRowVal(r, 'tahunhijriah', 'tahun'),
                 tanggalsakit: sVal,
                 tanggalizin: iVal,
                 tanggalalpa: aVal,
@@ -1019,7 +1024,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                 _alphaParsed: parseDates(aVal, 1, 30),
                 status: getRowVal(r, 'status', 'statuskoreksi', 'koreksi', 'ket'),
                 _timestamp: cleanTs,
-                _source: 'koreksi',
+                _source: r._source || 'koreksi',
                 _updateIndex: idx
             };
         });
@@ -1133,7 +1138,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
     function populateGlobalTahunDropdown() {
         let select = document.getElementById('filter-global-tahun');
-        let selectModal = document.getElementById('archive-tahun-hijri');
         if (!select) return;
 
         let currVal = select.value;
@@ -1162,23 +1166,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         });
 
         select.value = currVal && select.querySelector(`option[value="${currVal}"]`) ? currVal : "ALL";
-
-        if (selectModal) {
-            let currModalVal = selectModal.value;
-            selectModal.innerHTML = '';
-            let maxYear = Math.max(...sortedYears);
-            let nextYear = maxYear + 1;
-            let modalYears = [...sortedYears];
-            if (!modalYears.includes(nextYear)) modalYears.unshift(nextYear);
-
-            modalYears.forEach(y => {
-                let opt = document.createElement('option');
-                opt.value = y;
-                opt.innerText = `${y} H`;
-                selectModal.appendChild(opt);
-            });
-            selectModal.value = currModalVal && selectModal.querySelector(`option[value="${currModalVal}"]`) ? currModalVal : maxYear;
-        }
     }
     
     function populateGlobalDaerahDropdown() {
@@ -1214,7 +1201,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         showToast("🔄 Filter Reset!");
     }
 
-    // Diperbaiki: Ditambahkan escapeHtml() untuk sanitasi input teks broadcast
     function renderBroadcastCardUI(bcData) {
         let statusBadge = document.getElementById('current-bc-status-badge');
         let titleEl     = document.getElementById('current-bc-disp-title');
@@ -1769,7 +1755,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         return 0;
     }
 
-    // Diperbaiki: Ditambahkan escapeHtml() pada rendering tabel audit
     function renderAuditLogTable(logs) {
         let tbody = document.getElementById('tbody-audit-log');
         if (!tbody) return;
@@ -2007,7 +1992,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         }
     }
 
-    // Diperbaiki: Ditambahkan escapeHtml() pada rendering dimensi
     function renderDimensionChartAndTable() {
         let selectEl = document.getElementById('select-dimension');
         if (!selectEl) return;
@@ -2097,7 +2081,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         `;
     }
 
-    // Diperbaiki: Ditambahkan escapeHtml() pada rendering tabel monitoring
     function renderMonitoringTable() {
         let tbody = document.getElementById('tbody-monitoring');
         let searchVal = document.getElementById('search-daerah').value.toUpperCase().trim();
@@ -2160,7 +2143,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         });
     }
 
-    // Diperbaiki: Ditambahkan escapeHtml() pada rendering detail modal santri
     function openDetailModal(daerah) {
         let d = window.processedStats[daerah];
         if (!d) return;
@@ -2226,7 +2208,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         document.getElementById('modal-detail-daerah').style.display = 'none';
     }
 
-    // Diperbaiki: Ditambahkan escapeHtml() pada rendering daftar pengguna
     function renderUsersTable() {
         let tbody = document.getElementById('tbody-users');
         tbody.innerHTML = "";
