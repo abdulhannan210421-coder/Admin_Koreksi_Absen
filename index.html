@@ -188,7 +188,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
     backdrop-filter: blur(10px); 
     border-top: 1px solid var(--border); 
     display: flex; 
-    justify-content: space-around; 
+    justify-around: space-around; 
     padding: 8px 0; 
     z-index: 99990; 
 }
@@ -226,7 +226,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
     <!-- STICKY FILTER BAR -->
     <div class="sticky-filter-bar">
-        <!-- BARIS 1: DAERAH & KATEGORI -->
         <div class="filter-grid">
             <select id="filter-global-daerah" class="select-control" onchange="processAndRenderStats()">
                 <option value="ALL">📍 Semua Daerah</option>
@@ -239,7 +238,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             </select>
         </div>
 
-        <!-- BARIS 2: BULAN & TAHUN HIJRIAH -->
         <div class="filter-grid">
             <select id="filter-global-bulan" class="select-control" onchange="processAndRenderStats()">
                 <option value="ALL">🌙 Semua Bulan Hijriah</option>
@@ -262,7 +260,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             </select>
         </div>
 
-        <!-- BARIS 3: RENTANG TANGGAL HIJRIAH -->
         <div class="filter-date-group">
             <span style="font-size:9px; font-weight:800; color:var(--text-muted);">Tgl Hijriah:</span>
             <input type="number" id="filter-tgl-min" min="1" max="30" placeholder="1" class="input-search" style="padding:4px; text-align:center;" oninput="processAndRenderStats()">
@@ -276,7 +273,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
     <main>
         <!-- MENU 1: DASHBOARD -->
         <section id="view-dashboard" class="app-view active">
-            <!-- KPI CARDS GRID -->
             <div class="kpi-grid">
                 <div class="kpi-card full-width">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -316,7 +312,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                 </div>
             </div>
 
-            <!-- LINE CHART TREN -->
             <div class="panel">
                 <div class="panel-title"><span>📈 Tren Absensi Harian (Tgl Hijriah 1–30)</span></div>
                 <div class="chart-container"><canvas id="chartLineTrend"></canvas></div>
@@ -458,7 +453,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         <section id="view-progress" class="app-view">
             <div class="panel">
                 <div class="panel-title">
-                    <span>Monitoring Progress Daerah</span>
+                    <span>Monitoring Progress Daerah (Koreksi Pekan Ini)</span>
                     <span id="progress-filter-label" class="config-badge all">SEMUA DATA</span>
                 </div>
                 
@@ -649,7 +644,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                 </select>
 
                 <label style="font-size:10px; font-weight:800; color:var(--text-muted);">Tahun Hijriah Pekan Ini:</label>
-                <!-- KETIK MANUAL TAHUN HIJRIAH -->
                 <input type="number" id="archive-tahun-hijri" class="input-search" placeholder="Contoh: 1448" value="1448">
             </div>
 
@@ -689,7 +683,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
     const APPS_SCRIPT_URL_REKAP  = "https://script.google.com/macros/s/AKfycbz1ecMJ8KBdbsNhuJCm_eYrRH2ATxZH7sn73GV-B19JoxKLNMrS8BCS8fZNnHBcqjM/exec";
     const APPS_SCRIPT_URL_MASTER = "https://script.google.com/macros/s/AKfycbV_l5rAXgnapi2c3ZH90WOusrHgN-Ny9wjaFJ9tczCl1mkz1pURw_sZUYhEF4YY6byRg/exec";
 
-    // FUNGSI UTIS: Escape HTML untuk Mencegah Serangan XSS
     function escapeHtml(str) {
         if (str === null || str === undefined) return '';
         return String(str)
@@ -738,7 +731,6 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
     let donutChartInstance = null;
     let lineTrendChartInstance = null;
 
-    // --- INDEXEDDB HELPER ---
     const DB_NAME = "TaklimdaDB";
     const DB_VERSION = 2;
     const STORE_NAME = "master_cache";
@@ -1530,6 +1522,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         rawKoreksiData.forEach(row => {
             let dom = String(row.domisili || '').toUpperCase().trim();
             let letter = extractDaerahLetter(dom);
+            let isKoreksiSheet = (row._source === 'koreksi' || !row._source);
 
             if (filterDaerah !== "ALL" && letter !== filterDaerah) return;
 
@@ -1573,22 +1566,23 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
             if (!isIncludedInMode) return;
 
-            if (!statsPerDaerah[letter]) {
-                statsPerDaerah[letter] = { total: 0, sudah: 0, belum: 0, sakit: 0, izin: 0, alpha: 0, santriList: [] };
-            }
-
             let namaSantri = row.namasantri || '-';
             let idPps = row.idpps || '-';
 
-            statsPerDaerah[letter].santriList.push({
-                nama: namaSantri, idPps: idPps, domisili: dom,
-                sakit: sCount, izin: iCount, alpha: aCount, isDone: isDone, status: statusText
-            });
+            // --- HITUNG MONITORING PROGRESS (KHUSUS SHEET KOREKSI ABSEN) ---
+            if (isKoreksiSheet) {
+                if (!statsPerDaerah[letter]) {
+                    statsPerDaerah[letter] = { total: 0, sudah: 0, belum: 0, sakit: 0, izin: 0, alpha: 0, santriList: [] };
+                }
 
-            statsPerDaerah[letter].total++;
-            if (isDone) {
-                statsPerDaerah[letter].sudah++;
-                if (row._source === 'koreksi' || !row._source) {
+                statsPerDaerah[letter].santriList.push({
+                    nama: namaSantri, idPps: idPps, domisili: dom,
+                    sakit: sCount, izin: iCount, alpha: aCount, isDone: isDone, status: statusText
+                });
+
+                statsPerDaerah[letter].total++;
+                if (isDone) {
+                    statsPerDaerah[letter].sudah++;
                     auditLogList.push({
                         nama: namaSantri,
                         daerah: letter,
@@ -1597,15 +1591,16 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                         updateIndex: row._updateIndex || 0,
                         timestamp: row._timestamp || 0
                     });
+                } else {
+                    statsPerDaerah[letter].belum++;
                 }
-            } else {
-                statsPerDaerah[letter].belum++;
+
+                if (sCount > 0) statsPerDaerah[letter].sakit++;
+                if (iCount > 0) statsPerDaerah[letter].izin++;
+                if (aCount > 0) statsPerDaerah[letter].alpha++;
             }
 
-            if (sCount > 0) statsPerDaerah[letter].sakit++;
-            if (iCount > 0) statsPerDaerah[letter].izin++;
-            if (aCount > 0) statsPerDaerah[letter].alpha++;
-
+            // --- HITUNG MATRIKS & STATISTIK GLOBAL (DASHBOARD) ---
             let dims = {
                 marhalah: normalizeDimension(row.marhalah, 'marhalah'),
                 tingkat: normalizeDimension(row.tingkat, 'tingkat'),
