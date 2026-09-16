@@ -5,310 +5,133 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard Taklimda Pusat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Admin Dashboard & Koreksi Taklimda Pusat</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- CHART.JS LIBRARY -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <style>
-:root {
-    --primary: #0f172a;
-    --accent: #059669;
-    --accent-gradient: linear-gradient(135deg, #059669 0%, #10b981 100%);
-    --bg-color: #f8fafc;
-    --card-bg: #ffffff;
-    --text-main: #0f172a;
-    --text-muted: #64748b;
-    --border: #e2e8f0;
-
-    --sakit-color: #0284c7;
-    --sakit-bg: #e0f2fe;
-    --izin-color: #d97706;
-    --izin-bg: #fef3c7;
-    --alpha-color: #e11d48;
-    --alpha-bg: #ffe4e6;
-}
-
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-
-html, body {
-    width: 100%;
-    overflow-x: hidden;
-    background-color: var(--bg-color); 
-    color: var(--text-main); 
-}
-
-body { 
-    padding: 8px; 
-    max-width: 1280px; 
-    margin: 0 auto; 
-    padding-bottom: 80px; 
-}
-
-.app-view { display: none; }
-.app-view.active { display: block !important; }
-
-/* HEADER ATAS */
-.admin-header { 
-    background: white; 
-    padding: 10px 12px; 
-    border-radius: 12px; 
-    border: 1px solid var(--border); 
-    margin-bottom: 8px; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    width: 100%;
-}
-.avatar-icon { width: 34px; height: 34px; background: var(--primary); color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
-
-.live-badge { display: inline-flex; align-items: center; gap: 4px; background: #d1fae5; color: #047857; padding: 3px 8px; border-radius: 10px; font-size: 10px; font-weight: 800; }
-.live-dot { width: 6px; height: 6px; background: #10b981; border-radius: 50%; animation: pulse 1.5s infinite; }
-
-@keyframes pulse { 0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.8; } }
-
-.toggle-switch { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; color: var(--text-muted); cursor: pointer; }
-.toggle-switch input { display: none; }
-.slider { width: 32px; height: 18px; background-color: #cbd5e1; border-radius: 20px; position: relative; transition: 0.2s; }
-.slider::before { content: ""; position: absolute; width: 14px; height: 14px; border-radius: 50%; background-color: white; top: 2px; left: 2px; transition: 0.2s; }
-.toggle-switch input:checked + .slider { background-color: var(--accent); }
-.toggle-switch input:checked + .slider::before { transform: translateX(14px); }
-
-/* STICKY FILTER BAR */
-.sticky-filter-bar {
-    position: sticky;
-    top: 4px;
-    z-index: 9990;
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(8px);
-    padding: 8px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    box-shadow: 0 4px 12px rgba(15,23,42,0.04);
-    margin-bottom: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    width: 100%;
-}
-
-.filter-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-    width: 100%;
-}
-
-.filter-date-group {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    width: 100%;
-}
-
-/* RESPONSIVE GRID LAYOUTS */
-.kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 8px; width: 100%; }
-.grid-2col { display: grid; grid-template-columns: 1fr; gap: 8px; width: 100%; }
-
-.chart-container { position: relative; height: 200px; width: 100%; }
-
-@media (min-width: 768px) {
-    .sticky-filter-bar { flex-direction: column; }
-    .kpi-grid { grid-template-columns: repeat(5, 1fr); }
-    .kpi-card.full-width { grid-column: span 5; }
-    .grid-2col { grid-template-columns: repeat(2, 1fr); }
-    .chart-container { height: 250px; }
-    .bottom-nav { width: 450px; left: 50%; transform: translateX(-50%); border-radius: 18px; bottom: 8px; }
-}
-
-.kpi-card { background: white; padding: 10px; border-radius: 12px; border: 1px solid var(--border); }
-.kpi-card.full-width { grid-column: span 2; }
-
-.kpi-title { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
-.kpi-value { font-size: 18px; font-weight: 800; margin-top: 2px; color: var(--text-main); }
-.kpi-subtext { font-size: 10px; font-weight: 700; color: var(--text-muted); margin-top: 2px; }
-
-.panel { background: white; border-radius: 12px; border: 1px solid var(--border); padding: 10px; margin-bottom: 8px; width: 100%; overflow: hidden; }
-.panel-title { font-size: 11px; font-weight: 800; margin-bottom: 8px; text-transform: uppercase; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; }
-
-.controls-stack { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
-.input-search, .select-control { width: 100%; padding: 7px 9px; border: 1px solid var(--border); border-radius: 8px; font-size: 11px; font-weight: 700; outline: none; background: white; }
-
-.config-badge { padding: 3px 7px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
-.config-badge.all { background: #d1fae5; color: #047857; }
-.config-badge.alpha { background: var(--alpha-bg); color: var(--alpha-color); }
-.config-badge.izin { background: var(--izin-bg); color: var(--izin-color); }
-.config-badge.sakit { background: var(--sakit-bg); color: var(--sakit-color); }
-
-.table-container { 
-    width: 100%; 
-    overflow-x: auto; 
-    -webkit-overflow-scrolling: touch; 
-    border-radius: 8px; 
-    border: 1px solid var(--border); 
-}
-table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; white-space: nowrap; }
-th { background: #f8fafc; padding: 7px 9px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); }
-td { padding: 7px 9px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-
-.progress-bg { background: #e2e8f0; height: 6px; border-radius: 8px; overflow: hidden; width: 50px; display: inline-block; vertical-align: middle; }
-.progress-fill { background: var(--accent); height: 100%; width: 0%; }
-
-.status-tag { padding: 3px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; }
-.status-selesai { background: #d1fae5; color: #047857; }
-.status-proses { background: #fef3c7; color: #b45309; }
-.status-matikan { background: #ffe4e6; color: #e11d48; }
-
-.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); z-index: 99999; align-items: center; justify-content: center; padding: 10px; }
-.modal-box { background: white; padding: 16px; border-radius: 14px; width: 100%; max-width: 340px; }
-
-.modal-box-lg { background: white; border-radius: 16px; width: 100%; max-width: 480px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; }
-.modal-header-lg { padding: 12px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; }
-.modal-body-lg { padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-
-.room-breakdown-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 8px; }
-.room-breakdown-header { display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 10px; margin-bottom: 6px; border-bottom: 1px dashed var(--border); padding-bottom: 4px; }
-
-.santri-mini-list { display: flex; flex-direction: column; gap: 4px; }
-.santri-mini-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 10px; }
-
-button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; }
-.btn-primary { background: var(--accent-gradient); color: white; padding: 8px 12px; border-radius: 8px; font-size: 11px; }
-.btn-dark { background: var(--primary); color: white; padding: 6px 10px; border-radius: 6px; font-size: 10px; }
-.btn-outline { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border); padding: 5px 8px; border-radius: 6px; font-size: 10px; }
-
-.bottom-nav { 
-    position: fixed; 
-    bottom: 0; 
-    left: 0; 
-    width: 100%; 
-    background: rgba(255, 255, 255, 0.96); 
-    backdrop-filter: blur(10px); 
-    border-top: 1px solid var(--border); 
-    display: flex; 
-    justify-around: space-around; 
-    padding: 8px 0; 
-    z-index: 99990; 
-}
-.nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; color: var(--text-muted); font-size: 10px; font-weight: 800; width: 25%; }
-.nav-item.active { color: var(--accent); }
-.nav-icon { font-size: 16px; }
-
-.toast { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; opacity: 0; transition: 0.2s; z-index: 999999; pointer-events: none; text-align: center; max-width: 90%; }
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(-2px); }
-    </style>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
     <div id="toast" class="toast">Notifikasi</div>
 
-    <!-- HEADER ATAS -->
-    <header class="admin-header">
-        <div style="display:flex; align-items:center; gap:8px;">
-            <div class="avatar-icon">A</div>
-            <div>
-                <h1 style="font-size:12px; font-weight:800; color:var(--text-main);">Admin Taklimda</h1>
-                <p style="font-size:9px; color:var(--text-muted); font-weight:600;">Sidogiri</p>
+    <!-- HEADER UTAMA PUSAT -->
+    <header class="top-deck slide-up">
+        <div class="header-compact">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div class="avatar">A</div>
+                <div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <h1 style="font-size:14px; font-weight:800; color:var(--text-main);">TTQ Pusat</h1>
+                        <span id="net-status-badge" class="sync-badge online"><div class="live-dot"></div> Online</span>
+                    </div>
+                    <p style="font-size:10px; color:var(--text-muted); font-weight:600;" id="stat-progress-text">0 / 0 Santri Dikoreksi (PEKAN INI)</p>
+                </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-autosync" checked onchange="toggleAutoSync(this.checked)">
+                    <span class="slider"></span>
+                    <span>Auto (1 Jam)</span>
+                </label>
+                <button class="btn-act" style="background:#f1f5f9; color:var(--text-main);" onclick="manualSync()">🔄 Sync</button>
             </div>
         </div>
-        <div style="display:flex; align-items:center; gap:6px;">
-            <label class="toggle-switch">
-                <input type="checkbox" id="toggle-autosync" checked onchange="toggleAutoSync(this.checked)">
-                <span class="slider"></span>
-                <span>Auto</span>
-            </label>
-            <button class="btn-dark" onclick="openGantiPekanModal()" style="background:#e11d48; color:white;">📦 Ganti Pekan</button>
-            <button class="btn-dark" onclick="manualSync()">🔄 Sync</button>
+
+        <div class="progress-inline" style="margin-top:10px;">
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-bar-fill"></div>
+            </div>
+            <span style="font-size:11px; font-weight:800; color:var(--primary);" id="stat-percent">0%</span>
+        </div>
+
+        <div id="pending-info-bar" style="display:none; font-size:10px; font-weight:800; color:#d97706; background:#fef3c7; border:1px solid #fcd34d; padding:6px 10px; border-radius:10px; margin-top:8px; text-align:center;">
+            ⚠️ Ada <span id="pending-count-num">0</span> data tersimpan offline. Akan otomatis dikirim saat online.
         </div>
     </header>
 
-    <!-- STICKY FILTER BAR -->
-    <div class="sticky-filter-bar">
-        <div class="filter-grid">
-            <select id="filter-global-daerah" class="select-control" onchange="processAndRenderStats()">
-                <option value="ALL">📍 Semua Daerah</option>
-            </select>
-            
-            <select id="filter-global-kategori" class="select-control" onchange="processAndRenderStats()">
-                <option value="ALL">🏆 MTQ & MQS</option>
-                <option value="MTQ">Khusus MTQ</option>
-                <option value="MQS">Khusus MQS</option>
-            </select>
-        </div>
-
-        <div class="filter-grid">
-            <select id="filter-global-bulan" class="select-control" onchange="processAndRenderStats()">
-                <option value="ALL">🌙 Semua Bulan Hijriah</option>
-                <option value="Muharram">1. Muharram</option>
-                <option value="Safar">2. Safar</option>
-                <option value="Rabi'ul Awal">3. Rabi'ul Awal</option>
-                <option value="Rabi'ul Akhir">4. Rabi'ul Akhir</option>
-                <option value="Jumadil Ula">5. Jumadil Ula</option>
-                <option value="Jumadil Akhirah">6. Jumadil Akhirah</option>
-                <option value="Rajab">7. Rajab</option>
-                <option value="Sya'ban">8. Sya'ban</option>
-                <option value="Ramadhan">9. Ramadhan</option>
-                <option value="Syawal">10. Syawal</option>
-                <option value="Dzulqa'dah">11. Dzulqa'dah</option>
-                <option value="Dzulhijjah">12. Dzulhijjah</option>
-            </select>
-            
-            <select id="filter-global-tahun" class="select-control" onchange="processAndRenderStats()">
-                <option value="ALL">📅 Semua Tahun</option>
-            </select>
-        </div>
-
-        <div class="filter-date-group">
-            <span style="font-size:9px; font-weight:800; color:var(--text-muted);">Tgl Hijriah:</span>
-            <input type="number" id="filter-tgl-min" min="1" max="30" placeholder="1" class="input-search" style="padding:4px; text-align:center;" oninput="processAndRenderStats()">
-            <span style="font-size:9px; font-weight:800; color:var(--text-muted);">-</span>
-            <input type="number" id="filter-tgl-max" min="1" max="30" placeholder="30" class="input-search" style="padding:4px; text-align:center;" oninput="processAndRenderStats()">
-            <button class="btn-outline" onclick="resetGlobalFilters()" style="white-space:nowrap;">🔄 Reset</button>
-        </div>
-    </div>
-
     <!-- MAIN APP CONTENT -->
     <main>
-        <!-- MENU 1: DASHBOARD -->
+        <!-- TAB 1: DASHBOARD ANALITIK & GRAFIK -->
         <section id="view-dashboard" class="app-view active">
+
+			<!-- KARTU FILTER DASHBOARD MODERN -->
+			<div class="dashboard-filter-card">
+				<div class="filter-grid">
+					<div>
+						<select id="filter-global-kategori" onchange="processAndRenderStats()">
+							<option value="ALL">🏆 MTQ & MQS</option>
+							<option value="MTQ">Khusus MTQ</option>
+							<option value="MQS">Khusus MQS</option>
+						</select>
+					</div>
+					<div>
+						<select id="filter-global-daerah" onchange="processAndRenderStats()">
+							<option value="ALL">📍 Semua Daerah</option>
+						</select>
+					</div>
+					<div>
+						<select id="filter-global-bulan" onchange="processAndRenderStats()">
+							<option value="ALL">🌙 Semua Bulan Hijriah</option>
+						</select>
+					</div>
+					<div>
+						<select id="filter-global-tahun" onchange="processAndRenderStats()">
+							<option value="ALL">📅 Semua Tahun</option>
+						</select>
+					</div>
+				</div>
+				
+				<div class="filter-date-group">
+					<input type="number" id="filter-tgl-min" placeholder="Tgl Min (1)" min="1" max="30" class="input-search" onchange="processAndRenderStats()">
+					<span style="font-size:11px; font-weight:700; color:var(--text-muted);">s/d</span>
+					<input type="number" id="filter-tgl-max" placeholder="Tgl Max (30)" min="1" max="30" class="input-search" onchange="processAndRenderStats()">
+					<button class="btn-outline" onclick="resetGlobalFilters()" style="padding:8px 12px; border-radius:12px; font-size:10px; font-weight:800; white-space:nowrap;">🔄 Reset Filter</button>
+				</div>
+			</div>
+
+            <!-- KPI DASHBOARD SINKRON SPREADSHEET MASTER DATA -->
             <div class="kpi-grid">
                 <div class="kpi-card full-width">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div>
-                            <div class="kpi-title">Total Santri Filtered</div>
+                            <div class="kpi-title">Total Santri Keseluruhan (Master Data API)</div>
                             <div class="kpi-value" id="dash-total-santri">0</div>
+                            <div class="kpi-subtext" id="dash-sub-pekan-santri">Pekan ini wajib dikoreksi: 0 Santri</div>
                         </div>
                         <div style="text-align:right;">
-                            <div class="kpi-title">Status Realtime</div>
-                            <div class="live-badge" style="margin-top:2px;"><div class="live-dot"></div> Connected</div>
+                            <div class="kpi-title">Status Master Sync</div>
+                            <div id="master-status-badge" class="sync-badge online" style="margin-top:2px;"><div class="live-dot"></div> Master Connected</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="kpi-card">
-                    <div class="kpi-title">Diverifikasi</div>
-                    <div class="kpi-value" style="color:var(--accent);" id="dash-total-sudah">0</div>
-                    <div class="kpi-subtext" id="dash-pct-sudah">0% selesai</div>
+                    <div class="kpi-title">Diverifikasi (Pekan Ini)</div>
+                    <div class="kpi-value" style="color:var(--primary);" id="dash-total-sudah">0</div>
+                    <div class="kpi-subtext" id="dash-pct-sudah">0% Selesai</div>
                 </div>
 
                 <div class="kpi-card">
-                    <div class="kpi-title">Sakit (S)</div>
+                    <div class="kpi-title">Sakit (S) Pekan Ini</div>
                     <div class="kpi-value" style="color:var(--sakit-color);" id="dash-total-sakit">0</div>
-                    <div class="kpi-subtext" id="dash-pct-sakit">0 Santri (0 Hari)</div>
+                    <div class="kpi-subtext" id="dash-pct-sakit">Santri Sakit</div>
                 </div>
 
                 <div class="kpi-card">
-                    <div class="kpi-title">Izin (I)</div>
+                    <div class="kpi-title">Izin (I) Pekan Ini</div>
                     <div class="kpi-value" style="color:var(--izin-color);" id="dash-total-izin">0</div>
-                    <div class="kpi-subtext" id="dash-pct-izin">0 Santri (0 Hari)</div>
+                    <div class="kpi-subtext" id="dash-pct-izin">Santri Izin</div>
                 </div>
 
                 <div class="kpi-card">
-                    <div class="kpi-title">Alpha (A)</div>
+                    <div class="kpi-title">Alpha (A) Pekan Ini</div>
                     <div class="kpi-value" style="color:var(--alpha-color);" id="dash-total-alpha">0</div>
-                    <div class="kpi-subtext" id="dash-pct-alpha">0 Santri (0 Hari)</div>
+                    <div class="kpi-subtext" id="dash-pct-alpha">Santri Alpha</div>
                 </div>
             </div>
 
@@ -319,14 +142,14 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
             <div class="grid-2col">
                 <div class="panel">
-                    <div class="panel-title"><span>🏆 Komparasi MTQ & MQS</span></div>
+                    <div class="panel-title"><span>🏆 Komparasi MTQ & MQS (Master vs Absensi Pekan Ini)</span></div>
                     <div class="table-container">
                         <table>
                             <thead>
                                 <tr>
                                     <th>Kategori</th>
-                                    <th style="text-align:center;">Induk</th>
-                                    <th style="text-align:center; color:var(--accent);">Hadir</th>
+                                    <th style="text-align:center;">Total Master</th>
+                                    <th style="text-align:center; color:var(--primary);">Hadir Pekan Ini</th>
                                     <th style="text-align:center; color:var(--sakit-color);">S</th>
                                     <th style="text-align:center; color:var(--izin-color);">I</th>
                                     <th style="text-align:center; color:var(--alpha-color);">A</th>
@@ -360,7 +183,7 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
             </div>
 
             <div class="panel">
-                <div class="panel-title"><span>📍 Breakdown MTQ & MQS Per Daerah (Jumlah Santri)</span></div>
+                <div class="panel-title"><span>📍 Breakdown MTQ & MQS Per Daerah (Pekan Ini)</span></div>
                 <div class="table-container">
                     <table>
                         <thead>
@@ -371,13 +194,13 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
                             </tr>
                             <tr>
                                 <th style="text-align:center; background:#f1f5f9;">Induk</th>
-                                <th style="text-align:center; color:var(--accent); background:#f1f5f9;">Hadir</th>
+                                <th style="text-align:center; color:var(--primary); background:#f1f5f9;">Hadir</th>
                                 <th style="text-align:center; color:var(--sakit-color); background:#f1f5f9;">S</th>
                                 <th style="text-align:center; color:var(--izin-color); background:#f1f5f9;">I</th>
                                 <th style="text-align:center; color:var(--alpha-color); background:#f1f5f9;">A</th>
 
                                 <th style="text-align:center;">Induk</th>
-                                <th style="text-align:center; color:var(--accent);">Hadir</th>
+                                <th style="text-align:center; color:var(--primary);">Hadir</th>
                                 <th style="text-align:center; color:var(--sakit-color);">S</th>
                                 <th style="text-align:center; color:var(--izin-color);">I</th>
                                 <th style="text-align:center; color:var(--alpha-color);">A</th>
@@ -392,204 +215,214 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
 
             <div class="grid-2col">
                 <div class="panel">
-                    <div class="panel-title"><span>📊 Grafik MTQ</span></div>
+                    <div class="panel-title"><span>📊 Grafik MTQ Pekan Ini</span></div>
                     <div class="chart-container"><canvas id="chartBarMtq"></canvas></div>
                 </div>
 
                 <div class="panel">
-                    <div class="panel-title"><span>📊 Grafik MQS</span></div>
+                    <div class="panel-title"><span>📊 Grafik MQS Pekan Ini</span></div>
                     <div class="chart-container"><canvas id="chartBarMqs"></canvas></div>
                 </div>
             </div>
 
             <div class="grid-2col">
                 <div class="panel">
-                    <div class="panel-title"><span>📊 Ketidakhadiran Daerah</span></div>
+                    <div class="panel-title"><span>📊 Ketidakhadiran Daerah (Pekan Ini)</span></div>
                     <div class="chart-container"><canvas id="chartBarDaerah"></canvas></div>
                 </div>
 
                 <div class="panel">
-                    <div class="panel-title"><span>🍩 Proporsi Absensi Global</span></div>
+                    <div class="panel-title"><span>🍩 Proporsi Absensi Pekan Ini</span></div>
                     <div class="chart-container" style="display:flex; justify-content:center;"><canvas id="chartDonutAbsensi"></canvas></div>
                 </div>
             </div>
 
-            <div class="panel">
-                <div class="panel-title"><span>📈 Stat Multidimensi</span></div>
-                <div style="margin-bottom:6px;">
-                    <select id="select-dimension" class="select-control" onchange="renderDimensionChartAndTable()">
-                        <option value="marhalah">Marhalah / Jilid Baru</option>
-                        <option value="tingkat">Tingkat Pendidikan</option>
-                        <option value="kelas">Kelas Pendidikan</option>
-                        <option value="majliskitab">Majlis / Jalsah / Surau</option>
-                    </select>
-                </div>
-                <div class="chart-container" style="margin-bottom:8px;">
-                    <canvas id="chartBarDimension"></canvas>
+
+        </section>
+
+        <!-- TAB 2: EDIT DATA ADMIN -->
+        <section id="view-editor" class="app-view">
+            <div class="controls-row slide-up">
+                <div style="display:flex; gap:6px; margin-bottom:4px;">
+                    <button class="tab-btn active" id="btn-src-koreksi" onclick="switchEditorSource('koreksi')">⚡ Koreksi Pekan Ini</button>
+                    <button class="tab-btn" id="btn-src-database" onclick="switchEditorSource('database')">📦 Database Rekap (Arsip)</button>
                 </div>
 
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th id="th-dim-label">Kategori</th>
-                                <th style="text-align:center;">Sakit</th>
-                                <th style="text-align:center;">Izin</th>
-                                <th style="text-align:center;">Alpha</th>
-                                <th style="text-align:center;">Verified</th>
-                                <th style="text-align:center;">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody id="dash-matrix-tbody">
-                            <tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:10px;">Memuat data...</td></tr>
-                        </tbody>
-                        <tfoot id="dash-matrix-tfoot"></tfoot>
-                    </table>
+                <div class="search-box-mini">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="search-koreksi" placeholder="Cari Daerah / Kamar / Nama Santri..." oninput="renderEditorView()">
                 </div>
+
+                <div class="filter-tabs">
+                    <button class="tab-btn active" id="tab-status-belum" onclick="setEditorStatusFilter('belum')">Belum Dikoreksi (<span id="count-belum">0</span>)</button>
+                    <button class="tab-btn" id="tab-status-sudah" onclick="setEditorStatusFilter('sudah')">Selesai (<span id="count-sudah">0</span>)</button>
+                    <button class="tab-btn" id="tab-status-alpha" onclick="setEditorStatusFilter('alpha')">🔴 Alpha (<span id="count-alpha-filter">0</span>)</button>
+                    <button class="tab-btn" id="tab-status-izin" onclick="setEditorStatusFilter('izin')">🟠 Izin (<span id="count-izin-filter">0</span>)</button>
+                    <button class="tab-btn" id="tab-status-sakit" onclick="setEditorStatusFilter('sakit')">🔵 Sakit (<span id="count-sakit-filter">0</span>)</button>
+                </div>
+            </div>
+
+            <div id="editor-breadcrumb" class="breadcrumb-bar fade-in" style="display:none;">
+                <div style="font-size:11px; font-weight:800;" id="breadcrumb-text">📍 Semua Daerah</div>
+                <button class="btn-outline" id="btn-back-level" onclick="navLevelBack()" style="padding:4px 10px; font-size:10px; border-radius:8px;">← Kembali</button>
+            </div>
+
+            <div id="editor-content-container" class="slide-up">
+                <div style="text-align:center; padding:30px 15px; color:var(--text-muted); font-size:12px; background:white; border-radius:18px; border:1px solid var(--border);">Memuat data...</div>
             </div>
         </section>
 
-        <!-- MENU 2: PROGRESS -->
+        <!-- TAB 3: PROGRESS KOREKSI PEKAN INI -->
         <section id="view-progress" class="app-view">
             <div class="panel">
                 <div class="panel-title">
-                    <span>Monitoring Progress Daerah (Koreksi Pekan Ini)</span>
-                    <span id="progress-filter-label" class="config-badge all">SEMUA DATA</span>
+                    <span>📋 Progress Koreksi Daerah Pekan Ini</span>
+                    <span class="config-badge all" id="progress-mode-badge">MODE APP</span>
                 </div>
+                <p style="font-size:11px; color:var(--text-muted); margin-bottom:12px; line-height:1.4;">
+                    Progress di bawah murni menghitung data dari <b>Sheet Koreksi Absen (Pekan Ini)</b> dan disesuaikan dengan <b>Filter Mode App Taklimda</b> yang aktif di sheet config.
+                </p>
                 
-                <div class="controls-stack">
-                    <input type="text" id="search-daerah" class="input-search" placeholder="🔍 Cari Daerah..." oninput="renderMonitoringTable()">
-                    <div style="display:flex; gap:6px;">
-                        <select id="filter-status-daerah" class="select-control" onchange="renderMonitoringTable()">
-                            <option value="all">Semua Status</option>
-                            <option value="proses">Proses / Belum 100%</option>
-                            <option value="selesai">Selesai (100%)</option>
-                        </select>
-                        <select id="sort-daerah" class="select-control" onchange="renderMonitoringTable()">
-                            <option value="az">Abjad (A–Z)</option>
-                            <option value="progress_asc">Progress Terendah</option>
-                            <option value="progress_desc">Progress Tertinggi</option>
-                        </select>
-                    </div>
+                <div style="display:flex; gap:8px; margin-bottom:12px;">
+                    <input type="text" id="search-daerah" class="input-search" placeholder="🔍 Cari Daerah..." oninput="renderMonitoringTable()" style="flex:1;">
+                    <select id="sort-progress" class="select-control" onchange="renderMonitoringTable()" style="flex:1;">
+                        <option value="lowest">📉 Progress Terendah</option>
+                        <option value="highest">📈 Progress Tertinggi</option>
+                        <option value="name_asc">🔤 Nama Daerah (A-Z)</option>
+                        <option value="total_desc">👥 Total Target Terbanyak</option>
+                    </select>
                 </div>
 
                 <div class="table-container">
                     <table>
-                        <thead>
-                            <tr>
-                                <th>Daerah</th>
-                                <th>Status</th>
-                                <th>Total</th>
-                                <th>Selesai</th>
-                                <th>Belum</th>
-                                <th>Progress</th>
-                                <th style="text-align:center;">Aksi</th>
-                            </tr>
-                        </thead>
+						<thead>
+							<tr>
+								<th>DAERAH</th>
+								<th style="text-align:center;">STATUS</th>
+								<th style="text-align:center;">TOTAL</th>
+								<th style="text-align:center;">SELESAI</th>
+								<th style="text-align:center;">BELUM</th>
+								<th style="text-align:center;">AKSI</th>
+							</tr>
+						</thead>
                         <tbody id="tbody-monitoring">
-                            <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:12px;">Memuat data...</td></tr>
+                            <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:14px;">Memuat data progress...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </section>
 
-        <!-- MENU 3: CONFIG -->
+        <!-- TAB 4: PENGATURAN MODE APP HP TAKLIMDA & TOMBOL ARSIP -->
         <section id="view-config" class="app-view">
             <div class="grid-2col">
                 <div class="panel">
                     <div class="panel-title">
-                        <span>⚙️ Mode Koreksi App</span>
+                        <span>⚙️ Mode Tampilan App Taklimda (HP Daerah)</span>
                         <span id="badge-active-mode" class="config-badge all">SEMUA DATA</span>
                     </div>
-                    <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px;">
-                        <label style="background:#f8fafc; padding:8px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; gap:8px; cursor:pointer;">
-                            <input type="radio" name="optFilterAbsen" value="all" checked style="accent-color:var(--accent);">
+                    <p style="font-size:10px; color:var(--text-muted); margin-bottom:10px;">
+                        Pengaturan ini langsung membaca & mengubah data pada **sheet config**. Penentu data apa saja yang tampil di HP Pengurus Taklimda Daerah.
+                    </p>
+
+                    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+                        <label style="background:#f8fafc; padding:10px; border-radius:12px; border:1px solid var(--border); display:flex; align-items:center; gap:10px; cursor:pointer;">
+                            <input type="radio" name="optFilterAbsen" value="all" id="radio-mode-all" style="accent-color:var(--primary);">
                             <div>
-                                <div style="font-size:11px; font-weight:800; color:var(--text-main);">🟢 Semua Data Absensi</div>
-                                <div style="font-size:9px; color:var(--text-muted);">Mengkoreksi seluruh santri.</div>
+                                <div style="font-size:11px; font-weight:800; color:var(--text-main);">🟢 Tampilkan Semua Data Absensi</div>
+                                <div style="font-size:9px; color:var(--text-muted);">Pengurus Taklimda HP melihat seluruh santri (Sakit, Izin, Alpha, & Hadir).</div>
                             </div>
                         </label>
 
-                        <label style="background:#f8fafc; padding:8px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; gap:8px; cursor:pointer;">
-                            <input type="radio" name="optFilterAbsen" value="alpha" style="accent-color:var(--alpha-color);">
+                        <label style="background:#f8fafc; padding:10px; border-radius:12px; border:1px solid var(--border); display:flex; align-items:center; gap:10px; cursor:pointer;">
+                            <input type="radio" name="optFilterAbsen" value="alpha" id="radio-mode-alpha" style="accent-color:var(--alpha-color);">
                             <div>
-                                <div style="font-size:11px; font-weight:800; color:var(--alpha-color);">🔴 Khusus Data Alpha (A)</div>
-                                <div style="font-size:9px; color:var(--text-muted);">Hanya santri berstatus Alpha.</div>
+                                <div style="font-size:11px; font-weight:800; color:var(--alpha-color);">🔴 Khusus Data Alpha (A) Sahaja</div>
+                                <div style="font-size:9px; color:var(--text-muted);">Pengurus Taklimda HP hanya melihat & mengoreksi santri yang berstatus Alpha.</div>
                             </div>
                         </label>
 
-                        <label style="background:#f8fafc; padding:8px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; gap:8px; cursor:pointer;">
-                            <input type="radio" name="optFilterAbsen" value="izin" style="accent-color:var(--izin-color);">
+                        <label style="background:#f8fafc; padding:10px; border-radius:12px; border:1px solid var(--border); display:flex; align-items:center; gap:10px; cursor:pointer;">
+                            <input type="radio" name="optFilterAbsen" value="izin" id="radio-mode-izin" style="accent-color:var(--izin-color);">
                             <div>
-                                <div style="font-size:11px; font-weight:800; color:var(--izin-color);">🟠 Khusus Data Izin (I)</div>
-                                <div style="font-size:9px; color:var(--text-muted);">Hanya santri berstatus Izin.</div>
+                                <div style="font-size:11px; font-weight:800; color:var(--izin-color);">🟠 Khusus Data Izin (I) Sahaja</div>
+                                <div style="font-size:9px; color:var(--text-muted);">Pengurus Taklimda HP hanya melihat & mengoreksi santri yang berstatus Izin.</div>
                             </div>
                         </label>
 
-                        <label style="background:#f8fafc; padding:8px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; gap:8px; cursor:pointer;">
-                            <input type="radio" name="optFilterAbsen" value="sakit" style="accent-color:var(--sakit-color);">
+                        <label style="background:#f8fafc; padding:10px; border-radius:12px; border:1px solid var(--border); display:flex; align-items:center; gap:10px; cursor:pointer;">
+                            <input type="radio" name="optFilterAbsen" value="sakit" id="radio-mode-sakit" style="accent-color:var(--sakit-color);">
                             <div>
-                                <div style="font-size:11px; font-weight:800; color:var(--sakit-color);">🔵 Khusus Data Sakit (S)</div>
-                                <div style="font-size:9px; color:var(--text-muted);">Hanya santri berstatus Sakit.</div>
+                                <div style="font-size:11px; font-weight:800; color:var(--sakit-color);">🔵 Khusus Data Sakit (S) Sahaja</div>
+                                <div style="font-size:9px; color:var(--text-muted);">Pengurus Taklimda HP hanya melihat & mengoreksi santri yang berstatus Sakit.</div>
                             </div>
                         </label>
                     </div>
 
-                    <button onclick="saveAppConfig()" class="btn-primary" style="width:100%; padding:9px;">💾 Simpan Pengaturan</button>
+                    <button onclick="saveAppConfig()" class="btn-act btn-primary" style="width:100%; padding:11px; margin-bottom:14px;">💾 Simpan Mode App HP Taklimda (Update Sheet Config)</button>
+
+                    <div style="border-top: 1px dashed var(--border); padding-top: 12px;">
+                        <div style="font-size:11px; font-weight:800; color:var(--text-main); margin-bottom:4px;">📦 Arsip & Reset Pekan Absensi</div>
+                        <p style="font-size:10px; color:var(--text-muted); margin-bottom:8px;">
+                            Pindahkan seluruh data pekan ini ke sheet `Database_Rekap` dan bersihkan sheet `Koreksi_Absen` untuk pekan baru.
+                        </p>
+                        <button onclick="openGantiPekanModal()" class="btn-act" style="background:#ffe4e6; color:var(--alpha-color); width:100%; padding:10px; border:1px solid #fecdd3;">📦 Ganti Pekan & Arsipkan Data</button>
+                    </div>
                 </div>
 
                 <div class="panel">
                     <div class="panel-title"><span>📢 Pengumuman Pusat</span></div>
-                    <div id="current-bc-box" style="background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:10px; margin-bottom:8px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                            <span style="font-size:9px; font-weight:800; color:var(--text-muted);">STATUS</span>
+                    <div id="current-bc-box" style="background:#f8fafc; border:1px solid var(--border); border-radius:14px; padding:12px; margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <span style="font-size:9px; font-weight:800; color:var(--text-muted);">STATUS HARI INI</span>
                             <span id="current-bc-status-badge" class="status-tag status-selesai">MEMUAT...</span>
                         </div>
                         <h4 id="current-bc-disp-title" style="font-size:12px; font-weight:800; margin-bottom:4px;">-</h4>
-                        <p id="current-bc-disp-msg" style="font-size:10px; color:var(--text-muted); white-space:pre-line; margin-bottom:8px;">-</p>
+                        <p id="current-bc-disp-msg" style="font-size:10px; color:var(--text-muted); white-space:pre-line; margin-bottom:10px;">-</p>
                         <div style="display:flex; gap:6px;">
-                            <button onclick="fillFormFromCurrentBc()" class="btn-outline" style="flex:1;">✏️ Edit</button>
-                            <button id="btn-quick-toggle-bc" onclick="quickToggleBroadcast()" class="btn-dark" style="background:var(--alpha-color); flex:1;">🛑 Nonaktifkan</button>
+                            <button onclick="fillFormFromCurrentBc()" class="btn-outline" style="flex:1; padding:6px; border-radius:8px; font-size:10px;">✏️ Edit Text</button>
+                            <button id="btn-quick-toggle-bc" onclick="quickToggleBroadcast()" class="btn-act" style="background:var(--alpha-color); color:white; flex:1; padding:6px; border-radius:8px; font-size:10px;">🛑 Nonaktifkan</button>
                         </div>
                     </div>
 
-                    <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:8px;">
+                    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;">
                         <input type="text" id="bc-title" class="input-search" placeholder="Judul Pengumuman">
-                        <textarea id="bc-message" class="input-search" style="height:60px; resize:none;" placeholder="Isi pengumuman..."></textarea>
+                        <textarea id="bc-message" class="input-search" style="height:70px; resize:none;" placeholder="Isi pesan pengumuman..."></textarea>
                         
-                        <div style="display:flex; gap:6px; align-items:center;">
+                        <div style="display:flex; gap:8px; align-items:center;">
                             <select id="bc-type" class="select-control" style="flex:1;">
-                                <option value="info">🔵 Info</option>
-                                <option value="warning">🟠 Peringatan</option>
-                                <option value="danger">🔴 Darurat</option>
+                                <option value="info">🔵 Informasi Standard</option>
+                                <option value="warning">🟠 Peringatan Penting</option>
+                                <option value="danger">🔴 Darurat / Urgent</option>
                             </select>
                             <label style="font-size:10px; font-weight:800; display:flex; align-items:center; gap:4px; cursor:pointer;">
-                                <input type="checkbox" id="bc-active" checked style="accent-color:var(--accent);"> Aktif
+                                <input type="checkbox" id="bc-active" checked style="accent-color:var(--primary);"> Aktifkan
                             </label>
                         </div>
                     </div>
 
-                    <button onclick="sendBroadcastPusat()" class="btn-primary" style="width:100%; padding:9px;">🚀 Terbitkan</button>
+                    <button onclick="sendBroadcastPusat()" class="btn-act btn-primary" style="width:100%; padding:11px;">🚀 Terbitkan Pengumuman</button>
                 </div>
             </div>
         </section>
 
-        <!-- MENU 4: USERS -->
+        <!-- TAB 5: KELOLA SANDI DAERAH -->
         <section id="view-users" class="app-view">
             <div class="panel">
-                <div class="panel-title">Pengaturan Sandi Daerah</div>
+                <div class="panel-title">
+                    <span>🔑 Pengaturan Sandi Pengurus Daerah</span>
+                </div>
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
                                 <th>Daerah</th>
-                                <th>Sandi Saat Ini</th>
-                                <th style="text-align:center;">Aksi</th>
+                                <th style="text-align:center;">Sandi Akses Saat Ini</th>
+                                <th style="text-align:center;">Aksi Editor</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-users">
-                            <tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:12px;">Memuat data...</td></tr>
+                            <tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:12px;">Memuat daftar password...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -602,6 +435,10 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         <button class="nav-item active" id="nav-btn-dashboard" onclick="switchNav('dashboard')">
             <span class="nav-icon">📊</span>
             <span>Dashboard</span>
+        </button>
+        <button class="nav-item" id="nav-btn-editor" onclick="switchNav('editor')">
+            <span class="nav-icon">✏️</span>
+            <span>Edit Data</span>
         </button>
         <button class="nav-item" id="nav-btn-progress" onclick="switchNav('progress')">
             <span class="nav-icon">📋</span>
@@ -617,1665 +454,151 @@ button { border: none; cursor: pointer; font-family: inherit; font-weight: 800; 
         </button>
     </nav>
 
-    <!-- MODALS -->
-    <div id="modal-ganti-pekan" class="modal-overlay">
-        <div class="modal-box slide-up" style="max-width:340px; text-align:center;">
-            <div style="font-size:32px; margin-bottom:6px;">⚠️</div>
-            <h3 style="font-size:14px; font-weight:800; color:var(--text-main); margin-bottom:4px;">Konfirmasi Ganti Pekan</h3>
-            <p style="font-size:11px; color:var(--text-muted); line-height:1.4; margin-bottom:12px;">
-                Tentukan Bulan & Tahun Hijriah untuk arsip rekap pekan ini:
-            </p>
-            
-            <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:12px; text-align:left;">
-                <label style="font-size:10px; font-weight:800; color:var(--text-muted);">Bulan Hijriah Pekan Ini:</label>
-                <select id="archive-bulan-hijri" class="select-control">
-                    <option value="Muharram">1. Muharram</option>
-                    <option value="Safar">2. Safar</option>
-                    <option value="Rabi'ul Awal">3. Rabi'ul Awal</option>
-                    <option value="Rabi'ul Akhir">4. Rabi'ul Akhir</option>
-                    <option value="Jumadil Ula">5. Jumadil Ula</option>
-                    <option value="Jumadil Akhirah">6. Jumadil Akhirah</option>
-                    <option value="Rajab">7. Rajab</option>
-                    <option value="Sya'ban">8. Sya'ban</option>
-                    <option value="Ramadhan">9. Ramadhan</option>
-                    <option value="Syawal">10. Syawal</option>
-                    <option value="Dzulqa'dah">11. Dzulqa'dah</option>
-                    <option value="Dzulhijjah">12. Dzulhijjah</option>
-                </select>
-
-                <label style="font-size:10px; font-weight:800; color:var(--text-muted);">Tahun Hijriah Pekan Ini:</label>
-                <input type="number" id="archive-tahun-hijri" class="input-search" placeholder="Contoh: 1448" value="1448">
+    <!-- MODAL EDIT KOREKSI SANTRI -->
+    <div id="modal-edit-koreksi" class="modal-overlay" onclick="if(event.target===this) closeEditModal()">
+        <div class="modal-content slide-up">
+            <div class="modal-header">
+                <div style="font-size:13px; font-weight:800; letter-spacing:0.5px;">EDIT KOREKSI SANTRI</div>
+                <button onclick="closeEditModal()" style="background:rgba(255,255,255,0.25); color:white; border:none; width:26px; height:26px; border-radius:50%; font-size:12px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
             </div>
 
-            <div style="display:flex; gap:6px; justify-content:center;">
-                <button onclick="closeGantiPekanModal()" style="padding:8px 12px; background:#f1f5f9; border-radius:6px; font-size:10px; font-weight:800; flex:1;">Batal</button>
-                <button onclick="executeGantiPekan()" class="btn-primary" style="background:var(--alpha-color); padding:8px 12px; border-radius:6px; flex:1;">Ya, Simpan & Reset</button>
+            <div class="modal-body">
+                <div class="id-card-box">
+                    <div class="photo-container-id">
+                        <img id="edit-foto" src="" alt="Foto Santri" class="photo-img-id" style="display:none;" onerror="this.style.display='none'; document.getElementById('edit-foto-placeholder').style.display='flex';">
+                        <div id="edit-foto-placeholder" class="photo-placeholder-id">👤</div>
+                    </div>
+                    <div class="id-card-details">
+                        <div class="id-card-nama" id="edit-nama">Nama Santri</div>
+                        <div class="santri-meta">ID PPS: <b id="edit-pps" style="color:var(--text-main);">-</b></div>
+                        <div class="santri-meta">Domisili/Kamar: <b id="edit-domisili" style="color:var(--primary); font-weight:800;">-</b></div>
+                    </div>
+                </div>
+
+                <div class="section-box">
+                    <div class="section-title" style="color:var(--alpha-color);">
+                        <span>Tanggal Alpha (A)</span>
+                        <button onclick="addTodayDate('alpha')" style="font-size:9px; color:var(--alpha-color); background:var(--alpha-bg); border:none; padding:3px 8px; border-radius:6px; font-weight:800; cursor:pointer;">+ Hari Ini</button>
+                    </div>
+                    <div class="chips-wrapper" id="chips-alpha"></div>
+                    <div class="quick-input-group">
+                        <input type="text" id="input-add-alpha" placeholder="Misal: 1, 2, 3..." onkeydown="if(event.key==='Enter'){event.preventDefault();tambahTanggal('alpha');}">
+                        <button onclick="tambahTanggal('alpha')" class="btn-add-chip" style="background:var(--alpha-color);">+ Alpha</button>
+                    </div>
+                </div>
+
+                <div class="section-box">
+                    <div class="section-title" style="color:var(--izin-color);">
+                        <span>Tanggal Izin (I)</span>
+                        <button onclick="addTodayDate('izin')" style="font-size:9px; color:var(--izin-color); background:var(--izin-bg); border:none; padding:3px 8px; border-radius:6px; font-weight:800; cursor:pointer;">+ Hari Ini</button>
+                    </div>
+                    <div class="chips-wrapper" id="chips-izin"></div>
+                    <div class="quick-input-group">
+                        <input type="text" id="input-add-izin" placeholder="Misal: 1, 2, 3..." onkeydown="if(event.key==='Enter'){event.preventDefault();tambahTanggal('izin');}">
+                        <button onclick="tambahTanggal('izin')" class="btn-add-chip" style="background:var(--izin-color);">+ Izin</button>
+                    </div>
+                </div>
+
+                <div class="section-box">
+                    <div class="section-title" style="color:var(--sakit-color);">
+                        <span>Tanggal Sakit (S)</span>
+                        <button onclick="addTodayDate('sakit')" style="font-size:9px; color:var(--sakit-color); background:var(--sakit-bg); border:none; padding:3px 8px; border-radius:6px; font-weight:800; cursor:pointer;">+ Hari Ini</button>
+                    </div>
+                    <div class="chips-wrapper" id="chips-sakit"></div>
+                    <div class="quick-input-group">
+                        <input type="text" id="input-add-sakit" placeholder="Misal: 1, 2, 3..." onkeydown="if(event.key==='Enter'){event.preventDefault();tambahTanggal('sakit');}">
+                        <button onclick="tambahTanggal('sakit')" class="btn-add-chip" style="background:var(--sakit-color);">+ Sakit</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label style="font-size:10px; font-weight:800; color:var(--text-muted); display:block; margin-bottom:4px;">
+                        KETERANGAN TAKLIMDA 
+                        <span id="ket-required-badge" style="color:#e11d48; font-size:9px; font-weight:800; display:none;">*(Wajib diisi karena ada Alpha)</span>
+                    </label>
+                    <input type="text" id="edit-ket" class="input-search" placeholder="Contoh: Haddam, Pulang, dll..">
+                </div>
+
+                <div style="display:flex; gap:8px; margin-top:4px;">
+                    <button onclick="closeEditModal()" style="flex:1; padding:12px; background:#f1f5f9; color:var(--text-main); font-weight:800; border-radius:12px; font-size:12px; border:none; cursor:pointer;">Batal</button>
+                    <button onclick="saveEditModal()" class="btn-act btn-primary" style="flex:2; padding:12px; font-size:12px; border-radius:12px;">Simpan Data ➔</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="modal-pass" class="modal-overlay">
-        <div class="modal-box">
-            <h3 style="font-size:13px; font-weight:800; margin-bottom:4px;">Ubah Sandi Daerah <span id="modal-target-daerah">A</span></h3>
-            <p style="font-size:10px; color:var(--text-muted); margin-bottom:12px;">Sandi baru langsung berlaku di HP Pengurus.</p>
-            <input type="text" id="input-new-pass" placeholder="Masukkan Sandi Baru..." style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px; font-weight:700; margin-bottom:12px; font-size:11px; outline:none;">
-            <div style="display:flex; gap:6px; justify-content:flex-end;">
-                <button onclick="closePassModal()" style="padding:8px 12px; background:#f1f5f9; border-radius:6px; font-size:10px; font-weight:800;">Batal</button>
-                <button onclick="submitNewPassword()" class="btn-primary" style="padding:8px 12px; border-radius:6px;">Simpan</button>
+    <!-- MODAL GANTI PEKAN / ARSIP -->
+    <div id="modal-ganti-pekan" class="modal-overlay center-modal">
+        <div class="modal-content slide-up" style="max-width:360px; padding:16px;">
+            <div style="text-align:center;">
+                <div style="font-size:32px; margin-bottom:6px;">📦</div>
+                <h3 style="font-size:14px; font-weight:800; color:var(--text-main); margin-bottom:4px;">Konfirmasi Ganti Pekan</h3>
+                <p style="font-size:11px; color:var(--text-muted); line-height:1.4; margin-bottom:12px;">
+                    Tentukan Bulan & Tahun Hijriah untuk arsip rekap pekan ini:
+                </p>
+                
+                <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px; text-align:left;">
+                    <label style="font-size:10px; font-weight:800; color:var(--text-muted);">Bulan Hijriah Pekan Ini:</label>
+                    <select id="archive-bulan-hijri" class="select-control">
+                        <option value="Muharram">1. Muharram</option>
+                        <option value="Safar">2. Safar</option>
+                        <option value="Rabi'ul Awal">3. Rabi'ul Awal</option>
+                        <option value="Rabi'ul Akhir">4. Rabi'ul Akhir</option>
+                        <option value="Jumadil Ula">5. Jumadil Ula</option>
+                        <option value="Jumadil Akhirah">6. Jumadil Akhirah</option>
+                        <option value="Rajab">7. Rajab</option>
+                        <option value="Sya'ban">8. Sya'ban</option>
+                        <option value="Ramadhan">9. Ramadhan</option>
+                        <option value="Syawal">10. Syawal</option>
+                        <option value="Dzulqa'dah">11. Dzulqa'dah</option>
+                        <option value="Dzulhijjah">12. Dzulhijjah</option>
+                    </select>
+
+                    <label style="font-size:10px; font-weight:800; color:var(--text-muted);">Tahun Hijriah Pekan Ini:</label>
+                    <input type="number" id="archive-tahun-hijri" class="input-search" placeholder="Contoh: 1448" value="1448">
+                </div>
+
+                <div style="display:flex; gap:8px;">
+                    <button onclick="closeGantiPekanModal()" style="padding:10px; background:#f1f5f9; border-radius:10px; font-size:11px; font-weight:800; flex:1; border:none; cursor:pointer;">Batal</button>
+                    <button onclick="executeGantiPekan()" class="btn-act" style="background:var(--alpha-color); color:white; padding:10px; border-radius:10px; flex:1.5;">Ya, Simpan & Reset</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="modal-detail-daerah" class="modal-overlay">
-        <div class="modal-box-lg">
-            <div class="modal-header-lg">
+    <!-- MODAL DETAIL BREAKDOWN DAERAH -->
+    <div id="modal-detail-daerah" class="modal-overlay center-modal">
+        <div class="modal-content slide-up" style="max-width:520px; border-radius:20px;">
+            <div class="modal-header">
                 <div>
                     <div style="font-size:9px; opacity:0.8; font-weight:800; text-transform:uppercase;">Rincian Detail Absensi</div>
                     <div style="font-size:13px; font-weight:800;" id="detail-daerah-title">Daerah A</div>
                 </div>
-                <button onclick="closeDetailModal()" style="background:rgba(255,255,255,0.2); color:white; border:none; width:26px; height:26px; border-radius:50%; font-size:12px; font-weight:bold; cursor:pointer;">✕</button>
+                <button onclick="closeDetailModal()" style="background:rgba(255,255,255,0.25); color:white; border:none; width:26px; height:26px; border-radius:50%; font-size:12px; font-weight:bold; cursor:pointer;">✕</button>
             </div>
-            <div class="modal-body-lg" id="detail-daerah-body"></div>
+            <div class="modal-body" id="detail-daerah-body" style="max-height:75vh;"></div>
         </div>
     </div>
 
-<script>
-    const APPS_SCRIPT_URL_REKAP  = "https://script.google.com/macros/s/AKfycbz1ecMJ8KBdbsNhuJCm_eYrRH2ATxZH7sn73GV-B19JoxKLNMrS8BCS8fZNnHBcqjM/exec";
-    const APPS_SCRIPT_URL_MASTER = "https://script.google.com/macros/s/AKfycbzV_l5rAXgnapi2c3ZH90WOusrHgN-Ny9wjaFJ9tczCl1mkz1pURw_sZUYhEF4YY6byRg/exec";
-
-    function escapeHtml(str) {
-        if (str === null || str === undefined) return '';
-        return String(str)
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-
-    (function preRenderFastCache() {
-        try {
-            const quickCache = localStorage.getItem('TAKLI_QUICK_KPI');
-            if (quickCache) {
-                const data = JSON.parse(quickCache);
-                document.addEventListener("DOMContentLoaded", () => {
-                    if (data.totSantri !== undefined) document.getElementById('dash-total-santri').innerText = data.totSantri;
-                    if (data.totSudah !== undefined) document.getElementById('dash-total-sudah').innerText = data.totSudah;
-                    if (data.pctSudah) document.getElementById('dash-pct-sudah').innerText = data.pctSudah;
-                    if (data.sakitText) document.getElementById('dash-pct-sakit').innerText = data.sakitText;
-                    if (data.izinText) document.getElementById('dash-pct-izin').innerText = data.izinText;
-                    if (data.alphaText) document.getElementById('dash-pct-alpha').innerText = data.alphaText;
-                    if (data.countSakit !== undefined) document.getElementById('dash-total-sakit').innerText = data.countSakit;
-                    if (data.countIzin !== undefined) document.getElementById('dash-total-izin').innerText = data.countIzin;
-                    if (data.countAlpha !== undefined) document.getElementById('dash-total-alpha').innerText = data.countAlpha;
-                });
-            }
-        } catch(e) {}
-    })();
-
-    let rawKoreksiData = [];
-    let rawMasterData = [];
-    let rawUserData = [];
-    let memoryMasterCache = null;
-    let currentConfigMode = "all";
-    let activePassDaerah = "";
-    let autoSyncTimer = null;
-    let isAutoSyncEnabled = true;
-    let isFetching = false;
-    let activeBroadcastData = null;
-
-    let barChartInstance = null;
-    let mtqChartInstance = null;
-    let mqsChartInstance = null;
-    let dimensionChartInstance = null;
-    let donutChartInstance = null;
-    let lineTrendChartInstance = null;
-
-    const DB_NAME = "TaklimdaDB";
-    const DB_VERSION = 2;
-    const STORE_NAME = "master_cache";
-
-    function openIDB() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
-            request.onupgradeneeded = (e) => {
-                const db = e.target.result;
-                if (!db.objectStoreNames.contains(STORE_NAME)) {
-                    db.createObjectStore(STORE_NAME);
-                }
-            };
-            request.onsuccess = (e) => resolve(e.target.result);
-            request.onerror = (e) => reject(e.target.error);
-        });
-    }
-
-    async function getCacheIDB(key) {
-        try {
-            const db = await openIDB();
-            if (!db.objectStoreNames.contains(STORE_NAME)) return null;
-            return new Promise((resolve) => {
-                const tx = db.transaction(STORE_NAME, "readonly");
-                const store = tx.objectStore(STORE_NAME);
-                const req = store.get(key);
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => resolve(null);
-            });
-        } catch (e) { return null; }
-    }
-
-    async function setCacheIDB(key, val) {
-        try {
-            const db = await openIDB();
-            if (!db.objectStoreNames.contains(STORE_NAME)) return false;
-            return new Promise((resolve) => {
-                const tx = db.transaction(STORE_NAME, "readwrite");
-                const store = tx.objectStore(STORE_NAME);
-                const req = store.put(val, key);
-                req.onsuccess = () => resolve(true);
-                req.onerror = () => resolve(false);
-            });
-        } catch (e) { return false; }
-    }
-
-    async function removeCacheIDB(key) {
-        try {
-            const db = await openIDB();
-            if (!db.objectStoreNames.contains(STORE_NAME)) return false;
-            return new Promise((resolve) => {
-                const tx = db.transaction(STORE_NAME, "readwrite");
-                const store = tx.objectStore(STORE_NAME);
-                const req = store.delete(key);
-                req.onsuccess = () => resolve(true);
-                req.onerror = () => resolve(false);
-            });
-        } catch (e) { return false; }
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-        loadAllRealtimeData(false);
-        startAutoSync();
-    });
-
-    function showToast(msg) {
-        const t = document.getElementById('toast');
-        if (!t) return;
-        t.innerText = msg;
-        t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 2000);
-    }
-
-    function switchNav(menu) {
-        document.querySelectorAll('.app-view').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-
-        document.getElementById(`view-${menu}`).classList.add('active');
-        document.getElementById(`nav-btn-${menu}`).classList.add('active');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-
-        if (menu === 'dashboard') {
-            setTimeout(() => {
-                if (lineTrendChartInstance) lineTrendChartInstance.resize();
-                if (barChartInstance) barChartInstance.resize();
-                if (mtqChartInstance) mtqChartInstance.resize();
-                if (mqsChartInstance) mqsChartInstance.resize();
-                if (donutChartInstance) donutChartInstance.resize();
-                if (dimensionChartInstance) dimensionChartInstance.resize();
-            }, 100);
-        }
-    }
-
-    function startAutoSync() {
-        if (autoSyncTimer) clearTimeout(autoSyncTimer);
-
-        async function scheduleNext() {
-            if (isAutoSyncEnabled && navigator.onLine && !isFetching) {
-                await loadAllRealtimeData(true);
-            }
-            autoSyncTimer = setTimeout(scheduleNext, 35000);
-        }
-
-        autoSyncTimer = setTimeout(scheduleNext, 35000);
-    }
-
-    function toggleAutoSync(enabled) {
-        isAutoSyncEnabled = enabled;
-        showToast(enabled ? "✅ Auto-Refresh (35s)" : "⏸️ Auto-Refresh Nonaktif");
-    }
-
-    function destroyAllCharts() {
-        if (lineTrendChartInstance) { lineTrendChartInstance.destroy(); lineTrendChartInstance = null; }
-        if (barChartInstance) { barChartInstance.destroy(); barChartInstance = null; }
-        if (mtqChartInstance) { mtqChartInstance.destroy(); mtqChartInstance = null; }
-        if (mqsChartInstance) { mqsChartInstance.destroy(); mqsChartInstance = null; }
-        if (donutChartInstance) { donutChartInstance.destroy(); donutChartInstance = null; }
-        if (dimensionChartInstance) { dimensionChartInstance.destroy(); dimensionChartInstance = null; }
-    }
-
-    async function manualSync() {
-        if (!isFetching) {
-            destroyAllCharts();
-            memoryMasterCache = null;
-            await removeCacheIDB('MASTER_DATA_CACHE');
-            await removeCacheIDB('MASTER_DATA_TIME');
-            await removeCacheIDB('REKAP_DATA_CACHE');
-            loadAllRealtimeData(false);
-        }
-    }
-
-    function openGantiPekanModal() {
-        let selBulan = document.getElementById('filter-global-bulan')?.value;
-        let selTahun = document.getElementById('filter-global-tahun')?.value;
-        if (selBulan && selBulan !== 'ALL') document.getElementById('archive-bulan-hijri').value = selBulan;
-        
-        if (selTahun && selTahun !== 'ALL') {
-            document.getElementById('archive-tahun-hijri').value = selTahun;
-        } else {
-            document.getElementById('archive-tahun-hijri').value = "1448";
-        }
-
-        document.getElementById('modal-ganti-pekan').style.display = 'flex';
-    }
-
-    function closeGantiPekanModal() {
-        document.getElementById('modal-ganti-pekan').style.display = 'none';
-    }
-
-    async function executeGantiPekan() {
-        let bHijri = document.getElementById('archive-bulan-hijri').value;
-        let tHijri = document.getElementById('archive-tahun-hijri').value.trim();
-
-        if (!tHijri) return alert("Tahun Hijriah wajib diisi!");
-
-        closeGantiPekanModal();
-        showToast(`Memproses arsip ${bHijri} ${tHijri}...`);
-
-        try {
-            let res = await fetch(APPS_SCRIPT_URL_REKAP, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({
-                    action: 'archiveAndResetWeek',
-                    bulanHijri: bHijri,
-                    tahunHijri: tHijri
-                })
-            });
-
-            let jsonRes = await res.json();
-
-            if (jsonRes.status === 'success') {
-                showToast("✅ " + jsonRes.message);
-                setTimeout(() => {
-                    loadAllRealtimeData(false);
-                }, 1000);
-            } else {
-                alert("❌ " + jsonRes.message);
-            }
-        } catch(e) {
-            console.error(e);
-            showToast("❌ Gagal terhubung ke server!");
-        }
-    }
-
-    function normalizeId(val) {
-        if (val === null || val === undefined) return '';
-        let str = String(val).trim();
-        str = str.replace(/\.0$/, '');
-        if (/^0+$/.test(str)) return '0';
-        return str.replace(/^0+/, '');
-    }
-
-    function getRowVal(obj, ...possibleKeys) {
-        if (!obj || typeof obj !== 'object') return '';
-        const normMap = {};
-        for (let key in obj) {
-            if (Object.prototype.hasOwnProperty.call(obj, key)) {
-                let cleanKey = String(key).toLowerCase().replace(/[^a-z0-9]/g, '');
-                normMap[cleanKey] = obj[key];
-            }
-        }
-        for (let target of possibleKeys) {
-            let cleanTarget = String(target).toLowerCase().replace(/[^a-z0-9]/g, '');
-            if (normMap[cleanTarget] !== undefined && normMap[cleanTarget] !== null && normMap[cleanTarget] !== '') {
-                return String(normMap[cleanTarget]).trim();
-            }
-        }
-        return '';
-    }
-
-    function extractDaerahLetter(domStr) {
-        if (!domStr) return 'LAIN';
-        let str = String(domStr).trim().toUpperCase();
-        str = str.replace(/^(DAERAH|KAMAR|WILAYAH|BLOK|RUMAH)\s*/i, '').trim();
-        let match = str.match(/^[A-Z]\b/) || str.match(/\b[A-Z]\b/);
-        return match ? match[0] : 'LAIN';
-    }
-
-    async function safeFetchJson(url, timeoutMs = 90000) {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-        try {
-            let r = await fetch(url, { 
-                method: 'GET', 
-                redirect: 'follow',
-                signal: controller.signal 
-            });
-            clearTimeout(timer);
-
-            if (!r.ok) {
-                console.error(`[Fetch Error] HTTP Status: ${r.status}`);
-                return null;
-            }
-            
-            let text = await r.text();
-            try { 
-                return JSON.parse(text); 
-            } catch (e) { 
-                console.error("[Fetch Error] Gagal parse JSON:", text.substring(0, 150)); 
-                return null; 
-            }
-        } catch(e) {
-            clearTimeout(timer);
-            if (e.name === 'AbortError') {
-                console.error(`[Fetch Error] Request dibatalkan karena Timeout.`);
-            } else {
-                console.error("[Fetch Error] Network failure:", e);
-            }
-            return null;
-        }
-    }
-
-    function transformRekapList(listRekap) {
-        return listRekap.map((r, idx) => {
-            let rawId = getRowVal(r, 'idpps', 'id pps', 'id', 'idppsantri', 'nis');
-            let cleanId = normalizeId(rawId);
-            let rawTs = getRowVal(r, 'timestamp', 'waktu', 'updatedat', 'tgl', 'tanggalarchive');
-            let cleanTs = (rawTs && rawTs !== '-') ? rawTs : '';
-
-            let sVal = getRowVal(r, 'tanggalsakit', 'tglsakit', 'sakit');
-            let iVal = getRowVal(r, 'tanggalizin', 'tglizin', 'izin');
-            let aVal = getRowVal(r, 'tanggalalpa', 'tanggalalpha', 'tglalpa', 'alpha');
-
-            return {
-                ...r,
-                idpps: cleanId || `id_${idx}`,
-                namasantri: getRowVal(r, 'namasantri', 'nama', 'namalengkap') || '-',
-                domisili: getRowVal(r, 'domisili', 'daerah', 'kamar', 'wilayah') || '-',
-                marhalah: getRowVal(r, 'marhalah/jilid', 'marhalah', 'jilid'),
-                tingkat: getRowVal(r, 'tingkat', 'tingkatpendidikan') || '-',
-                kelas: getRowVal(r, 'kelas') || '-',
-                kategori: getRowVal(r, 'kategori', 'kategoribaru') || '',
-                majliskitab: getRowVal(r, 'majliskitab', 'jalsah'),
-                bulanhijriah: getRowVal(r, 'bulanhijriah', 'bulan'),
-                tahunhijriah: getRowVal(r, 'tahunhijriah', 'tahun'),
-                tanggalsakit: sVal,
-                tanggalizin: iVal,
-                tanggalalpa: aVal,
-                _sakitParsed: parseDates(sVal, 1, 30),
-                _izinParsed: parseDates(iVal, 1, 30),
-                _alphaParsed: parseDates(aVal, 1, 30),
-                status: getRowVal(r, 'status', 'statuskoreksi', 'koreksi', 'ket'),
-                _timestamp: cleanTs,
-                _source: r._source || 'koreksi',
-                _updateIndex: idx
-            };
-        });
-    }
-
-    async function loadAllRealtimeData(isSilent = false) {
-        if (isFetching) return;
-        isFetching = true;
-        if (!isSilent) showToast("Memuat Data...");
-
-        try {
-            const parseArray = (res) => {
-                if (Array.isArray(res)) return res;
-                if (res && Array.isArray(res.data)) return res.data;
-                if (res && Array.isArray(res.result)) return res.result;
-                return [];
-            };
-
-            if (!memoryMasterCache) {
-                let cachedMaster = await getCacheIDB('MASTER_DATA_CACHE');
-                if (cachedMaster && cachedMaster.dataUtama) {
-                    memoryMasterCache = cachedMaster;
-                    parseAndSetMasterData(cachedMaster);
-                }
-            }
-
-            let cachedRekap = await getCacheIDB('REKAP_DATA_CACHE');
-            if (cachedRekap && Array.isArray(cachedRekap) && cachedRekap.length > 0) {
-                rawKoreksiData = transformRekapList(cachedRekap);
-                populateGlobalDaerahDropdown();
-                populateGlobalTahunDropdown();
-                processAndRenderStats(); 
-            }
-
-            let initRes = await safeFetchJson(APPS_SCRIPT_URL_REKAP + "?action=getAllInitData", 45000);
-
-            if (initRes && initRes.status === 'success') {
-                if (initRes.config && initRes.config.filterAbsen) {
-                    currentConfigMode = String(initRes.config.filterAbsen).toLowerCase();
-                    updateConfigUI(currentConfigMode);
-                }
-                rawUserData = initRes.users || [];
-                activeBroadcastData = initRes.broadcast || null;
-                renderBroadcastCardUI(activeBroadcastData);
-
-                let listRekap = parseArray(initRes.rekap);
-
-                if (listRekap.length > 0) {
-                    rawKoreksiData = transformRekapList(listRekap);
-                    await setCacheIDB('REKAP_DATA_CACHE', listRekap);
-                }
-
-                populateGlobalDaerahDropdown();
-                populateGlobalTahunDropdown();
-                processAndRenderStats();
-                renderUsersTable();
-            }
-
-            if (!isSilent) showToast("Dashboard Siap!");
-
-            const NOW = new Date().getTime();
-            let cacheTime = await getCacheIDB('MASTER_DATA_TIME');
-
-            if (!memoryMasterCache || !cacheTime || (NOW - parseInt(cacheTime, 10) >= 3600000)) {
-                let masterRes = await safeFetchJson(APPS_SCRIPT_URL_MASTER, 45000);
-                if (masterRes && masterRes.dataUtama) {
-                    memoryMasterCache = masterRes;
-                    await setCacheIDB('MASTER_DATA_CACHE', masterRes);
-                    await setCacheIDB('MASTER_DATA_TIME', NOW.toString());
-                    parseAndSetMasterData(masterRes);
-                    processAndRenderStats();
-                }
-            }
-
-        } catch(e) {
-            console.error("Error Global:", e);
-            if (!isSilent) showToast("Gagal terhubung!");
-        } finally {
-            isFetching = false;
-        }
-    }
-
-    function parseAndSetMasterData(masterRes) {
-        if (!masterRes || !masterRes.dataUtama || !masterRes.headersUtama) return;
-        let headers = masterRes.headersUtama.map(h => String(h).trim());
-        let mutaallimMap = masterRes.mutaallimMap || {};
-
-        rawMasterData = masterRes.dataUtama.map(row => {
-            let item = {};
-            headers.forEach((h, idx) => {
-                item[h] = row[idx] !== undefined && row[idx] !== null ? String(row[idx]).trim() : '';
-            });
-
-            let rawId = getRowVal(item, 'idpps', 'id pps', 'id') || row[0] || '';
-            let idPps = normalizeId(rawId);
-            let mData = mutaallimMap[idPps] || mutaallimMap[rawId] || {};
-            let extraCat = (item['Kategori'] || '') + " " + (mData['KATEGORI BARU'] || mData['Kategori'] || '');
-
-            return {
-                idpps: idPps,
-                nama: getRowVal(item, 'nama', 'namasantri') || row[1] || '',
-                domisili: getRowVal(item, 'domisili', 'statusdomisili') || row[6] || '',
-                kelas: getRowVal(item, 'kelas') || row[7] || '',
-                tingkat: getRowVal(item, 'tingkat') || row[8] || '',
-                kategoriText: extraCat.toUpperCase(),
-                rawMaster: item
-            };
-        });
-        populateGlobalDaerahDropdown();
-    }
-
-    function populateGlobalTahunDropdown() {
-        let select = document.getElementById('filter-global-tahun');
-        if (!select) return;
-
-        let currVal = select.value;
-        select.innerHTML = '<option value="ALL">📅 Semua Tahun</option>';
-
-        let tahunSet = new Set();
-        rawKoreksiData.forEach(r => {
-            let t = r.tahunhijriah || r.tahun;
-            if (t && String(t).trim() !== '' && String(t).trim() !== 'undefined' && String(t).trim() !== 'null') {
-                tahunSet.add(String(t).trim());
-            }
-        });
-
-        if (tahunSet.size === 0) tahunSet.add("1448");
-
-        let sortedYears = Array.from(tahunSet)
-            .map(n => parseInt(n, 10))
-            .filter(n => !isNaN(n))
-            .sort((a,b) => b - a);
-
-        sortedYears.forEach(y => {
-            let opt = document.createElement('option');
-            opt.value = y;
-            opt.innerText = `${y} H`;
-            select.appendChild(opt);
-        });
-
-        select.value = currVal && select.querySelector(`option[value="${currVal}"]`) ? currVal : "ALL";
-    }
-    
-    function populateGlobalDaerahDropdown() {
-        let select = document.getElementById('filter-global-daerah');
-        if (!select) return;
-        let currVal = select.value;
-        select.innerHTML = '<option value="ALL">📍 Semua Daerah</option>';
-
-        let daerahSet = new Set();
-        rawMasterData.forEach(m => {
-            let ltr = extractDaerahLetter(m.domisili);
-            if (ltr && ltr !== 'LAIN') daerahSet.add(ltr);
-        });
-
-        Array.from(daerahSet).sort().forEach(ltr => {
-            let opt = document.createElement('option');
-            opt.value = ltr;
-            opt.innerText = `Daerah ${ltr}`;
-            select.appendChild(opt);
-        });
-
-        select.value = currVal || "ALL";
-    }
-
-    function resetGlobalFilters() {
-        document.getElementById('filter-global-daerah').value = "ALL";
-        document.getElementById('filter-global-kategori').value = "ALL";
-        document.getElementById('filter-global-bulan').value = "ALL";
-        document.getElementById('filter-global-tahun').value = "ALL";
-        document.getElementById('filter-tgl-min').value = "";
-        document.getElementById('filter-tgl-max').value = "";
-        processAndRenderStats();
-        showToast("🔄 Filter Reset!");
-    }
-
-    function renderBroadcastCardUI(bcData) {
-        let statusBadge = document.getElementById('current-bc-status-badge');
-        let titleEl     = document.getElementById('current-bc-disp-title');
-        let msgEl       = document.getElementById('current-bc-disp-msg');
-        let btnToggle   = document.getElementById('btn-quick-toggle-bc');
-
-        if (!bcData || !bcData.title) {
-            statusBadge.className = 'status-tag status-matikan';
-            statusBadge.innerText = 'NONAKTIF';
-            titleEl.innerText = '(Belum ada pengumuman)';
-            msgEl.innerText = 'Tidak ada pengumuman.';
-            btnToggle.style.display = 'none';
-            return;
-        }
-
-        let isBcActive = (bcData.active === true || String(bcData.active).toLowerCase() === 'true');
-
-        if (isBcActive) {
-            statusBadge.className = 'status-tag status-selesai';
-            statusBadge.innerText = '● AKTIF';
-            btnToggle.style.display = 'inline-block';
-            btnToggle.className = 'btn-dark';
-            btnToggle.style.background = 'var(--alpha-color)';
-            btnToggle.innerText = '🛑 Matikan';
-        } else {
-            statusBadge.className = 'status-tag status-matikan';
-            statusBadge.innerText = '○ NONAKTIF';
-            btnToggle.style.display = 'inline-block';
-            btnToggle.className = 'btn-primary';
-            btnToggle.innerText = '🟢 Aktifkan';
-        }
-
-        titleEl.innerText = bcData.title || 'Pengumuman Pusat';
-        msgEl.innerText = bcData.message || '-';
-    }
-
-    function fillFormFromCurrentBc() {
-        if (!activeBroadcastData) return alert("Belum ada data pengumuman.");
-        document.getElementById('bc-title').value   = activeBroadcastData.title || '';
-        document.getElementById('bc-message').value = activeBroadcastData.message || '';
-        document.getElementById('bc-type').value    = activeBroadcastData.type || 'info';
-        document.getElementById('bc-active').checked = (activeBroadcastData.active === true || String(activeBroadcastData.active).toLowerCase() === 'true');
-        showToast("Dimuat ke form!");
-    }
-
-    async function quickToggleBroadcast() {
-        if (!activeBroadcastData) return;
-        let isCurrentlyActive = (activeBroadcastData.active === true || String(activeBroadcastData.active).toLowerCase() === 'true');
-        let newStatus = !isCurrentlyActive;
-
-        showToast(newStatus ? "Mengaktifkan..." : "Memonaktifkan...");
-
-        try {
-            let res = await fetch(APPS_SCRIPT_URL_REKAP, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({
-                    action: 'updateBroadcast',
-                    broadcast: {
-                        title: activeBroadcastData.title,
-                        message: activeBroadcastData.message,
-                        type: activeBroadcastData.type || 'info',
-                        active: newStatus
-                    }
-                })
-            });
-
-            let jsonRes = await res.json();
-            if (jsonRes.status === 'success') {
-                showToast("Berhasil diubah!");
-                loadAllRealtimeData(true);
-            }
-        } catch(e) {
-            console.error(e);
-            showToast("❌ Gagal!");
-        }
-    }
-
-    function updateConfigUI(mode) {
-        const badge = document.getElementById('badge-active-mode');
-        const badgeProgress = document.getElementById('progress-filter-label');
-        let labelText = mode === 'all' ? 'SEMUA DATA' : `KHUSUS ${mode.toUpperCase()}`;
-        
-        if (badge) {
-            badge.className = `config-badge ${mode}`;
-            badge.innerText = labelText;
-        }
-        if (badgeProgress) {
-            badgeProgress.className = `config-badge ${mode}`;
-            badgeProgress.innerText = labelText;
-        }
-
-        const radios = document.getElementsByName('optFilterAbsen');
-        radios.forEach(r => { r.checked = (r.value === mode); });
-    }
-
-    async function saveAppConfig() {
-        const radios = document.getElementsByName('optFilterAbsen');
-        let selectedVal = 'all';
-        radios.forEach(r => { if (r.checked) selectedVal = r.value; });
-
-        showToast("Menyimpan...");
-        try {
-            let res = await fetch(APPS_SCRIPT_URL_REKAP, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                body: JSON.stringify({ action: 'updateConfig', filterAbsen: selectedVal }) 
-            });
-
-            currentConfigMode = selectedVal;
-            updateConfigUI(selectedVal);
-            processAndRenderStats();
-            showToast("✅ Berhasil disimpan!");
-        } catch(e) {
-            console.error(e);
-            showToast("❌ Terjadi kesalahan!");
-        }
-    }
-
-    async function sendBroadcastPusat() {
-        let title = document.getElementById('bc-title').value.trim();
-        let message = document.getElementById('bc-message').value.trim();
-        let type = document.getElementById('bc-type').value;
-        let active = document.getElementById('bc-active').checked;
-
-        if (!title || !message) return alert("Judul & pesan wajib diisi!");
-
-        showToast("Menerbitkan...");
-
-        try {
-            let res = await fetch(APPS_SCRIPT_URL_REKAP, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({
-                    action: 'updateBroadcast',
-                    broadcast: { title, message, type, active }
-                })
-            });
-
-            let jsonRes = await res.json();
-            if (jsonRes.status === 'success') {
-                showToast("📢 Diterbitkan!");
-                loadAllRealtimeData(true);
-            }
-        } catch (e) {
-            console.error(e);
-            showToast("❌ Kesalahan koneksi!");
-        }
-    }
-
-    function parseDates(val, minTgl = 1, maxTgl = 30) {
-        if (!val) return [];
-        let str = String(val).trim();
-        if (!str || str === '-' || str === '0') return [];
-        if (/^\d{4}-\d{2}-\d{2}/.test(str)) return [];
-
-        let tokens = str.split(/[\s,;\/\-]+/);
-        let results = [];
-
-        for (let i = 0; i < tokens.length; i++) {
-            let clean = tokens[i].replace(/[^0-9]/g, '');
-            if (clean) {
-                let num = parseInt(clean, 10);
-                if (!isNaN(num) && num >= minTgl && num <= maxTgl) {
-                    results.push(num);
-                }
-            }
-        }
-
-        return results;
-    }
-
-    function filterParsedDates(dateArr, minTgl, maxTgl) {
-        if (!dateArr || dateArr.length === 0) return [];
-        return dateArr.filter(d => d >= minTgl && d <= maxTgl);
-    }
-
-    function normalizeDimension(val, dimType) {
-        let str = String(val || '').trim();
-        if (!str || str === '-' || str === 'null' || str === 'undefined') return 'Tidak Terisi';
-
-        if (dimType === 'marhalah') return str.toUpperCase();
-
-        if (dimType === 'tingkat') {
-            let upper = str.toUpperCase();
-            if (upper.includes('IBTIDAIYAH')) return 'Ibtidaiyah';
-            if (upper.includes('TSANAWIYAH')) return 'Tsanawiyah';
-            if (upper.includes('IDADIYAH')) return 'Idadiyah';
-            if (upper.includes('FIKIH')) return 'Fikih';
-            if (upper.includes('ALIYAH')) return 'Aliyah';
-            return str;
-        }
-
-        if (dimType === 'kelas') {
-            let matchNum = str.match(/(\d+)/);
-            if (matchNum) return `Kelas ${matchNum[1]}`;
-            if (str.toUpperCase().includes('TAKHOSSUS')) return 'Takhossus';
-            return str;
-        }
-
-        if (dimType === 'majliskitab') {
-            let upper = str.toUpperCase();
-            if (upper.includes('SURAU')) return 'Majlis Surau';
-            return str;
-        }
-
-        return str;
-    }
-
-    function processAndRenderStats() {
-        let filterDaerah   = document.getElementById('filter-global-daerah')?.value || "ALL";
-        let filterKategori = document.getElementById('filter-global-kategori')?.value || "ALL";
-        let filterBulan    = document.getElementById('filter-global-bulan')?.value || "ALL";
-        let filterTahun    = document.getElementById('filter-global-tahun')?.value || "ALL";
-
-        let rawMin = parseInt(document.getElementById('filter-tgl-min')?.value, 10);
-        let rawMax = parseInt(document.getElementById('filter-tgl-max')?.value, 10);
-
-        let tglMin = isNaN(rawMin) ? 1 : rawMin;
-        let tglMax = isNaN(rawMax) ? 30 : rawMax;
-
-        if (tglMin > tglMax) {
-            let tmp = tglMin; tglMin = tglMax; tglMax = tmp;
-        }
-
-        let statsPerDaerah = {};
-        'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(ltr => {
-            statsPerDaerah[ltr] = { total: 0, sudah: 0, belum: 0, sakit: 0, izin: 0, alpha: 0, santriList: [] };
-        });
-
-        let dimensionData = { marhalah: {}, tingkat: {}, kelas: {}, majliskitab: {} };
-        let dailyTrendData = { sakit: Array(31).fill(0), izin: Array(31).fill(0), alpha: Array(31).fill(0) };
-
-        let rekapMap = new Map();
-        rawKoreksiData.forEach(r => {
-            if (r.idpps && r.idpps !== '0' && !r.idpps.startsWith('id_')) {
-                rekapMap.set(r.idpps, r);
-            }
-        });
-
-        let mtqGlobal = { masterTotal: 0, hadir: 0, sakit: 0, izin: 0, alpha: 0 };
-        let mqsGlobal = { masterTotal: 0, hadir: 0, sakit: 0, izin: 0, alpha: 0 };
-
-        let mtqMqsDaerah = {};
-        'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(ltr => {
-            mtqMqsDaerah[ltr] = {
-                mtqTotal: 0, mtqHadir: 0, mtqSakit: 0, mtqIzin: 0, mtqAlpha: 0,
-                mqsTotal: 0, mqsHadir: 0, mqsSakit: 0, mqsIzin: 0, mqsAlpha: 0
-            };
-        });
-
-        if (rawMasterData.length > 0) {
-            rawMasterData.forEach(m => {
-                let idKey = m.idpps;
-                let dom   = String(m.domisili || '').toUpperCase().trim();
-                let letter = extractDaerahLetter(dom);
-
-                if (filterDaerah !== "ALL" && letter !== filterDaerah) return;
-
-                let isMTQ = m.kategoriText.includes('MTQ');
-                let isMQS = m.kategoriText.includes('MQS');
-
-                if (filterKategori === "MTQ" && !isMTQ) return;
-                if (filterKategori === "MQS" && !isMQS) return;
-
-                let rekapObj = rekapMap.get(idKey);
-                let sCount = 0, iCount = 0, aCount = 0;
-
-                if (rekapObj) {
-                    let rBulan = rekapObj.bulanhijriah || '';
-                    let rTahun = rekapObj.tahunhijriah || '';
-
-                    let matchBulan = (filterBulan === "ALL") || !rBulan || (rBulan.toLowerCase() === filterBulan.toLowerCase());
-                    let matchTahun = (filterTahun === "ALL") || !rTahun || (rTahun.toString() === filterTahun.toString());
-
-                    if (matchBulan && matchTahun) {
-                        sCount = filterParsedDates(rekapObj._sakitParsed, tglMin, tglMax).length;
-                        iCount = filterParsedDates(rekapObj._izinParsed, tglMin, tglMax).length;
-                        aCount = filterParsedDates(rekapObj._alphaParsed, tglMin, tglMax).length;
-                    }
-                }
-
-                let isSakit = sCount > 0;
-                let isIzin  = !isSakit && iCount > 0;
-                let isAlpha = !isSakit && !isIzin && aCount > 0;
-                let isHadir = !isSakit && !isIzin && !isAlpha;
-
-                if (isMTQ) {
-                    mtqGlobal.masterTotal++;
-                    if (isHadir) mtqGlobal.hadir++;
-                    if (isSakit) mtqGlobal.sakit++;
-                    if (isIzin)  mtqGlobal.izin++;
-                    if (isAlpha) mtqGlobal.alpha++;
-
-                    if (mtqMqsDaerah[letter]) {
-                        mtqMqsDaerah[letter].mtqTotal++;
-                        if (isHadir) mtqMqsDaerah[letter].mtqHadir++;
-                        if (isSakit) mtqMqsDaerah[letter].mtqSakit++;
-                        if (isIzin)  mtqMqsDaerah[letter].mtqIzin++;
-                        if (isAlpha) mtqMqsDaerah[letter].mtqAlpha++;
-                    }
-                }
-
-                if (isMQS) {
-                    mqsGlobal.masterTotal++;
-                    if (isHadir) mqsGlobal.hadir++;
-                    if (isSakit) mqsGlobal.sakit++;
-                    if (isIzin)  mqsGlobal.izin++;
-                    if (isAlpha) mqsGlobal.alpha++;
-
-                    if (mtqMqsDaerah[letter]) {
-                        mtqMqsDaerah[letter].mqsTotal++;
-                        if (isHadir) mtqMqsDaerah[letter].mqsHadir++;
-                        if (isSakit) mtqMqsDaerah[letter].mqsSakit++;
-                        if (isIzin)  mtqMqsDaerah[letter].mqsIzin++;
-                        if (isAlpha) mtqMqsDaerah[letter].mqsAlpha++;
-                    }
-                }
-            });
-        }
-
-        let totSantri = 0, totSudah = 0;
-        let totSakitHari = 0, totIzinHari = 0, totAlphaHari = 0;
-        let countSakitSantri = 0, countIzinSantri = 0, countAlphaSantri = 0;
-        let auditLogList = [];
-
-        rawKoreksiData.forEach(row => {
-            let dom = String(row.domisili || '').toUpperCase().trim();
-            let letter = extractDaerahLetter(dom);
-            let isKoreksiSheet = (row._source === 'koreksi' || !row._source);
-
-            if (filterDaerah !== "ALL" && letter !== filterDaerah) return;
-
-            let katText = String(row.kategori || '').toUpperCase();
-            if (filterKategori === "MTQ" && !katText.includes("MTQ")) return;
-            if (filterKategori === "MQS" && !katText.includes("MQS")) return;
-
-            let rBulan = row.bulanhijriah || '';
-            let rTahun = row.tahunhijriah || '';
-
-            if (filterBulan !== "ALL" && rBulan && rBulan.toLowerCase() !== filterBulan.toLowerCase()) return;
-            if (filterTahun !== "ALL" && rTahun && rTahun.toString() !== filterTahun.toString()) return;
-
-            let tSakit = filterParsedDates(row._sakitParsed, tglMin, tglMax);
-            let tIzin  = filterParsedDates(row._izinParsed, tglMin, tglMax);
-            let tAlpha = filterParsedDates(row._alphaParsed, tglMin, tglMax);
-
-            tSakit.forEach(day => { if(day <= 30) dailyTrendData.sakit[day]++; });
-            tIzin.forEach(day  => { if(day <= 30) dailyTrendData.izin[day]++; });
-            tAlpha.forEach(day => { if(day <= 30) dailyTrendData.alpha[day]++; });
-
-            let sCount = tSakit.length;
-            let iCount = tIzin.length;
-            let aCount = tAlpha.length;
-
-            let statusText = String(row.status || '').toLowerCase();
-            let isDone = (
-                statusText.includes('sudah') || 
-                statusText.includes('dikoreksi') || 
-                statusText.includes('sesuai') || 
-                statusText.includes('benar') ||
-                statusText.includes('selesai') ||
-                statusText.includes('v') ||
-                statusText.includes('✔')
-            ) && !statusText.includes('belum');
-
-            let isIncludedInMode = true;
-            if (currentConfigMode === 'alpha') isIncludedInMode = (aCount > 0) || isDone;
-            else if (currentConfigMode === 'izin') isIncludedInMode = (iCount > 0) || isDone;
-            else if (currentConfigMode === 'sakit') isIncludedInMode = (sCount > 0) || isDone;
-
-            if (!isIncludedInMode) return;
-
-            let namaSantri = row.namasantri || '-';
-            let idPps = row.idpps || '-';
-
-            // --- HITUNG MONITORING PROGRESS (KHUSUS SHEET KOREKSI ABSEN) ---
-            if (isKoreksiSheet) {
-                if (!statsPerDaerah[letter]) {
-                    statsPerDaerah[letter] = { total: 0, sudah: 0, belum: 0, sakit: 0, izin: 0, alpha: 0, santriList: [] };
-                }
-
-                statsPerDaerah[letter].santriList.push({
-                    nama: namaSantri, idPps: idPps, domisili: dom,
-                    sakit: sCount, izin: iCount, alpha: aCount, isDone: isDone, status: statusText
-                });
-
-                statsPerDaerah[letter].total++;
-                if (isDone) {
-                    statsPerDaerah[letter].sudah++;
-                    auditLogList.push({
-                        nama: namaSantri,
-                        daerah: letter,
-                        status: statusText || 'Sudah Dikoreksi',
-                        s: sCount, i: iCount, a: aCount,
-                        updateIndex: row._updateIndex || 0,
-                        timestamp: row._timestamp || 0
-                    });
-                } else {
-                    statsPerDaerah[letter].belum++;
-                }
-
-                if (sCount > 0) statsPerDaerah[letter].sakit++;
-                if (iCount > 0) statsPerDaerah[letter].izin++;
-                if (aCount > 0) statsPerDaerah[letter].alpha++;
-            }
-
-            // --- HITUNG MATRIKS & STATISTIK GLOBAL (DASHBOARD) ---
-            let dims = {
-                marhalah: normalizeDimension(row.marhalah, 'marhalah'),
-                tingkat: normalizeDimension(row.tingkat, 'tingkat'),
-                kelas: normalizeDimension(row.kelas, 'kelas'),
-                majliskitab: normalizeDimension(row.majliskitab, 'majliskitab')
-            };
-
-            Object.keys(dims).forEach(dKey => {
-                let catVal = dims[dKey];
-                if (!dimensionData[dKey][catVal]) {
-                    dimensionData[dKey][catVal] = { total: 0, sudah: 0, sakit: 0, izin: 0, alpha: 0 };
-                }
-                dimensionData[dKey][catVal].total++;
-                if (isDone) dimensionData[dKey][catVal].sudah++;
-                if (sCount > 0) dimensionData[dKey][catVal].sakit++;
-                if (iCount > 0) dimensionData[dKey][catVal].izin++;
-                if (aCount > 0) dimensionData[dKey][catVal].alpha++;
-            });
-
-            totSantri++;
-            if (isDone) totSudah++;
-            if (sCount > 0) countSakitSantri++;
-            if (iCount > 0) countIzinSantri++;
-            if (aCount > 0) countAlphaSantri++;
-
-            totSakitHari += sCount;
-            totIzinHari  += iCount;
-            totAlphaHari += aCount;
-        });
-
-        document.getElementById('dash-total-santri').innerText = totSantri;
-        document.getElementById('dash-total-sudah').innerText = totSudah;
-        document.getElementById('dash-pct-sudah').innerText = `${totSantri ? Math.round((totSudah/totSantri)*100) : 0}% selesai`;
-
-        document.getElementById('dash-total-sakit').innerText = countSakitSantri;
-        document.getElementById('dash-pct-sakit').innerText = `${countSakitSantri} Santri (${totSakitHari} Hari)`;
-
-        document.getElementById('dash-total-izin').innerText = countIzinSantri;
-        document.getElementById('dash-pct-izin').innerText = `${countIzinSantri} Santri (${totIzinHari} Hari)`;
-
-        document.getElementById('dash-total-alpha').innerText = countAlphaSantri;
-        document.getElementById('dash-pct-alpha').innerText = `${countAlphaSantri} Santri (${totAlphaHari} Hari)`;
-
-        try {
-            localStorage.setItem('TAKLI_QUICK_KPI', JSON.stringify({
-                totSantri, totSudah,
-                pctSudah: `${totSantri ? Math.round((totSudah/totSantri)*100) : 0}% selesai`,
-                countSakit: countSakitSantri, sakitText: `${countSakitSantri} Santri (${totSakitHari} Hari)`,
-                countIzin: countIzinSantri, izinText: `${countIzinSantri} Santri (${totIzinHari} Hari)`,
-                countAlpha: countAlphaSantri, alphaText: `${countAlphaSantri} Santri (${totAlphaHari} Hari)`
-            }));
-        } catch(e) {}
-
-        window.processedStats = statsPerDaerah;
-        window.processedDimension = dimensionData;
-
-        renderAuditLogTable(auditLogList);
-        renderMtqMqsTables(mtqGlobal, mqsGlobal, mtqMqsDaerah);
-        renderDimensionChartAndTable();
-        renderMonitoringTable();
-
-        setTimeout(() => {
-            renderLineTrendChart(dailyTrendData, tglMin, tglMax);
-            renderMtqMqsCharts(mtqMqsDaerah);
-            renderGraphicalChartsAndMatrix(countSakitSantri, countIzinSantri, countAlphaSantri, totSudah);
-        }, 50);
-    }
-
-    function renderLineTrendChart(trendData, minTgl, maxTgl) {
-        const canvas = document.getElementById('chartLineTrend');
-        if (!canvas) return;
-
-        let labels = [], dataS = [], dataI = [], dataA = [];
-
-        for (let d = minTgl; d <= maxTgl; d++) {
-            labels.push(`Tgl ${d}`);
-            dataS.push(trendData.sakit[d] || 0);
-            dataI.push(trendData.izin[d] || 0);
-            dataA.push(trendData.alpha[d] || 0);
-        }
-
-        if (lineTrendChartInstance) {
-            lineTrendChartInstance.data.labels = labels;
-            lineTrendChartInstance.data.datasets[0].data = dataS;
-            lineTrendChartInstance.data.datasets[1].data = dataI;
-            lineTrendChartInstance.data.datasets[2].data = dataA;
-            if (canvas.offsetWidth > 0) lineTrendChartInstance.update('none');
-            return;
-        }
-
-        lineTrendChartInstance = new Chart(canvas.getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    { label: 'Sakit (S)', data: dataS, borderColor: '#0284c7', backgroundColor: '#0284c715', tension: 0.3, fill: true },
-                    { label: 'Izin (I)', data: dataI, borderColor: '#d97706', backgroundColor: '#d9770615', tension: 0.3, fill: true },
-                    { label: 'Alpha (A)', data: dataA, borderColor: '#e11d48', backgroundColor: '#e11d4815', tension: 0.3, fill: true }
-                ]
-            },
-            options: {
-                animation: false,
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { ticks: { font: { size: 8, weight: 'bold' } } },
-                    y: { beginAtZero: true, ticks: { precision: 0 } }
-                },
-                plugins: { legend: { position: 'bottom', labels: { font: { size: 9, weight: 'bold' }, boxWidth: 8 } } }
-            }
-        });
-    }
-
-    function parseIndoDate(str) {
-        if (!str) return 0;
-        let s = String(str).trim();
-        if (!s || s === '-' || s === '0') return 0;
-        if (/^\d+$/.test(s)) return parseInt(s, 10);
-
-        let parsed = Date.parse(s);
-        if (!isNaN(parsed)) return parsed;
-
-        let mYMD = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
-        if (mYMD) {
-            return new Date(
-                parseInt(mYMD[1], 10),
-                parseInt(mYMD[2], 10) - 1,
-                parseInt(mYMD[3], 10),
-                parseInt(mYMD[4] || 0, 10),
-                parseInt(mYMD[5] || 0, 10),
-                parseInt(mYMD[6] || 0, 10)
-            ).getTime();
-        }
-
-        let mDMY = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
-        if (mDMY) {
-            return new Date(
-                parseInt(mDMY[3], 10),
-                parseInt(mDMY[2], 10) - 1,
-                parseInt(mDMY[1], 10),
-                parseInt(mDMY[4] || 0, 10),
-                parseInt(mDMY[5] || 0, 10),
-                parseInt(mDMY[6] || 0, 10)
-            ).getTime();
-        }
-
-        return 0;
-    }
-
-    function renderAuditLogTable(logs) {
-        let tbody = document.getElementById('tbody-audit-log');
-        if (!tbody) return;
-        tbody.innerHTML = "";
-
-        if (!logs || logs.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:10px;">Belum ada verifikasi pekan ini.</td></tr>`;
-            return;
-        }
-
-        logs.sort((a, b) => {
-            let tA = parseIndoDate(a.timestamp);
-            let tB = parseIndoDate(b.timestamp);
-            if (tA !== tB) return tB - tA;
-            return (b.updateIndex || 0) - (a.updateIndex || 0);
-        });
-
-        let rowsHtml = "";
-        logs.slice(0, 30).forEach(item => {
-            rowsHtml += `<tr>
-                <td><b>${escapeHtml(item.nama)}</b></td>
-                <td><span class="status-tag status-selesai">${escapeHtml(item.daerah)}</span></td>
-                <td><span style="color:var(--accent); font-weight:800;">✔ ${escapeHtml(item.status)}</span></td>
-                <td style="text-align:center; font-weight:800; font-size:9px;">S:${item.s} I:${item.i} A:${item.a}</td>
-            </tr>`;
-        });
-        tbody.innerHTML = rowsHtml;
-    }
-
-    function renderMtqMqsTables(mtqG, mqsG, daerahData) {
-        let tbodyG = document.getElementById('tbody-mtq-mqs-global');
-        if (tbodyG) {
-            tbodyG.innerHTML = `
-                <tr>
-                    <td><b>MTQ</b></td>
-                    <td style="text-align:center; font-weight:800;">${mtqG.masterTotal}</td>
-                    <td style="text-align:center; font-weight:800; color:var(--accent);">${mtqG.hadir}</td>
-                    <td style="text-align:center; font-weight:800; color:var(--sakit-color);">${mtqG.sakit}</td>
-                    <td style="text-align:center; font-weight:800; color:var(--izin-color);">${mtqG.izin}</td>
-                    <td style="text-align:center; font-weight:800; color:var(--alpha-color);">${mtqG.alpha}</td>
-                </tr>
-                <tr>
-                    <td><b>MQS</b></td>
-                    <td style="text-align:center; font-weight:800;">${mqsG.masterTotal}</td>
-                    <td style="text-align:center; font-weight:800; color:var(--accent);">${mqsG.hadir}</td>
-                    <td style="text-align:center; font-weight:800; color:var(--sakit-color);">${mqsG.sakit}</td>
-                    <td style="text-align:center; font-weight:800; color:var(--izin-color);">${mqsG.izin}</td>
-                    <td style="text-align:center; font-weight:800; color:var(--alpha-color);">${mqsG.alpha}</td>
-                </tr>
-            `;
-        }
-
-        let tbodyD = document.getElementById('tbody-mtq-mqs-daerah');
-        if (!tbodyD) return;
-        tbodyD.innerHTML = "";
-
-        let activeRegions = Object.keys(daerahData).filter(k => (daerahData[k].mtqTotal > 0 || daerahData[k].mqsTotal > 0)).sort();
-
-        if (activeRegions.length === 0) {
-            tbodyD.innerHTML = `<tr><td colspan="11" style="text-align:center; color:var(--text-muted); padding:10px;">Data tidak ditemukan.</td></tr>`;
-            return;
-        }
-
-        activeRegions.forEach(ltr => {
-            let d = daerahData[ltr];
-            let tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><b>Daerah ${escapeHtml(ltr)}</b></td>
-                <td style="text-align:center; font-weight:800; background:#f8fafc;">${d.mtqTotal}</td>
-                <td style="text-align:center; font-weight:800; color:var(--accent); background:#f8fafc;">${d.mtqHadir}</td>
-                <td style="text-align:center; font-weight:800; color:var(--sakit-color); background:#f8fafc;">${d.mtqSakit}</td>
-                <td style="text-align:center; font-weight:800; color:var(--izin-color); background:#f8fafc;">${d.mtqIzin}</td>
-                <td style="text-align:center; font-weight:800; color:var(--alpha-color); background:#f8fafc;">${d.mtqAlpha}</td>
-
-                <td style="text-align:center; font-weight:800;">${d.mqsTotal}</td>
-                <td style="text-align:center; font-weight:800; color:var(--accent);">${d.mqsHadir}</td>
-                <td style="text-align:center; font-weight:800; color:var(--sakit-color);">${d.mqsSakit}</td>
-                <td style="text-align:center; font-weight:800; color:var(--izin-color);">${d.mqsIzin}</td>
-                <td style="text-align:center; font-weight:800; color:var(--alpha-color);">${d.mqsAlpha}</td>
-            `;
-            tbodyD.appendChild(tr);
-        });
-    }
-
-    function renderMtqMqsCharts(daerahData) {
-        let activeRegions = Object.keys(daerahData).filter(k => (daerahData[k].mtqTotal > 0 || daerahData[k].mqsTotal > 0)).sort();
-        let labels = activeRegions.map(r => `Drh ${r}`);
-
-        let mtqHadir = activeRegions.map(r => daerahData[r].mtqHadir);
-        let mtqSakit = activeRegions.map(r => daerahData[r].mtqSakit);
-        let mtqIzin  = activeRegions.map(r => daerahData[r].mtqIzin);
-        let mtqAlpha = activeRegions.map(r => daerahData[r].mtqAlpha);
-
-        let mqsHadir = activeRegions.map(r => daerahData[r].mqsHadir);
-        let mqsSakit = activeRegions.map(r => daerahData[r].mqsSakit);
-        let mqsIzin  = activeRegions.map(r => daerahData[r].mqsIzin);
-        let mqsAlpha = activeRegions.map(r => daerahData[r].mqsAlpha);
-
-        const canvasMtq = document.getElementById('chartBarMtq');
-        if (canvasMtq) {
-            if (mtqChartInstance) {
-                mtqChartInstance.data.labels = labels;
-                mtqChartInstance.data.datasets[0].data = mtqHadir;
-                mtqChartInstance.data.datasets[1].data = mtqSakit;
-                mtqChartInstance.data.datasets[2].data = mtqIzin;
-                mtqChartInstance.data.datasets[3].data = mtqAlpha;
-                if (canvasMtq.offsetWidth > 0) mtqChartInstance.update('none');
-            } else {
-                mtqChartInstance = new Chart(canvasMtq.getContext('2d'), {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            { label: 'Hadir', data: mtqHadir, backgroundColor: '#059669', borderRadius: 3 },
-                            { label: 'Sakit', data: mtqSakit, backgroundColor: '#0284c7', borderRadius: 3 },
-                            { label: 'Izin', data: mtqIzin, backgroundColor: '#d97706', borderRadius: 3 },
-                            { label: 'Alpha', data: mtqAlpha, backgroundColor: '#e11d48', borderRadius: 3 }
-                        ]
-                    },
-                    options: {
-                        animation: false,
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            x: { ticks: { font: { size: 8, weight: 'bold' } } },
-                            y: { beginAtZero: true, ticks: { precision: 0 } }
-                        },
-                        plugins: { legend: { position: 'bottom', labels: { font: { size: 8, weight: 'bold' }, boxWidth: 6 } } }
-                    }
-                });
-            }
-        }
-
-        const canvasMqs = document.getElementById('chartBarMqs');
-        if (canvasMqs) {
-            if (mqsChartInstance) {
-                mqsChartInstance.data.labels = labels;
-                mqsChartInstance.data.datasets[0].data = mqsHadir;
-                mqsChartInstance.data.datasets[1].data = mqsSakit;
-                mqsChartInstance.data.datasets[2].data = mqsIzin;
-                mqsChartInstance.data.datasets[3].data = mqsAlpha;
-                if (canvasMqs.offsetWidth > 0) mqsChartInstance.update('none');
-            } else {
-                mqsChartInstance = new Chart(canvasMqs.getContext('2d'), {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            { label: 'Hadir', data: mqsHadir, backgroundColor: '#059669', borderRadius: 3 },
-                            { label: 'Sakit', data: mqsSakit, backgroundColor: '#0284c7', borderRadius: 3 },
-                            { label: 'Izin', data: mqsIzin, backgroundColor: '#d97706', borderRadius: 3 },
-                            { label: 'Alpha', data: mqsAlpha, backgroundColor: '#e11d48', borderRadius: 3 }
-                        ]
-                    },
-                    options: {
-                        animation: false,
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            x: { ticks: { font: { size: 8, weight: 'bold' } } },
-                            y: { beginAtZero: true, ticks: { precision: 0 } }
-                        },
-                        plugins: { legend: { position: 'bottom', labels: { font: { size: 8, weight: 'bold' }, boxWidth: 6 } } }
-                    }
-                });
-            }
-        }
-    }
-
-    function renderGraphicalChartsAndMatrix(totSakit, totIzin, totAlpha, totSudah) {
-        let activeRegions = Object.keys(window.processedStats || {}).filter(k => window.processedStats[k].total > 0).sort();
-
-        let labelsBar = activeRegions.map(r => `Drh ${r}`);
-        let dataSakit = activeRegions.map(r => window.processedStats[r].sakit);
-        let dataIzin  = activeRegions.map(r => window.processedStats[r].izin);
-        let dataAlpha = activeRegions.map(r => window.processedStats[r].alpha);
-
-        const canvasBar = document.getElementById('chartBarDaerah');
-        if (canvasBar) {
-            if (barChartInstance) {
-                barChartInstance.data.labels = labelsBar;
-                barChartInstance.data.datasets[0].data = dataSakit;
-                barChartInstance.data.datasets[1].data = dataIzin;
-                barChartInstance.data.datasets[2].data = dataAlpha;
-                if (canvasBar.offsetWidth > 0) barChartInstance.update('none');
-            } else {
-                barChartInstance = new Chart(canvasBar.getContext('2d'), {
-                    type: 'bar',
-                    data: {
-                        labels: labelsBar,
-                        datasets: [
-                            { label: 'Sakit', data: dataSakit, backgroundColor: '#0284c7', borderRadius: 3 },
-                            { label: 'Izin', data: dataIzin, backgroundColor: '#d97706', borderRadius: 3 },
-                            { label: 'Alpha', data: dataAlpha, backgroundColor: '#e11d48', borderRadius: 3 }
-                        ]
-                    },
-                    options: {
-                        animation: false,
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            x: { ticks: { font: { size: 8, weight: 'bold' } } },
-                            y: { beginAtZero: true, ticks: { precision: 0 } }
-                        },
-                        plugins: { legend: { position: 'bottom', labels: { font: { size: 8, weight: 'bold' }, boxWidth: 6 } } }
-                    }
-                });
-            }
-        }
-
-        const canvasDonut = document.getElementById('chartDonutAbsensi');
-        if (canvasDonut) {
-            if (donutChartInstance) {
-                donutChartInstance.data.datasets[0].data = [totSakit, totIzin, totAlpha, totSudah];
-                if (canvasDonut.offsetWidth > 0) donutChartInstance.update('none');
-            } else {
-                donutChartInstance = new Chart(canvasDonut.getContext('2d'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Sakit', 'Izin', 'Alpha', 'Verified'],
-                        datasets: [{
-                            data: [totSakit, totIzin, totAlpha, totSudah],
-                            backgroundColor: ['#0284c7', '#d97706', '#e11d48', '#059669'],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        animation: false,
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { position: 'bottom', labels: { font: { size: 8, weight: 'bold' }, boxWidth: 8 } } }
-                    }
-                });
-            }
-        }
-    }
-
-    function renderDimensionChartAndTable() {
-        let selectEl = document.getElementById('select-dimension');
-        if (!selectEl) return;
-        let dimKey = selectEl.value;
-        let dimObj = window.processedDimension ? window.processedDimension[dimKey] : {};
-
-        let catNames = Object.keys(dimObj || {}).sort();
-        let dataS = catNames.map(c => dimObj[c].sakit);
-        let dataI = catNames.map(c => dimObj[c].izin);
-        let dataA = catNames.map(c => dimObj[c].alpha);
-
-        const canvasDim = document.getElementById('chartBarDimension');
-        if (canvasDim) {
-            if (dimensionChartInstance) {
-                dimensionChartInstance.data.labels = catNames;
-                dimensionChartInstance.data.datasets[0].data = dataS;
-                dimensionChartInstance.data.datasets[1].data = dataI;
-                dimensionChartInstance.data.datasets[2].data = dataA;
-                if (canvasDim.offsetWidth > 0) dimensionChartInstance.update('none');
-            } else {
-                dimensionChartInstance = new Chart(canvasDim.getContext('2d'), {
-                    type: 'bar',
-                    data: {
-                        labels: catNames,
-                        datasets: [
-                            { label: 'Sakit', data: dataS, backgroundColor: '#0284c7', borderRadius: 3 },
-                            { label: 'Izin', data: dataI, backgroundColor: '#d97706', borderRadius: 3 },
-                            { label: 'Alpha', data: dataA, backgroundColor: '#e11d48', borderRadius: 3 }
-                        ]
-                    },
-                    options: {
-                        animation: false,
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            x: { ticks: { font: { size: 8, weight: 'bold' } } },
-                            y: { beginAtZero: true, ticks: { precision: 0 } }
-                        },
-                        plugins: { legend: { position: 'bottom', labels: { font: { size: 8, weight: 'bold' }, boxWidth: 6 } } }
-                    }
-                });
-            }
-        }
-
-        let thLabel = document.getElementById('th-dim-label');
-        if (thLabel) thLabel.innerText = dimKey.toUpperCase();
-
-        let tbody = document.getElementById('dash-matrix-tbody');
-        let tfoot = document.getElementById('dash-matrix-tfoot');
-        tbody.innerHTML = "";
-        if (catNames.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:10px;">Data tidak ditemukan.</td></tr>`;
-            tfoot.innerHTML = "";
-            return;
-        }
-        let sumS = 0, sumI = 0, sumA = 0, sumSudah = 0, sumTot = 0;
-
-        catNames.forEach(cat => {
-            let d = dimObj[cat];
-            sumS += d.sakit;
-            sumI += d.izin;
-            sumA += d.alpha;
-            sumSudah += d.sudah;
-            sumTot += d.total;
-
-            let tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><b>${escapeHtml(cat)}</b></td>
-                <td style="color:var(--sakit-color); font-weight:800; text-align:center;">${d.sakit}</td>
-                <td style="color:var(--izin-color); font-weight:800; text-align:center;">${d.izin}</td>
-                <td style="color:var(--alpha-color); font-weight:800; text-align:center;">${d.alpha}</td>
-                <td style="color:var(--accent); font-weight:800; text-align:center;">${d.sudah}</td>
-                <td style="font-weight:800; text-align:center;">${d.total}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-        tfoot.innerHTML = `
-            <tr style="background:#f1f5f9; font-weight:800; border-top:2px solid var(--border);">
-                <td>TOTAL</td>
-                <td style="color:var(--sakit-color); text-align:center;">${sumS}</td>
-                <td style="color:var(--izin-color); text-align:center;">${sumI}</td>
-                <td style="color:var(--alpha-color); text-align:center;">${sumA}</td>
-                <td style="color:var(--accent); text-align:center;">${sumSudah}</td>
-                <td style="text-align:center; color:var(--text-main);">${sumTot}</td>
-            </tr>
-        `;
-    }
-
-    function renderMonitoringTable() {
-        let tbody = document.getElementById('tbody-monitoring');
-        let searchVal = document.getElementById('search-daerah').value.toUpperCase().trim();
-        let filterVal = document.getElementById('filter-status-daerah').value;
-        let sortVal = document.getElementById('sort-daerah').value;
-
-        tbody.innerHTML = "";
-
-        let keys = Object.keys(window.processedStats || {}).filter(k => {
-            let d = window.processedStats[k];
-            if (d.total === 0) return false;
-            
-            let matchSearch = !searchVal || k.includes(searchVal);
-            let percent = d.total > 0 ? Math.round((d.sudah / d.total) * 100) : 0;
-            let matchFilter = true;
-            if (filterVal === 'proses') matchFilter = percent < 100;
-            if (filterVal === 'selesai') matchFilter = percent === 100;
-
-            return matchSearch && matchFilter;
-        });
-
-        keys.sort((a, b) => {
-            let dA = window.processedStats[a];
-            let dB = window.processedStats[b];
-            let percentA = dA.total > 0 ? (dA.sudah / dA.total) : 0;
-            let percentB = dB.total > 0 ? (dB.sudah / dB.total) : 0;
-
-            if (sortVal === 'progress_asc') return percentA - percentB;
-            if (sortVal === 'progress_desc') return percentB - percentA;
-            return a.localeCompare(b);
-        });
-
-        if (keys.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:10px;">Data tidak ditemukan.</td></tr>`;
-            return;
-        }
-
-        keys.forEach(daerah => {
-            let d = window.processedStats[daerah];
-            let percent = d.total > 0 ? Math.round((d.sudah / d.total) * 100) : 0;
-            let statusBadge = percent === 100 ? 
-                `<span class="status-tag status-selesai">Selesai</span>` : 
-                `<span class="status-tag status-proses">${percent}%</span>`;
-
-            let tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><b>Daerah ${escapeHtml(daerah)}</b></td>
-                <td>${statusBadge}</td>
-                <td><b>${d.total}</b></td>
-                <td style="color:var(--accent); font-weight:800;">${d.sudah}</td>
-                <td style="color:var(--text-muted);">${d.belum}</td>
-                <td>
-                    <div class="progress-bg"><div class="progress-fill" style="width:${percent}%;"></div></div>
-                </td>
-                <td style="text-align:center;">
-                    <button class="btn-outline" onclick="openDetailModal('${escapeHtml(daerah)}')">🔍 Detail</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    function openDetailModal(daerah) {
-        let d = window.processedStats[daerah];
-        if (!d) return;
-
-        document.getElementById('detail-daerah-title').innerText = `Daerah ${daerah} (${d.sudah}/${d.total} Selesai)`;
-        let container = document.getElementById('detail-daerah-body');
-        container.innerHTML = "";
-
-        let groupedByRoom = {};
-        d.santriList.forEach(s => {
-            let room = s.domisili || 'LAIN-LAIN';
-            if (!groupedByRoom[room]) groupedByRoom[room] = [];
-            groupedByRoom[room].push(s);
-        });
-
-        let sortedRooms = Object.keys(groupedByRoom).sort((a,b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
-
-        let fragment = document.createDocumentFragment();
-
-        sortedRooms.forEach(roomName => {
-            let list = groupedByRoom[roomName];
-            let doneCount = list.filter(x => x.isDone).length;
-            let percentRoom = Math.round((doneCount / list.length) * 100);
-
-            let roomCard = document.createElement('div');
-            roomCard.className = 'room-breakdown-card';
-
-            let santriRows = list.map(s => {
-                let badge = s.isDone ? 
-                    `<span class="status-tag status-selesai">✔ Selesai</span>` : 
-                    `<span class="status-tag status-proses">Belum</span>`;
-
-                return `
-                    <div class="santri-mini-item">
-                        <div>
-                            <b>${escapeHtml(s.nama)}</b> <span style="color:var(--text-muted); font-size:9px;">(${escapeHtml(s.idPps)})</span>
-                        </div>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:9px; font-weight:800;">S:${s.sakit} I:${s.izin} A:${s.alpha}</span>
-                            ${badge}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            roomCard.innerHTML = `
-                <div class="room-breakdown-header">
-                    <span>🚪 Kamar ${escapeHtml(roomName)}</span>
-                    <span style="color:var(--text-muted);">${doneCount}/${list.length} (${percentRoom}%)</span>
-                </div>
-                <div class="santri-mini-list">
-                    ${santriRows}
-                </div>
-            `;
-            fragment.appendChild(roomCard);
-        });
-
-        container.appendChild(fragment);
-        document.getElementById('modal-detail-daerah').style.display = 'flex';
-    }
-
-    function closeDetailModal() {
-        document.getElementById('modal-detail-daerah').style.display = 'none';
-    }
-
-    function renderUsersTable() {
-        let tbody = document.getElementById('tbody-users');
-        tbody.innerHTML = "";
-
-        if (!rawUserData || rawUserData.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:12px;">Sandi belum diset.</td></tr>`;
-            return;
-        }
-
-        rawUserData.forEach(u => {
-            let tr = document.createElement('tr');
-            let cleanPass = escapeHtml(u.password);
-            let cleanDaerah = escapeHtml(u.daerah);
-            tr.innerHTML = `
-                <td><b>Daerah ${cleanDaerah}</b></td>
-                <td>
-                    <div style="display:flex; align-items:center; gap:4px;">
-                        <input type="password" readonly value="${cleanPass}" id="pass-input-${cleanDaerah}" style="background:#f1f5f9; border:1px solid var(--border); padding:4px 6px; border-radius:4px; font-weight:800; font-size:10px; width:80px; outline:none; text-align:center;">
-                        <button onclick="togglePassVisibility('${cleanDaerah}')" class="btn-outline" style="padding:3px 6px;" id="btn-toggle-${cleanDaerah}">👁️</button>
-                    </div>
-                </td>
-                <td style="text-align:center;"><button class="btn-dark" onclick="openPassModal('${cleanDaerah}',\`${u.password.replace(/`/g, '\\`')}\`)" style="padding:5px 8px; font-size:9px;">Ubah</button></td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    function togglePassVisibility(daerah) {
-        let input = document.getElementById(`pass-input-${daerah}`);
-        let btn = document.getElementById(`btn-toggle-${daerah}`);
-        if (input.type === 'password') {
-            input.type = 'text';
-            btn.innerText = '🙈';
-        } else {
-            input.type = 'password';
-            btn.innerText = '👁️';
-        }
-    }
-
-    function openPassModal(daerah, currentPass) {
-        activePassDaerah = daerah;
-        document.getElementById('modal-target-daerah').innerText = daerah;
-        document.getElementById('input-new-pass').value = currentPass;
-        document.getElementById('modal-pass').style.display = 'flex';
-    }
-
-    function closePassModal() {
-        document.getElementById('modal-pass').style.display = 'none';
-    }
-
-    function submitNewPassword() {
-        let newPass = document.getElementById('input-new-pass').value.trim();
-        if (!newPass) return alert("Sandi tidak boleh kosong!");
-
-        showToast("Mengirim...");
-
-        Promise.allSettled([
-            fetch(APPS_SCRIPT_URL_REKAP, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                body: JSON.stringify({ action: 'updatePassword', data: { daerah: activePassDaerah, password: newPass } }) 
-            }),
-            fetch(APPS_SCRIPT_URL_MASTER, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                body: JSON.stringify({ action: 'updatePassword', data: { daerah: activePassDaerah, password: newPass } }) 
-            })
-        ]).then(() => {
-            showToast("Sandi diperbarui!");
-            closePassModal();
-            loadAllRealtimeData(false);
-        }).catch(err => console.error(err));
-    }
-</script>
+    <!-- MODAL UBAH SANDI DAERAH -->
+    <div id="modal-pass" class="modal-overlay center-modal">
+        <div class="modal-content slide-up" style="max-width:340px; padding:16px;">
+            <h3 style="font-size:13px; font-weight:800; margin-bottom:4px;">Ubah Sandi Daerah <span id="modal-target-daerah">A</span></h3>
+            <p style="font-size:10px; color:var(--text-muted); margin-bottom:12px;">Sandi baru langsung berlaku di sistem HP Pengurus Daerah.</p>
+            <input type="text" id="input-new-pass" placeholder="Masukkan Sandi Baru..." class="input-search" style="margin-bottom:12px;">
+            <div style="display:flex; gap:6px; justify-content:flex-end;">
+                <button onclick="closePassModal()" style="padding:8px 12px; background:#f1f5f9; border-radius:8px; font-size:10px; font-weight:800; border:none; cursor:pointer;">Batal</button>
+                <button onclick="submitNewPassword()" class="btn-act btn-primary" style="padding:8px 12px; border-radius:8px; font-size:10px;">Simpan Sandi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EXTERNAL SEPARATED JS MODULES -->
+    <script src="js/core.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/editor.js"></script>
+    <script src="js/progress.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/users.js"></script>
 </body>
 </html>
