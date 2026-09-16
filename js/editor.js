@@ -1,5 +1,5 @@
 /* =========================================================
-   TAB 2: EDIT DATA ADMIN (Hierarchy & Modal Koreksi)
+   TAB 2: EDIT DATA ADMIN (Fix Bentrok RowIndex & Source)
 ========================================================= */
 let editorSource = 'koreksi';
 let editorStatusFilter = 'belum';
@@ -54,24 +54,25 @@ function renderEditorView() {
     let container = document.getElementById('editor-content-container');
     let breadcrumb = document.getElementById('editor-breadcrumb');
     let breadcrumbText = document.getElementById('breadcrumb-text');
-    let searchVal = document.getElementById('search-koreksi').value.toUpperCase().trim();
+    let searchVal = document.getElementById('search-koreksi')?.value.toUpperCase().trim() || '';
+    if (!container) return;
     container.innerHTML = "";
 
     let sourceDataset = rawKoreksiData.filter(x => x._source === editorSource);
 
     document.getElementById('count-belum').innerText = sourceDataset.filter(x => !x._isDone).length;
     document.getElementById('count-sudah').innerText = sourceDataset.filter(x => x._isDone).length;
-    document.getElementById('count-alpha-filter').innerText = sourceDataset.filter(x => x._tglAlphaArr.length > 0).length;
-    document.getElementById('count-izin-filter').innerText = sourceDataset.filter(x => x._tglIzinArr.length > 0).length;
-    document.getElementById('count-sakit-filter').innerText = sourceDataset.filter(x => x._tglSakitArr.length > 0).length;
+    document.getElementById('count-alpha-filter').innerText = sourceDataset.filter(x => x._tglAlphaArr && x._tglAlphaArr.length > 0).length;
+    document.getElementById('count-izin-filter').innerText = sourceDataset.filter(x => x._tglIzinArr && x._tglIzinArr.length > 0).length;
+    document.getElementById('count-sakit-filter').innerText = sourceDataset.filter(x => x._tglSakitArr && x._tglSakitArr.length > 0).length;
 
     let filteredList = sourceDataset.filter(item => {
         let matchStatus = true;
         if (editorStatusFilter === 'belum') matchStatus = !item._isDone;
         else if (editorStatusFilter === 'sudah') matchStatus = item._isDone;
-        else if (editorStatusFilter === 'alpha') matchStatus = item._tglAlphaArr.length > 0;
-        else if (editorStatusFilter === 'izin') matchStatus = item._tglIzinArr.length > 0;
-        else if (editorStatusFilter === 'sakit') matchStatus = item._tglSakitArr.length > 0;
+        else if (editorStatusFilter === 'alpha') matchStatus = item._tglAlphaArr && item._tglAlphaArr.length > 0;
+        else if (editorStatusFilter === 'izin') matchStatus = item._tglIzinArr && item._tglIzinArr.length > 0;
+        else if (editorStatusFilter === 'sakit') matchStatus = item._tglSakitArr && item._tglSakitArr.length > 0;
 
         let matchSearch = true;
         if (searchVal) {
@@ -216,8 +217,9 @@ function renderEditorView() {
     container.appendChild(gridDiv);
 }
 
+// PENCARIAN PRESISI MENGGUNAKAN ROWINDEX + SOURCE
 function markAsSesuaiByRowIndex(rowIndex) {
-    const item = rawKoreksiData.find(x => x._rowIndex === rowIndex);
+    const item = rawKoreksiData.find(x => x._rowIndex === rowIndex && x._source === editorSource);
     if (!item) return;
 
     item._statusKoreksi = 'Sesuai (Benar)';
@@ -227,6 +229,7 @@ function markAsSesuaiByRowIndex(rowIndex) {
     sendOrQueueData({
         _rowIndex: item._rowIndex,
         _idPps: item.idpps,
+        _source: item._source,
         tglSakit: item._tglSakitArr.join(', '),
         tglIzin: item._tglIzinArr.join(', '),
         tglAlpha: item._tglAlphaArr.join(', '),
@@ -255,9 +258,10 @@ async function sendOrQueueData(dataPayload) {
     } catch(err) { queueForSync(dataPayload); }
 }
 
+// PENCARIAN PRESISI MENGGUNAKAN ROWINDEX + SOURCE
 function bukaModalKoreksiByRowIndex(rowIndex) {
     activeEditRowIndex = rowIndex;
-    const item = rawKoreksiData.find(x => x._rowIndex === rowIndex);
+    const item = rawKoreksiData.find(x => x._rowIndex === rowIndex && x._source === editorSource);
     if (!item) return;
 
     tempSakit = [...(item._tglSakitArr || [])];
@@ -347,9 +351,10 @@ function addTodayDate(type) {
 
 function closeEditModal() { document.getElementById('modal-edit-koreksi').style.display = 'none'; }
 
+// SIMPAN HASIL EDIT DENGAN PENCARIAN PRESISI
 function saveEditModal() {
     if (activeEditRowIndex === null) return;
-    const item = rawKoreksiData.find(x => x._rowIndex === activeEditRowIndex);
+    const item = rawKoreksiData.find(x => x._rowIndex === activeEditRowIndex && x._source === editorSource);
     if (!item) return;
 
     let ketVal = document.getElementById('edit-ket').value.trim();
@@ -371,6 +376,7 @@ function saveEditModal() {
     sendOrQueueData({
         _rowIndex: item._rowIndex,
         _idPps: item.idpps,
+        _source: item._source,
         tglSakit: item._tglSakitArr.join(', '),
         tglIzin: item._tglIzinArr.join(', '),
         tglAlpha: item._tglAlphaArr.join(', '),
