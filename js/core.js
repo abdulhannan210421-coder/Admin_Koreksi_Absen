@@ -19,12 +19,12 @@ let masterDataLoaded = false;
 let autoSyncTimer = null;
 let charts = {};
 
-// Cache helper KHUSUS data ringan (Config, Users, Rekap Absen)
+// Cache helper KHUSUS data ringan (Config, Users, Broadcast)
 const LOCAL_CACHE = {
     save: (key, data) => {
         try { 
-            // Jangan simpan master 13.000 data ke LocalStorage (cegah kuota 5MB jebol)
-            if (key === 'taklimda_cache_master') return; 
+            // Jangan simpan master & rekap data ke LocalStorage (cegah kuota 5MB jebol)
+            if (key === 'taklimda_cache_master' || key === 'taklimda_cache_rekap') return; 
             localStorage.setItem(key, JSON.stringify(data)); 
         } catch(e) { console.warn("Cache Warning:", e); }
     },
@@ -302,7 +302,7 @@ function loadFromLocalCache() {
 
 function renderAllViewsUI() {
     populateGlobalDaerahDropdown();
-    populateGlobalBulanDropdown(); // <--- TAMBAHKAN BARIS INI (Wajib)
+    populateGlobalBulanDropdown();
     populateGlobalTahunDropdown();
     processAndRenderStats();
     renderUsersTable();
@@ -364,7 +364,6 @@ async function fetchMasterSantriData() {
         console.warn("Gagal load master data (404/Network Error):", e);
     } finally {
         isFetchingMasterData = false;
-        // Apapun hasilnya (sukses/gagal), langsung render UI agar tidak tertahan di "Memuat..."
         if (activeMenu === 'dashboard') {
             processAndRenderStats();
         }
