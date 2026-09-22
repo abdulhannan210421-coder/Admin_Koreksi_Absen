@@ -1,5 +1,5 @@
 /* =========================================================
-   TAB 1: DASHBOARD ANALITIK & GRAFIK (Fix Log Verifikasi Murni Pekan Ini)
+   TAB 1: DASHBOARD ANALITIK & GRAFIK (Akurat & Terintegrasi Master Data)
 ========================================================= */
 
 function populateGlobalDaerahDropdown() {
@@ -38,8 +38,9 @@ function populateGlobalBulanDropdown() {
     let bulanSet = new Set();
     rawKoreksiData.forEach(r => {
         let b = r.bulanhijriah || window.getValPeka(r, ['bulan', 'bulanhijriah']);
-        if (b && String(b).trim() !== '' && String(b).trim() !== 'undefined') {
-            bulanSet.add(String(b).trim());
+        let cleanB = String(b || '').trim();
+        if (cleanB && cleanB !== '-' && cleanB !== 'undefined' && cleanB !== 'null') {
+            bulanSet.add(cleanB);
         }
     });
 
@@ -63,8 +64,9 @@ function populateGlobalTahunDropdown() {
     let tahunSet = new Set();
     rawKoreksiData.forEach(r => {
         let t = r.tahunhijriah || window.getValPeka(r, ['tahun', 'tahunhijriah']);
-        if (t && String(t).trim() !== '' && String(t).trim() !== 'undefined') {
-            tahunSet.add(String(t).trim());
+        let cleanT = String(t || '').trim();
+        if (cleanT && cleanT !== '-' && cleanT !== 'undefined' && cleanT !== 'null') {
+            tahunSet.add(cleanT);
         }
     });
 
@@ -141,12 +143,19 @@ document.addEventListener('click', () => {
 });
 
 function resetGlobalFilters() {
-    document.getElementById('filter-global-daerah').value = "ALL";
-    document.getElementById('filter-global-kategori').value = "ALL";
-    document.getElementById('filter-global-bulan').value = "ALL";
-    document.getElementById('filter-global-tahun').value = "ALL";
-    document.getElementById('filter-tgl-min').value = "";
-    document.getElementById('filter-tgl-max').value = "";
+    let elDaerah = document.getElementById('filter-global-daerah');
+    let elKat = document.getElementById('filter-global-kategori');
+    let elBulan = document.getElementById('filter-global-bulan');
+    let elTahun = document.getElementById('filter-global-tahun');
+    let elMin = document.getElementById('filter-tgl-min');
+    let elMax = document.getElementById('filter-tgl-max');
+
+    if (elDaerah) elDaerah.value = "ALL";
+    if (elKat) elKat.value = "ALL";
+    if (elBulan) elBulan.value = "ALL";
+    if (elTahun) elTahun.value = "ALL";
+    if (elMin) elMin.value = "";
+    if (elMax) elMax.value = "";
 
     ['filter-global-kategori', 'filter-global-daerah', 'filter-global-bulan', 'filter-global-tahun'].forEach(id => {
         let el = document.getElementById(id);
@@ -165,13 +174,21 @@ function processAndRenderStats() {
 
     let rawMin = parseInt(document.getElementById('filter-tgl-min')?.value, 10);
     let rawMax = parseInt(document.getElementById('filter-tgl-max')?.value, 10);
-    let tglMin = isNaN(rawMin) ? 1 : rawMin;
-    let tglMax = isNaN(rawMax) ? 30 : rawMax;
+    let tglMin = isNaN(rawMin) ? 1 : Math.max(1, Math.min(30, rawMin));
+    let tglMax = isNaN(rawMax) ? 30 : Math.max(1, Math.min(30, rawMax));
+    if (tglMin > tglMax) { let temp = tglMin; tglMin = tglMax; tglMax = temp; }
 
     let katEl = document.getElementById('filter-global-kategori');
     if (katEl && !katEl.parentElement.querySelector('.custom-select-wrapper')) {
         buildCustomSelectDropdown(katEl);
     }
+
+    // MAP PENCARIAN DARI MASTER DATA
+    let masterMap = {};
+    rawMasterSantri.forEach(m => {
+        let idPps = String(m.idpps || m.id_pps || '').trim();
+        if (idPps) masterMap[idPps] = m;
+    });
 
     // 1. FILTER MASTER SANTRI
     let filteredMasterData = rawMasterSantri.filter(m => {
@@ -185,38 +202,68 @@ function processAndRenderStats() {
         return true;
     });
 
-    let totalSantriMaster = rawMasterSantri.length > 0 ? filteredMasterData.length : rawKoreksiData.length;
-
-    // 2. FILTER ABSENSI
+    // 2. FILTER DATA ABSENSI
+    // Jika tidak ada filter bulan & tahun spesifik, fokus murni ke PEKAN INI (_source === 'koreksi')
+    let isFilterActive = (filterBulan !== "ALL" || filterTahun !== "ALL");
+    
     let datasetAbsensiFiltered = rawKoreksiData.filter(row => {
+        // Jika filter Bulan/Tahun ALL, ambil murni Koreksi Pekan Ini
+        if (!isFilterActive && row._source !== 'koreksi') return false;
+
+        let idPps = String(row.idpps || row.id_pps || '').trim();
+        let mDetail = masterMap[idPps];
+
+        // Tentukan Daerah (Cek Koreksi dulu, fallback ke Master)
         let letter = row._daerah;
+        if ((!letter || letter === 'LAIN') && mDetail) {
+            letter = window.extractDaerahCode(mDetail.domisili);
+        }
         if (filterDaerah !== "ALL" && letter !== filterDaerah) return false;
 
-        let katText = String(row.kategori || '').toUpperCase().trim();
+        // Tentukan Kategori (Cek Koreksi dulu, fallback ke Master)
+        let katText = String(row.kategori || (mDetail ? mDetail.kategori : '') || '').toUpperCase().trim();
         if (filterKategori === "MTQ" && !katText.includes("MTQ")) return false;
         if (filterKategori === "MQS" && !katText.includes("MQS")) return false;
 
-        let rBulan = String(row.bulanhijriah || '').trim();
-        let rTahun = String(row.tahunhijriah || '').trim();
-        if (filterBulan !== "ALL" && rBulan && rBulan.toLowerCase() !== filterBulan.toLowerCase()) return false;
-        if (filterTahun !== "ALL" && rTahun && rTahun !== filterTahun) return false;
+        // Filter Bulan & Tahun Hijriah jika aktif
+        if (filterBulan !== "ALL") {
+            let rBulan = String(row.bulanhijriah || '').trim().toLowerCase();
+            if (rBulan && rBulan !== filterBulan.toLowerCase()) return false;
+        }
+        if (filterTahun !== "ALL") {
+            let rTahun = String(row.tahunhijriah || '').trim();
+            if (rTahun && rTahun !== filterTahun) return false;
+        }
 
         return true;
     });
 
-    let datasetPekanIni = datasetAbsensiFiltered.filter(x => x._source === 'koreksi');
+    // PROGRESS KOREKSI PEKAN INI
+    let datasetPekanIni = rawKoreksiData.filter(x => x._source === 'koreksi');
+    if (filterDaerah !== "ALL") {
+        datasetPekanIni = datasetPekanIni.filter(x => x._daerah === filterDaerah);
+    }
     let totalPekanIni = datasetPekanIni.length;
     let selesaiPekanIni = datasetPekanIni.filter(x => x._isDone).length;
     let percentPekanIni = totalPekanIni > 0 ? Math.round((selesaiPekanIni / totalPekanIni) * 100) : 0;
-    
+
+    let totalSantriMaster = rawMasterSantri.length > 0 ? filteredMasterData.length : totalPekanIni;
+
     let subTxt = document.getElementById('dash-sub-pekan-santri');
     if (subTxt) subTxt.innerText = `Pekan ini wajib dikoreksi: ${totalPekanIni} Santri`;
 
-    document.getElementById('stat-progress-text').innerText = `${selesaiPekanIni} / ${totalPekanIni} Santri Dikoreksi (PEKAN INI)`;
-    document.getElementById('stat-percent').innerText = `${percentPekanIni}%`;
-    document.getElementById('progress-bar-fill').style.width = `${percentPekanIni}%`;
+    let statProg = document.getElementById('stat-progress-text');
+    if (statProg) statProg.innerText = `${selesaiPekanIni} / ${totalPekanIni} Santri Dikoreksi (PEKAN INI)`;
 
+    let statPct = document.getElementById('stat-percent');
+    if (statPct) statPct.innerText = `${percentPekanIni}%`;
+
+    let barFill = document.getElementById('progress-bar-fill');
+    if (barFill) barFill.style.width = `${percentPekanIni}%`;
+
+    // INISIALISASI PENAMPUNG PERHITUNGAN
     let countSakitTotal = 0, countIzinTotal = 0, countAlphaTotal = 0, countVerifiedTotal = 0;
+    
     let statsPerDaerah = {};
     'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(ltr => {
         statsPerDaerah[ltr] = { total: 0, sudah: 0, belum: 0, sakit: 0, izin: 0, alpha: 0 };
@@ -233,6 +280,7 @@ function processAndRenderStats() {
         mqsDaerah[l] = { total: 0, hadir: 0, sakit: 0, izin: 0, alpha: 0 };
     });
 
+    // POPULASI TOTAL DARI MASTER DATA
     filteredMasterData.forEach(m => {
         let katText = String(m.kategori || '').toUpperCase().trim();
         let dom = String(m.domisili || '').toUpperCase();
@@ -241,7 +289,8 @@ function processAndRenderStats() {
         if (katText.includes("MQS")) {
             mqsGlobal.total++;
             if (ltr !== 'LAIN' && mqsDaerah[ltr]) mqsDaerah[ltr].total++;
-        } else if (katText.includes("MTQ")) {
+        } else {
+            // Default ke MTQ jika tidak MQS
             mtqGlobal.total++;
             if (ltr !== 'LAIN' && mtqDaerah[ltr]) mtqDaerah[ltr].total++;
         }
@@ -249,20 +298,28 @@ function processAndRenderStats() {
 
     let auditLogList = [];
 
+    // OLAHI DATA ABSENSI TERFILTER
     datasetAbsensiFiltered.forEach(row => {
+        let idPps = String(row.idpps || row.id_pps || '').trim();
+        let mDetail = masterMap[idPps];
+
         let letter = row._daerah;
+        if ((!letter || letter === 'LAIN') && mDetail) {
+            letter = window.extractDaerahCode(mDetail.domisili);
+        }
 
-        let tSakit = (row._tglSakitArr || []).filter(d => d >= 1 && d <= 30);
-        let tIzin  = (row._tglIzinArr || []).filter(d => d >= 1 && d <= 30);
-        let tAlpha = (row._tglAlphaArr || []).filter(d => d >= 1 && d <= 30);
+        // Terapkan Filter Tanggal Min & Max
+        let tSakit = (row._tglSakitArr || []).filter(d => d >= tglMin && d <= tglMax);
+        let tIzin   = (row._tglIzinArr || []).filter(d => d >= tglMin && d <= tglMax);
+        let tAlpha = (row._tglAlphaArr || []).filter(d => d >= tglMin && d <= tglMax);
 
-        tSakit.forEach(day => { dailyTrendData.sakit[day]++; });
-        tIzin.forEach(day  => { dailyTrendData.izin[day]++; });
-        tAlpha.forEach(day => { dailyTrendData.alpha[day]++; });
+        tSakit.forEach(day => { if(day >= 1 && day <= 30) dailyTrendData.sakit[day]++; });
+        tIzin.forEach(day  => { if(day >= 1 && day <= 30) dailyTrendData.izin[day]++; });
+        tAlpha.forEach(day => { if(day >= 1 && day <= 30) dailyTrendData.alpha[day]++; });
 
-        let numSakit = tSakit.length || row._totSakitNum || 0;
-        let numIzin  = tIzin.length  || row._totIzinNum  || 0;
-        let numAlpha = tAlpha.length || row._totAlphaNum || 0;
+        let numSakit = tSakit.length || (tglMin === 1 && tglMax === 30 ? (row._totSakitNum || 0) : 0);
+        let numIzin  = tIzin.length  || (tglMin === 1 && tglMax === 30 ? (row._totIzinNum  || 0) : 0);
+        let numAlpha = tAlpha.length || (tglMin === 1 && tglMax === 30 ? (row._totAlphaNum || 0) : 0);
 
         let hasSakit = numSakit > 0;
         let hasIzin  = numIzin > 0;
@@ -274,24 +331,32 @@ function processAndRenderStats() {
         if (hasAlpha) countAlphaTotal++;
         if (isDone)   countVerifiedTotal++;
 
-        let katText = String(row.kategori || '').toUpperCase().trim();
-        if (katText.includes("MQS")) {
+        let katText = String(row.kategori || (mDetail ? mDetail.kategori : '') || '').toUpperCase().trim();
+        let isMqs = katText.includes("MQS");
+
+        if (isMqs) {
             if (hasSakit) mqsGlobal.sakit++;
             if (hasIzin)  mqsGlobal.izin++;
             if (hasAlpha) mqsGlobal.alpha++;
+            if (!hasSakit && !hasIzin && !hasAlpha) mqsGlobal.hadir++;
+
             if (letter !== 'LAIN' && mqsDaerah[letter]) {
                 if (hasSakit) mqsDaerah[letter].sakit++;
                 if (hasIzin)  mqsDaerah[letter].izin++;
                 if (hasAlpha) mqsDaerah[letter].alpha++;
+                if (!hasSakit && !hasIzin && !hasAlpha) mqsDaerah[letter].hadir++;
             }
-        } else if (katText.includes("MTQ")) {
+        } else {
             if (hasSakit) mtqGlobal.sakit++;
             if (hasIzin)  mtqGlobal.izin++;
             if (hasAlpha) mtqGlobal.alpha++;
+            if (!hasSakit && !hasIzin && !hasAlpha) mtqGlobal.hadir++;
+
             if (letter !== 'LAIN' && mtqDaerah[letter]) {
                 if (hasSakit) mtqDaerah[letter].sakit++;
                 if (hasIzin)  mtqDaerah[letter].izin++;
                 if (hasAlpha) mtqDaerah[letter].alpha++;
+                if (!hasSakit && !hasIzin && !hasAlpha) mtqDaerah[letter].hadir++;
             }
         }
 
@@ -299,10 +364,10 @@ function processAndRenderStats() {
             statsPerDaerah[letter].total++;
             if (isDone) {
                 statsPerDaerah[letter].sudah++;
-                // HANYA TAMBAHKAN KE LOG JIKA DATA BERASAL DARI KOREKSI_ABSEN (PEKAN INI)
                 if (row._source === 'koreksi') {
+                    let namaClean = row.namasantri !== '-' ? row.namasantri : (mDetail ? mDetail.namasantri : '-');
                     auditLogList.push({ 
-                        nama: row.namasantri, 
+                        nama: namaClean, 
                         daerah: letter, 
                         status: row._statusKoreksi, 
                         s: numSakit, i: numIzin, a: numAlpha 
@@ -317,32 +382,44 @@ function processAndRenderStats() {
         }
     });
 
-    mtqGlobal.hadir = Math.max(0, mtqGlobal.total - (mtqGlobal.sakit + mtqGlobal.izin + mtqGlobal.alpha));
-    mqsGlobal.hadir = Math.max(0, mqsGlobal.total - (mqsGlobal.sakit + mqsGlobal.izin + mqsGlobal.alpha));
+    // SESUAIKAN HADIR BERDASARKAN TARGET MASTER (JIKA MASTER DATA TERSEDIA)
+    if (rawMasterSantri.length > 0) {
+        mtqGlobal.hadir = Math.max(0, mtqGlobal.total - (mtqGlobal.sakit + mtqGlobal.izin + mtqGlobal.alpha));
+        mqsGlobal.hadir = Math.max(0, mqsGlobal.total - (mqsGlobal.sakit + mqsGlobal.izin + mqsGlobal.alpha));
 
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(l => {
-        mtqDaerah[l].hadir = Math.max(0, mtqDaerah[l].total - (mtqDaerah[l].sakit + mtqDaerah[l].izin + mtqDaerah[l].alpha));
-        mqsDaerah[l].hadir = Math.max(0, mqsDaerah[l].total - (mqsDaerah[l].sakit + mqsDaerah[l].izin + mqsDaerah[l].alpha));
-    });
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(l => {
+            if (mtqDaerah[l].total > 0) {
+                mtqDaerah[l].hadir = Math.max(0, mtqDaerah[l].total - (mtqDaerah[l].sakit + mtqDaerah[l].izin + mtqDaerah[l].alpha));
+            }
+            if (mqsDaerah[l].total > 0) {
+                mqsDaerah[l].hadir = Math.max(0, mqsDaerah[l].total - (mqsDaerah[l].sakit + mqsDaerah[l].izin + mqsDaerah[l].alpha));
+            }
+        });
+    }
 
-    document.getElementById('dash-total-santri').innerText = totalSantriMaster;
-    document.getElementById('dash-total-sudah').innerText = countVerifiedTotal;
-    document.getElementById('dash-pct-sudah').innerText = `Total Santri Diverifikasi`;
-    document.getElementById('dash-total-sakit').innerText = countSakitTotal;
-    document.getElementById('dash-pct-sakit').innerText = `Santri Sakit (S)`;
-    document.getElementById('dash-total-izin').innerText = countIzinTotal;
-    document.getElementById('dash-pct-izin').innerText = `Santri Izin (I)`;
-    document.getElementById('dash-total-alpha').innerText = countAlphaTotal;
-    document.getElementById('dash-pct-alpha').innerText = `Santri Alpha (A)`;
+    // UPDATE CARD KARTU KPI
+    let totalEl = document.getElementById('dash-total-santri');
+    if (totalEl) totalEl.innerText = totalSantriMaster;
+
+    let sudahEl = document.getElementById('dash-total-sudah');
+    if (sudahEl) sudahEl.innerText = countVerifiedTotal;
+
+    let pctSudahEl = document.getElementById('dash-pct-sudah');
+    if (pctSudahEl) pctSudahEl.innerText = `Total Santri Diverifikasi`;
+
+    let sakitEl = document.getElementById('dash-total-sakit');
+    if (sakitEl) sakitEl.innerText = countSakitTotal;
+
+    let izinEl = document.getElementById('dash-total-izin');
+    if (izinEl) izinEl.innerText = countIzinTotal;
+
+    let alphaEl = document.getElementById('dash-total-alpha');
+    if (alphaEl) alphaEl.innerText = countAlphaTotal;
 
     renderMtqMqsTables(mtqGlobal, mqsGlobal, mtqDaerah, mqsDaerah);
     renderAuditLogTable(auditLogList);
 
-    let chartTitle = document.getElementById('title-chart-trend');
-    if (chartTitle) {
-        chartTitle.innerText = "📈 TREN ABSENSI HARIAN (TGL HIJRIAH 1–30)";
-    }
-
+    // DRAW GRAFIK TREN HARIAN
     let labelsDaily = [];
     for (let i = tglMin; i <= tglMax; i++) {
         labelsDaily.push(`Tgl ${i}`);
@@ -389,7 +466,7 @@ function processAndRenderStats() {
     });
 
     drawChart('chartDonutAbsensi', 'doughnut', {
-        labels: ['Sakit', 'Izin', 'Alpha', 'Verified'],
+        labels: ['Sakit', 'Izin', 'Alpha', 'Verifikasi'],
         datasets: [{ data: [countSakitTotal, countIzinTotal, countAlphaTotal, countVerifiedTotal], backgroundColor: ['#0284c7', '#d97706', '#e11d48', '#059669'] }]
     });
 }
@@ -438,7 +515,7 @@ function renderAuditLogTable(logs) {
         logs.slice(0, 15).map(item => `
             <tr>
                 <td><b>${item.nama}</b></td>
-                <td><span class="status-tag status-selesai">${item.daerah}</span></td>
+                <td><span class="status-tag status-selesai">Daerah ${item.daerah}</span></td>
                 <td><span style="color:var(--primary); font-weight:800;">✔ OK</span></td>
                 <td style="text-align:center; font-weight:800; font-size:9px;">S:${item.s} I:${item.i} A:${item.a}</td>
             </tr>
