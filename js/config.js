@@ -25,6 +25,7 @@ function updateConfigUI(mode) {
 }
 
 async function saveAppConfig() {
+    triggerHaptic(20);
     const radios = document.getElementsByName('optFilterAbsen');
     let selectedVal = 'all';
     radios.forEach(r => { if (r.checked) selectedVal = r.value; });
@@ -65,6 +66,7 @@ function renderBroadcastCardUI(bcData) {
 }
 
 function fillFormFromCurrentBc() {
+    triggerHaptic(10);
     if (!activeBroadcastData) return alert("Belum ada data pengumuman saat ini!");
     let titleEl = document.getElementById('bc-title');
     let msgEl = document.getElementById('bc-message');
@@ -80,6 +82,7 @@ function fillFormFromCurrentBc() {
 }
 
 async function quickToggleBroadcast() {
+    triggerHaptic(20);
     if (!activeBroadcastData || !activeBroadcastData.title) return alert("Belum ada data pengumuman untuk diubah!");
     let currentStatus = (activeBroadcastData.active === true || String(activeBroadcastData.active).toLowerCase() === 'true');
     let newStatus = !currentStatus;
@@ -104,6 +107,7 @@ async function quickToggleBroadcast() {
 }
 
 async function sendBroadcastPusat() {
+    triggerHaptic(20);
     let title = document.getElementById('bc-title').value.trim();
     let message = document.getElementById('bc-message').value.trim();
     let type = document.getElementById('bc-type').value;
@@ -121,10 +125,11 @@ async function sendBroadcastPusat() {
     } catch(e) { showToast("❌ Gagal!"); }
 }
 
-function openGantiPekanModal() { document.getElementById('modal-ganti-pekan').style.display = 'flex'; }
+function openGantiPekanModal() { triggerHaptic(15); document.getElementById('modal-ganti-pekan').style.display = 'flex'; }
 function closeGantiPekanModal() { document.getElementById('modal-ganti-pekan').style.display = 'none'; }
 
 async function executeGantiPekan() {
+    triggerHaptic(25);
     let bHijri = document.getElementById('archive-bulan-hijri').value;
     let tHijri = document.getElementById('archive-tahun-hijri').value.trim();
     if (!tHijri) return alert("Tahun Hijriah wajib diisi!");

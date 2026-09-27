@@ -1,14 +1,14 @@
 /* =========================================================
-   CORE & GENERAL UTILITIES (Single-Flight Fetch & Memory Optimization)
+   CORE & GENERAL UTILITIES (Strict Daerah Match, Dark Mode)
 ========================================================= */
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz1ecMJ8KBdbsNhuJCm_eYrRH2ATxZH7sn73GV-B19JoxKLNMrS8BCS8fZNnHBcqjM/exec";
 const MASTER_DATA_URL = "https://script.google.com/macros/s/AKfycbzV_l5rAXgnapi2c3ZH90WOusrHgN-Ny9wjaFJ9tczCl1mkz1pURw_sZUYhEF4YY6byRg/exec";
-const AUTO_SYNC_INTERVAL = 60 * 60 * 1000; // 1 Jam
+const AUTO_SYNC_INTERVAL = 60 * 60 * 1000;
 
 let activeMenu = 'dashboard';
 let rawKoreksiData = [];
 let rawUserData = [];
-let rawMasterSantri = []; // Diisi murni di RAM browser
+let rawMasterSantri = [];
 let activeBroadcastData = null;
 let appConfigFilter = 'all';
 
@@ -19,11 +19,49 @@ let masterDataLoaded = false;
 let autoSyncTimer = null;
 let charts = {};
 
-// Cache helper KHUSUS data ringan (Config, Users, Broadcast)
+function triggerHaptic(ms = 18) {
+    if (navigator.vibrate) {
+        try { navigator.vibrate(ms); } catch(e){}
+    }
+}
+
+function initTheme() {
+    let savedTheme = localStorage.getItem('taklimda_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(savedTheme);
+}
+
+function toggleDarkMode() {
+    triggerHaptic(20);
+    let currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    let newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('taklimda_theme', newTheme);
+    updateThemeIcon(newTheme);
+    showToast(newTheme === 'dark' ? '🌙 Modus Gelap Aktif' : '☀️ Modus Terang Aktif');
+}
+
+function updateThemeIcon(theme) {
+    let iconEl = document.getElementById('theme-toggle-icon');
+    if (iconEl) iconEl.innerText = theme === 'dark' ? '☀️' : '🌙';
+}
+
+function updateCircularGauge(percent) {
+    let fillEl = document.getElementById('gauge-fill');
+    if (!fillEl) return;
+    let cleanPct = Math.max(0, Math.min(100, percent));
+    fillEl.setAttribute('stroke-dasharray', `${cleanPct}, 100`);
+}
+
+function highlightTextHTML(text, query) {
+    if (!query) return text;
+    let re = new RegExp(`(${query.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')})`, 'gi');
+    return String(text).replace(re, '<mark class="highlight-text">$1</mark>');
+}
+
 const LOCAL_CACHE = {
     save: (key, data) => {
         try { 
-            // Jangan simpan master & rekap data ke LocalStorage (cegah kuota 5MB jebol)
             if (key === 'taklimda_cache_master' || key === 'taklimda_cache_rekap') return; 
             localStorage.setItem(key, JSON.stringify(data)); 
         } catch(e) { console.warn("Cache Warning:", e); }
@@ -36,11 +74,25 @@ const LOCAL_CACHE = {
     }
 };
 
+/* STRICT DAERAH CODE EXTRACTION LOGIC */
 window.extractDaerahCode = function(domRaw) {
     if (!domRaw) return 'LAIN';
     let str = String(domRaw).toUpperCase().trim();
-    let match = str.match(/^[A-Z](?=[-\s0-9]|$)/) || str.match(/\b[A-Z]\b/) || str.match(/([A-Z])/);
-    return match ? match[0] : 'LAIN';
+
+    if (str.includes('RUMAH') || str.includes('ORTU') || str.includes('LAIN') || str.includes('LUAR')) {
+        return 'LAIN';
+    }
+
+    let match = str.match(/^(?:KAMAR|DAERAH)?\s*([A-Z])(?=[-\s\.\d]|$)/);
+    if (match && match[1]) {
+        return match[1];
+    }
+
+    if (str.length === 1 && /[A-Z]/.test(str)) {
+        return str;
+    }
+
+    return 'LAIN';
 };
 
 window.getValPeka = function(obj, targetKeys) {
@@ -91,11 +143,99 @@ function parseDates(val) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    initTheme();
     setupNetworkListeners();
+    setupRippleEffect();
+    setupPullToRefresh();
+    setupTouchDragAndDrop();
     loadFromLocalCache();
     loadAllRealtimeData(true);
     startAutoSync();
 });
+
+function setupRippleEffect() {
+    document.addEventListener('click', (e) => {
+        let target = e.target.closest('.ripple-target, .btn-act, .item-card, .tab-btn');
+        if (!target) return;
+        
+        triggerHaptic(12);
+
+        let rect = target.getBoundingClientRect();
+        let ripple = document.createElement('span');
+        ripple.className = 'ripple-effect';
+        let size = Math.max(rect.width, rect.height);
+        ripple.style.width = ripple.style.height = `${size}px`;
+        ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+        ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+        
+        target.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 500);
+    });
+}
+
+function setupPullToRefresh() {
+    let startY = 0;
+    let currentY = 0;
+    let isPulling = false;
+    const indicator = document.getElementById('pull-refresh-indicator');
+
+    window.addEventListener('touchstart', (e) => {
+        if (window.scrollY === 0) {
+            startY = e.touches[0].clientY;
+            isPulling = true;
+        }
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+        if (!isPulling) return;
+        currentY = e.touches[0].clientY;
+        let distance = currentY - startY;
+
+        if (distance > 70 && window.scrollY === 0) {
+            indicator.classList.add('visible');
+        } else if (distance < 30) {
+            indicator.classList.remove('visible');
+        }
+    }, { passive: true });
+
+    window.addEventListener('touchend', async () => {
+        if (isPulling && indicator.classList.contains('visible')) {
+            triggerHaptic(30);
+            document.getElementById('pull-text').innerText = "Mengambil Data...";
+            await manualSync();
+            setTimeout(() => {
+                indicator.classList.remove('visible');
+                document.getElementById('pull-text').innerText = "Tarik untuk Refresh";
+            }, 600);
+        }
+        isPulling = false;
+    });
+}
+
+function copyWaRekapFormat() {
+    triggerHaptic(20);
+    let totalPekanIni = rawKoreksiData.filter(x => x._source === 'koreksi').length;
+    let selesaiPekanIni = rawKoreksiData.filter(x => x._source === 'koreksi' && x._isDone).length;
+    let pct = totalPekanIni > 0 ? Math.round((selesaiPekanIni / totalPekanIni) * 100) : 0;
+
+    let totalSakit = rawKoreksiData.filter(x => x._source === 'koreksi' && x._tglSakitArr.length > 0).length;
+    let totalIzin = rawKoreksiData.filter(x => x._source === 'koreksi' && x._tglIzinArr.length > 0).length;
+    let totalAlpha = rawKoreksiData.filter(x => x._source === 'koreksi' && x._tglAlphaArr.length > 0).length;
+
+    let text = `📋 *REKAP PROGRESS TAKLIMDA PUSAT*
+📅 *Pekan Absensi Berjalan*
+
+👥 *Total Santri Dikoreksi:* ${selesaiPekanIni} / ${totalPekanIni} (${pct}%)
+🔵 Sakit: ${totalSakit} | 🟠 Izin: ${totalIzin} | 🔴 Alpha: ${totalAlpha}
+
+⚡ _Dikirim via App Dashboard Admin TTQ Pusat_`;
+
+    navigator.clipboard.writeText(text).then(() => {
+        showToast("💬 Format Rekap WA Berhasil Disalin!");
+    }).catch(() => {
+        showToast("Gagal menyalin format!");
+    });
+}
 
 function setupNetworkListeners() {
     window.addEventListener('online', () => { updateNetworkBadge(true); processPendingQueue(); });
@@ -119,6 +259,7 @@ function showToast(msg) {
 }
 
 function switchNav(menu) {
+    triggerHaptic(15);
     activeMenu = menu;
     document.querySelectorAll('.app-view').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -152,7 +293,7 @@ function savePendingQueue(queue) {
 
 function queueForSync(dataPayload) {
     let queue = getPendingQueue();
-    queue = queue.filter(q => q._rowIndex !== dataPayload._rowIndex);
+    queue = queue.filter(q => !(q._rowIndex === dataPayload._rowIndex && q._source === dataPayload._source));
     queue.push(dataPayload);
     savePendingQueue(queue);
 }
@@ -183,7 +324,7 @@ async function processPendingQueue() {
             });
             let jsonRes = await res.json();
             if (res.ok && jsonRes.status === 'success') {
-                remaining = remaining.filter(q => q._rowIndex !== item._rowIndex);
+                remaining = remaining.filter(q => !(q._rowIndex === item._rowIndex && q._source === item._source));
             }
         } catch(e) { break; }
     }
@@ -217,8 +358,9 @@ function transformRekapList(listRekap) {
     let pendingQueue = getPendingQueue();
 
     return listRekap.map((r, idx) => {
+        let sourceTag = r._source || 'koreksi';
         let actualRowIndex = (r._rowIndex !== undefined && r._rowIndex !== null) ? r._rowIndex : (idx + 2);
-        let pendingItem = pendingQueue.find(p => p._rowIndex === actualRowIndex);
+        let pendingItem = pendingQueue.find(p => p._rowIndex === actualRowIndex && p._source === sourceTag);
 
         let sVal = pendingItem ? pendingItem.tglSakit : window.getValPeka(r, ['tanggal_sakit', 'tanggalsakit', 'tgl_sakit', 'tglsakit', 'sakit']);
         let iVal = pendingItem ? pendingItem.tglIzin  : window.getValPeka(r, ['tanggal_izin', 'tanggalizin', 'tgl_izin', 'tglizin', 'izin']);
@@ -229,7 +371,7 @@ function transformRekapList(listRekap) {
         let totAlpha = parseInt(window.getValPeka(r, ['total_alpa', 'totalalpa', 'alpa', 'alpha']), 10) || 0;
         
         let statusK = pendingItem ? pendingItem.status : window.getValPeka(r, ['status_koreksi', 'status', 'koreksi']);
-        let timestampK = window.getValPeka(r, ['timestamp', 'updated_at', 'waktu']);
+        let timestampK = pendingItem ? pendingItem.timestamp : window.getValPeka(r, ['timestamp', 'updated_at', 'waktu', 'tanggal', 'waktuedit']);
         let ket = pendingItem ? pendingItem.keterangan : (window.getValPeka(r, ['keterangan_taklimda', 'keterangan', 'ket']) || '-');
 
         let statusClean = statusK ? String(statusK).trim() : '';
@@ -273,7 +415,7 @@ function transformRekapList(listRekap) {
             _timestamp: timestampClean,
             _isDone: isDone,
             _unsynced: !!pendingItem,
-            _source: r._source || 'koreksi'
+            _source: sourceTag
         };
     });
 }
@@ -313,11 +455,6 @@ function renderAllViewsUI() {
 async function fetchMasterSantriData() {
     if (isFetchingMasterData || masterDataLoaded) return;
     isFetchingMasterData = true;
-
-    let totalEl = document.getElementById('dash-total-santri');
-    if (totalEl && rawMasterSantri.length === 0) {
-        totalEl.innerText = "Memuat...";
-    }
 
     try {
         let res = await fetch(MASTER_DATA_URL);
@@ -361,7 +498,7 @@ async function fetchMasterSantriData() {
             masterDataLoaded = true;
         }
     } catch(e) {
-        console.warn("Gagal load master data (404/Network Error):", e);
+        console.warn("Gagal load master data:", e);
     } finally {
         isFetchingMasterData = false;
         if (activeMenu === 'dashboard') {

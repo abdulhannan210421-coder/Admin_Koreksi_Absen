@@ -1,0 +1,18 @@
+{
+  "name": "Admin Dashboard & Koreksi Taklimda Pusat",
+  "short_name": "TTQ Pusat",
+  "description": "Sistem Dashboard Admin dan Koreksi Absensi Taklimda Pusat",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#059669",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%23059669%22/><text y=%22.9em%22 x=%2210%22 font-size=%2275%22>📋</text></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

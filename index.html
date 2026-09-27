@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -7,7 +7,16 @@
     <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Admin Dashboard & Koreksi Taklimda Pusat</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
+    
+    <!-- PWA META TAGS -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#059669">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TTQ Pusat">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%23059669%22/><text y=%22.9em%22 x=%2210%22 font-size=%2275%22>📋</text></svg>">
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 x=%2210%22 font-size=%2290%22>📋</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- CHART.JS LIBRARY -->
@@ -17,39 +26,56 @@
 </head>
 <body>
 
+    <!-- PULL TO REFRESH SPINNER INDICATOR -->
+    <div id="pull-refresh-indicator" class="pull-refresh-box">
+        <div class="pull-spinner"></div>
+        <span id="pull-text">Tarik untuk Refresh</span>
+    </div>
+
     <div id="toast" class="toast">Notifikasi</div>
 
-    <!-- HEADER UTAMA PUSAT -->
+    <!-- FLOATING ACTION BUTTON (FAB) FOR QUICK WA REKAP -->
+    <button id="fab-wa-rekap" class="fab-btn" onclick="copyWaRekapFormat()" title="Salin Rekap WA">
+        💬
+    </button>
+
+    <!-- HEADER UTAMA PUSAT DENGAN CIRCULAR GAUGE & DARK MODE TOGGLE -->
     <header class="top-deck slide-up">
         <div class="header-compact">
-            <div style="display:flex; align-items:center; gap:10px;">
-                <div class="avatar">A</div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <!-- ANIMATED CIRCULAR PROGRESS GAUGE -->
+                <div class="gauge-wrapper" title="Progres Pekan Ini">
+                    <svg class="gauge-svg" viewBox="0 0 36 36">
+                        <path class="gauge-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                        <path id="gauge-fill" class="gauge-fill" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                    </svg>
+                    <div class="gauge-text" id="stat-percent">0%</div>
+                </div>
+
                 <div>
-                    <div style="display:flex; align-items:center; gap:6px;">
-                        <h1 style="font-size:14px; font-weight:800; color:var(--text-main);">TTQ Pusat</h1>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <h1 style="font-size:15px; font-weight:800; color:var(--text-main);">TTQ Pusat</h1>
                         <span id="net-status-badge" class="sync-badge online"><div class="live-dot"></div> Online</span>
                     </div>
-                    <p style="font-size:10px; color:var(--text-muted); font-weight:600;" id="stat-progress-text">0 / 0 Santri Dikoreksi (PEKAN INI)</p>
+                    <p style="font-size:10px; color:var(--text-muted); font-weight:700;" id="stat-progress-text">0 / 0 Santri Dikoreksi (PEKAN INI)</p>
                 </div>
             </div>
-            <div style="display:flex; align-items:center; gap:6px;">
+
+            <div style="display:flex; align-items:center; gap:8px;">
+                <button class="btn-theme-toggle ripple-target" onclick="toggleDarkMode()" title="Ganti Mode Gelap/Terang">
+                    <span id="theme-toggle-icon">🌙</span>
+                </button>
+
                 <label class="toggle-switch">
                     <input type="checkbox" id="toggle-autosync" checked onchange="toggleAutoSync(this.checked)">
                     <span class="slider"></span>
-                    <span>Auto (1 Jam)</span>
+                    <span class="toggle-label">Auto (1 Jam)</span>
                 </label>
-                <button class="btn-act" style="background:#f1f5f9; color:var(--text-main);" onclick="manualSync()">🔄 Sync</button>
+                <button class="btn-act btn-outline ripple-target" style="padding:6px 12px; font-size:11px;" onclick="manualSync()">🔄 Sync</button>
             </div>
         </div>
 
-        <div class="progress-inline" style="margin-top:10px;">
-            <div class="progress-bar-bg">
-                <div class="progress-bar-fill" id="progress-bar-fill"></div>
-            </div>
-            <span style="font-size:11px; font-weight:800; color:var(--primary);" id="stat-percent">0%</span>
-        </div>
-
-        <div id="pending-info-bar" style="display:none; font-size:10px; font-weight:800; color:#d97706; background:#fef3c7; border:1px solid #fcd34d; padding:6px 10px; border-radius:10px; margin-top:8px; text-align:center;">
+        <div id="pending-info-bar" style="display:none; font-size:10px; font-weight:800; color:#d97706; background:#fef3c7; border:1px solid #fcd34d; padding:8px 12px; border-radius:12px; margin-top:10px; text-align:center;">
             ⚠️ Ada <span id="pending-count-num">0</span> data tersimpan offline. Akan otomatis dikirim saat online.
         </div>
     </header>
@@ -59,45 +85,45 @@
         <!-- TAB 1: DASHBOARD ANALITIK & GRAFIK -->
         <section id="view-dashboard" class="app-view active">
 
-			<!-- KARTU FILTER DASHBOARD MODERN -->
-			<div class="dashboard-filter-card">
-				<div class="filter-grid">
-					<div>
-						<select id="filter-global-kategori" onchange="processAndRenderStats()">
-							<option value="ALL">🏆 MTQ & MQS</option>
-							<option value="MTQ">Khusus MTQ</option>
-							<option value="MQS">Khusus MQS</option>
-						</select>
-					</div>
-					<div>
-						<select id="filter-global-daerah" onchange="processAndRenderStats()">
-							<option value="ALL">📍 Semua Daerah</option>
-						</select>
-					</div>
-					<div>
-						<select id="filter-global-bulan" onchange="processAndRenderStats()">
-							<option value="ALL">🌙 Semua Bulan Hijriah</option>
-						</select>
-					</div>
-					<div>
-						<select id="filter-global-tahun" onchange="processAndRenderStats()">
-							<option value="ALL">📅 Semua Tahun</option>
-						</select>
-					</div>
-				</div>
-				
-				<div class="filter-date-group">
-					<input type="number" id="filter-tgl-min" placeholder="Tgl Min (1)" min="1" max="30" class="input-search" onchange="processAndRenderStats()">
-					<span style="font-size:11px; font-weight:700; color:var(--text-muted);">s/d</span>
-					<input type="number" id="filter-tgl-max" placeholder="Tgl Max (30)" min="1" max="30" class="input-search" onchange="processAndRenderStats()">
-					<button class="btn-outline" onclick="resetGlobalFilters()" style="padding:8px 12px; border-radius:12px; font-size:10px; font-weight:800; white-space:nowrap;">🔄 Reset Filter</button>
-				</div>
-			</div>
+            <!-- KARTU FILTER DASHBOARD MODERN -->
+            <div class="dashboard-filter-card">
+                <div class="filter-grid">
+                    <div>
+                        <select id="filter-global-kategori" onchange="processAndRenderStats()">
+                            <option value="ALL">🏆 MTQ & MQS</option>
+                            <option value="MTQ">Khusus MTQ</option>
+                            <option value="MQS">Khusus MQS</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select id="filter-global-daerah" onchange="processAndRenderStats()">
+                            <option value="ALL">📍 Semua Daerah</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select id="filter-global-bulan" onchange="processAndRenderStats()">
+                            <option value="ALL">🌙 Semua Bulan Hijriah</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select id="filter-global-tahun" onchange="processAndRenderStats()">
+                            <option value="ALL">📅 Semua Tahun</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="filter-date-group">
+                    <input type="number" id="filter-tgl-min" placeholder="Tgl Min (1)" min="1" max="30" class="input-search" onchange="processAndRenderStats()">
+                    <span style="font-size:11px; font-weight:800; color:var(--text-muted);">s/d</span>
+                    <input type="number" id="filter-tgl-max" placeholder="Tgl Max (30)" min="1" max="30" class="input-search" onchange="processAndRenderStats()">
+                    <button class="btn-outline ripple-target" onclick="resetGlobalFilters()" style="padding:8px 14px; border-radius:12px; font-size:11px; font-weight:800; white-space:nowrap;">🔄 Reset Filter</button>
+                </div>
+            </div>
 
             <!-- KPI DASHBOARD SINKRON SPREADSHEET MASTER DATA -->
             <div class="kpi-grid">
                 <div class="kpi-card full-width">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                         <div>
                             <div class="kpi-title">Total Santri Keseluruhan (Master Data API)</div>
                             <div class="kpi-value" id="dash-total-santri">0</div>
@@ -105,7 +131,7 @@
                         </div>
                         <div style="text-align:right;">
                             <div class="kpi-title">Status Master Sync</div>
-                            <div id="master-status-badge" class="sync-badge online" style="margin-top:2px;"><div class="live-dot"></div> Master Connected</div>
+                            <div id="master-status-badge" class="sync-badge online" style="margin-top:4px;"><div class="live-dot"></div> Master Connected</div>
                         </div>
                     </div>
                 </div>
@@ -113,7 +139,7 @@
                 <div class="kpi-card">
                     <div class="kpi-title">Diverifikasi (Pekan Ini)</div>
                     <div class="kpi-value" style="color:var(--primary);" id="dash-total-sudah">0</div>
-                    <div class="kpi-subtext" id="dash-pct-sudah">0% Selesai</div>
+                    <div class="kpi-subtext" id="dash-pct-sudah">Total Santri Diverifikasi</div>
                 </div>
 
                 <div class="kpi-card">
@@ -156,7 +182,7 @@
                                 </tr>
                             </thead>
                             <tbody id="tbody-mtq-mqs-global">
-                                <tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:10px;">Memuat data...</td></tr>
+                                <tr><td colspan="6" style="padding:12px;"><div class="skeleton-box" style="height:20px;"></div></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -164,10 +190,11 @@
 
                 <div class="panel">
                     <div class="panel-title"><span>📜 Log Verifikasi Realtime Pekan Ini</span></div>
-                    <div class="table-container" style="max-height: 160px; overflow-y: auto;">
+                    <div class="table-container" style="max-height: 220px; overflow-y: auto;">
                         <table>
                             <thead>
                                 <tr>
+                                    <th style="width: 85px;">Waktu</th>
                                     <th>Nama Santri</th>
                                     <th>Daerah</th>
                                     <th>Status</th>
@@ -175,7 +202,7 @@
                                 </tr>
                             </thead>
                             <tbody id="tbody-audit-log">
-                                <tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:10px;">Memuat log...</td></tr>
+                                <tr><td colspan="5" style="padding:12px;"><div class="skeleton-box" style="height:20px;"></div></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -189,15 +216,15 @@
                         <thead>
                             <tr>
                                 <th rowspan="2" style="vertical-align:middle;">Daerah</th>
-                                <th colspan="5" style="text-align:center; border-bottom:1px solid var(--border); background:#f1f5f9;">MTQ</th>
-                                <th colspan="5" style="text-align:center; border-bottom:1px solid var(--border); background:#f8fafc;">MQS</th>
+                                <th colspan="5" style="text-align:center; border-bottom:1px solid var(--border); background:var(--bg-subtle);">MTQ</th>
+                                <th colspan="5" style="text-align:center; border-bottom:1px solid var(--border); background:var(--card-bg);">MQS</th>
                             </tr>
                             <tr>
-                                <th style="text-align:center; background:#f1f5f9;">Induk</th>
-                                <th style="text-align:center; color:var(--primary); background:#f1f5f9;">Hadir</th>
-                                <th style="text-align:center; color:var(--sakit-color); background:#f1f5f9;">S</th>
-                                <th style="text-align:center; color:var(--izin-color); background:#f1f5f9;">I</th>
-                                <th style="text-align:center; color:var(--alpha-color); background:#f1f5f9;">A</th>
+                                <th style="text-align:center; background:var(--bg-subtle);">Induk</th>
+                                <th style="text-align:center; color:var(--primary); background:var(--bg-subtle);">Hadir</th>
+                                <th style="text-align:center; color:var(--sakit-color); background:var(--bg-subtle);">S</th>
+                                <th style="text-align:center; color:var(--izin-color); background:var(--bg-subtle);">I</th>
+                                <th style="text-align:center; color:var(--alpha-color); background:var(--bg-subtle);">A</th>
 
                                 <th style="text-align:center;">Induk</th>
                                 <th style="text-align:center; color:var(--primary);">Hadir</th>
@@ -207,7 +234,7 @@
                             </tr>
                         </thead>
                         <tbody id="tbody-mtq-mqs-daerah">
-                            <tr><td colspan="11" style="text-align:center; color:var(--text-muted); padding:10px;">Memuat data daerah...</td></tr>
+                            <tr><td colspan="11" style="padding:12px;"><div class="skeleton-box" style="height:20px;"></div></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -237,15 +264,14 @@
                 </div>
             </div>
 
-
         </section>
 
         <!-- TAB 2: EDIT DATA ADMIN -->
         <section id="view-editor" class="app-view">
             <div class="controls-row slide-up">
                 <div style="display:flex; gap:6px; margin-bottom:4px;">
-                    <button class="tab-btn active" id="btn-src-koreksi" onclick="switchEditorSource('koreksi')">⚡ Koreksi Pekan Ini</button>
-                    <button class="tab-btn" id="btn-src-database" onclick="switchEditorSource('database')">📦 Database Rekap (Arsip)</button>
+                    <button class="tab-btn active ripple-target" id="btn-src-koreksi" onclick="switchEditorSource('koreksi')">⚡ Koreksi Pekan Ini</button>
+                    <button class="tab-btn ripple-target" id="btn-src-database" onclick="switchEditorSource('database')">📦 Database Rekap (Arsip)</button>
                 </div>
 
                 <div class="search-box-mini">
@@ -254,21 +280,26 @@
                 </div>
 
                 <div class="filter-tabs">
-                    <button class="tab-btn active" id="tab-status-belum" onclick="setEditorStatusFilter('belum')">Belum Dikoreksi (<span id="count-belum">0</span>)</button>
-                    <button class="tab-btn" id="tab-status-sudah" onclick="setEditorStatusFilter('sudah')">Selesai (<span id="count-sudah">0</span>)</button>
-                    <button class="tab-btn" id="tab-status-alpha" onclick="setEditorStatusFilter('alpha')">🔴 Alpha (<span id="count-alpha-filter">0</span>)</button>
-                    <button class="tab-btn" id="tab-status-izin" onclick="setEditorStatusFilter('izin')">🟠 Izin (<span id="count-izin-filter">0</span>)</button>
-                    <button class="tab-btn" id="tab-status-sakit" onclick="setEditorStatusFilter('sakit')">🔵 Sakit (<span id="count-sakit-filter">0</span>)</button>
+                    <button class="tab-btn active ripple-target" id="tab-status-belum" onclick="setEditorStatusFilter('belum')">Belum Dikoreksi (<span id="count-belum">0</span>)</button>
+                    <button class="tab-btn ripple-target" id="tab-status-sudah" onclick="setEditorStatusFilter('sudah')">Selesai (<span id="count-sudah">0</span>)</button>
+                    <button class="tab-btn ripple-target" id="tab-status-alpha" onclick="setEditorStatusFilter('alpha')">🔴 Alpha (<span id="count-alpha-filter">0</span>)</button>
+                    <button class="tab-btn ripple-target" id="tab-status-izin" onclick="setEditorStatusFilter('izin')">🟠 Izin (<span id="count-izin-filter">0</span>)</button>
+                    <button class="tab-btn ripple-target" id="tab-status-sakit" onclick="setEditorStatusFilter('sakit')">🔵 Sakit (<span id="count-sakit-filter">0</span>)</button>
                 </div>
             </div>
 
             <div id="editor-breadcrumb" class="breadcrumb-bar fade-in" style="display:none;">
                 <div style="font-size:11px; font-weight:800;" id="breadcrumb-text">📍 Semua Daerah</div>
-                <button class="btn-outline" id="btn-back-level" onclick="navLevelBack()" style="padding:4px 10px; font-size:10px; border-radius:8px;">← Kembali</button>
+                <button class="btn-outline ripple-target" id="btn-back-level" onclick="navLevelBack()" style="padding:4px 10px; font-size:10px; border-radius:8px;">← Kembali</button>
             </div>
 
             <div id="editor-content-container" class="slide-up">
-                <div style="text-align:center; padding:30px 15px; color:var(--text-muted); font-size:12px; background:white; border-radius:18px; border:1px solid var(--border);">Memuat data...</div>
+                <div class="grid-cards">
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                </div>
             </div>
         </section>
 
@@ -280,12 +311,12 @@
                     <span class="config-badge all" id="progress-mode-badge">MODE APP</span>
                 </div>
                 <p style="font-size:11px; color:var(--text-muted); margin-bottom:12px; line-height:1.4;">
-                    Progress di bawah murni menghitung data dari <b>Sheet Koreksi Absen (Pekan Ini)</b> dan disesuaikan dengan <b>Filter Mode App Taklimda</b> yang aktif di sheet config.
+                    Progress di bawah murni menghitung data dari <b>Sheet Koreksi Absen (Pekan Ini)</b>.
                 </p>
                 
-                <div style="display:flex; gap:8px; margin-bottom:12px;">
-                    <input type="text" id="search-daerah" class="input-search" placeholder="🔍 Cari Daerah..." oninput="renderMonitoringTable()" style="flex:1;">
-                    <select id="sort-progress" class="select-control" onchange="renderMonitoringTable()" style="flex:1;">
+                <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+                    <input type="text" id="search-daerah" class="input-search" placeholder="🔍 Cari Daerah..." oninput="renderMonitoringTable()" style="flex:1; min-width:140px;">
+                    <select id="sort-progress" class="select-control" onchange="renderMonitoringTable()" style="flex:1; min-width:160px;">
                         <option value="lowest">📉 Progress Terendah</option>
                         <option value="highest">📈 Progress Tertinggi</option>
                         <option value="name_asc">🔤 Nama Daerah (A-Z)</option>
@@ -295,18 +326,18 @@
 
                 <div class="table-container">
                     <table>
-						<thead>
-							<tr>
-								<th>DAERAH</th>
-								<th style="text-align:center;">STATUS</th>
-								<th style="text-align:center;">TOTAL</th>
-								<th style="text-align:center;">SELESAI</th>
-								<th style="text-align:center;">BELUM</th>
-								<th style="text-align:center;">AKSI</th>
-							</tr>
-						</thead>
+                        <thead>
+                            <tr>
+                                <th>DAERAH</th>
+                                <th style="text-align:center;">STATUS</th>
+                                <th style="text-align:center;">TOTAL</th>
+                                <th style="text-align:center;">SELESAI</th>
+                                <th style="text-align:center;">BELUM</th>
+                                <th style="text-align:center;">AKSI</th>
+                            </tr>
+                        </thead>
                         <tbody id="tbody-monitoring">
-                            <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:14px;">Memuat data progress...</td></tr>
+                            <tr><td colspan="6" style="padding:14px;"><div class="skeleton-box" style="height:24px;"></div></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -326,7 +357,7 @@
                     </p>
 
                     <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
-                        <label style="background:#f8fafc; padding:10px; border-radius:12px; border:1px solid var(--border); display:flex; align-items:center; gap:10px; cursor:pointer;">
+                        <label style="background:var(--bg-subtle); padding:10px; border-radius:12px; border:1px solid var(--border); display:flex; align-items:center; gap:10px; cursor:pointer;">
                             <input type="radio" name="optFilterAbsen" value="all" id="radio-mode-all" style="accent-color:var(--primary);">
                             <div>
                                 <div style="font-size:11px; font-weight:800; color:var(--text-main);">🟢 Tampilkan Semua Data Absensi</div>
@@ -334,7 +365,7 @@
                             </div>
                         </label>
 
-                        <label style="background:#f8fafc; padding:10px; border-radius:12px; border:1px solid var(--border); display:flex; align-items:center; gap:10px; cursor:pointer;">
+                        <label style="background:var(--bg-subtle); padding:10px; border-radius:12px; border:1px solid var(--border); display:flex; align-items:center; gap:10px; cursor:pointer;">
                             <input type="radio" name="optFilterAbsen" value="alpha" id="radio-mode-alpha" style="accent-color:var(--alpha-color);">
                             <div>
                                 <div style="font-size:11px; font-weight:800; color:var(--alpha-color);">🔴 Khusus Data Alpha (A) Sahaja</div>
@@ -342,7 +373,7 @@
                             </div>
                         </label>
 
-                        <label style="background:#f8fafc; padding:10px; border-radius:12px; border:1px solid var(--border); display:flex; align-items:center; gap:10px; cursor:pointer;">
+                        <label style="background:var(--bg-subtle); padding:10px; border-radius:12px; border:1px solid var(--border); display:flex; align-items:center; gap:10px; cursor:pointer;">
                             <input type="radio" name="optFilterAbsen" value="izin" id="radio-mode-izin" style="accent-color:var(--izin-color);">
                             <div>
                                 <div style="font-size:11px; font-weight:800; color:var(--izin-color);">🟠 Khusus Data Izin (I) Sahaja</div>
@@ -350,7 +381,7 @@
                             </div>
                         </label>
 
-                        <label style="background:#f8fafc; padding:10px; border-radius:12px; border:1px solid var(--border); display:flex; align-items:center; gap:10px; cursor:pointer;">
+                        <label style="background:var(--bg-subtle); padding:10px; border-radius:12px; border:1px solid var(--border); display:flex; align-items:center; gap:10px; cursor:pointer;">
                             <input type="radio" name="optFilterAbsen" value="sakit" id="radio-mode-sakit" style="accent-color:var(--sakit-color);">
                             <div>
                                 <div style="font-size:11px; font-weight:800; color:var(--sakit-color);">🔵 Khusus Data Sakit (S) Sahaja</div>
@@ -359,20 +390,20 @@
                         </label>
                     </div>
 
-                    <button onclick="saveAppConfig()" class="btn-act btn-primary" style="width:100%; padding:11px; margin-bottom:14px;">💾 Simpan Mode App HP Taklimda (Update Sheet Config)</button>
+                    <button onclick="saveAppConfig()" class="btn-act btn-primary ripple-target" style="width:100%; padding:11px; margin-bottom:14px;">💾 Simpan Mode App HP Taklimda (Update Sheet Config)</button>
 
                     <div style="border-top: 1px dashed var(--border); padding-top: 12px;">
                         <div style="font-size:11px; font-weight:800; color:var(--text-main); margin-bottom:4px;">📦 Arsip & Reset Pekan Absensi</div>
                         <p style="font-size:10px; color:var(--text-muted); margin-bottom:8px;">
                             Pindahkan seluruh data pekan ini ke sheet `Database_Rekap` dan bersihkan sheet `Koreksi_Absen` untuk pekan baru.
                         </p>
-                        <button onclick="openGantiPekanModal()" class="btn-act" style="background:#ffe4e6; color:var(--alpha-color); width:100%; padding:10px; border:1px solid #fecdd3;">📦 Ganti Pekan & Arsipkan Data</button>
+                        <button onclick="openGantiPekanModal()" class="btn-act ripple-target" style="background:#ffe4e6; color:var(--alpha-color); width:100%; padding:10px; border:1px solid #fecdd3;">📦 Ganti Pekan & Arsipkan Data</button>
                     </div>
                 </div>
 
                 <div class="panel">
                     <div class="panel-title"><span>📢 Pengumuman Pusat</span></div>
-                    <div id="current-bc-box" style="background:#f8fafc; border:1px solid var(--border); border-radius:14px; padding:12px; margin-bottom:10px;">
+                    <div id="current-bc-box" style="background:var(--bg-subtle); border:1px solid var(--border); border-radius:14px; padding:12px; margin-bottom:10px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                             <span style="font-size:9px; font-weight:800; color:var(--text-muted);">STATUS HARI INI</span>
                             <span id="current-bc-status-badge" class="status-tag status-selesai">MEMUAT...</span>
@@ -380,8 +411,8 @@
                         <h4 id="current-bc-disp-title" style="font-size:12px; font-weight:800; margin-bottom:4px;">-</h4>
                         <p id="current-bc-disp-msg" style="font-size:10px; color:var(--text-muted); white-space:pre-line; margin-bottom:10px;">-</p>
                         <div style="display:flex; gap:6px;">
-                            <button onclick="fillFormFromCurrentBc()" class="btn-outline" style="flex:1; padding:6px; border-radius:8px; font-size:10px;">✏️ Edit Text</button>
-                            <button id="btn-quick-toggle-bc" onclick="quickToggleBroadcast()" class="btn-act" style="background:var(--alpha-color); color:white; flex:1; padding:6px; border-radius:8px; font-size:10px;">🛑 Nonaktifkan</button>
+                            <button onclick="fillFormFromCurrentBc()" class="btn-outline ripple-target" style="flex:1; padding:6px; border-radius:8px; font-size:10px;">✏️ Edit Text</button>
+                            <button id="btn-quick-toggle-bc" onclick="quickToggleBroadcast()" class="btn-act ripple-target" style="background:var(--alpha-color); color:white; flex:1; padding:6px; border-radius:8px; font-size:10px;">🛑 Nonaktifkan</button>
                         </div>
                     </div>
 
@@ -401,7 +432,7 @@
                         </div>
                     </div>
 
-                    <button onclick="sendBroadcastPusat()" class="btn-act btn-primary" style="width:100%; padding:11px;">🚀 Terbitkan Pengumuman</button>
+                    <button onclick="sendBroadcastPusat()" class="btn-act btn-primary ripple-target" style="width:100%; padding:11px;">🚀 Terbitkan Pengumuman</button>
                 </div>
             </div>
         </section>
@@ -422,7 +453,7 @@
                             </tr>
                         </thead>
                         <tbody id="tbody-users">
-                            <tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:12px;">Memuat daftar password...</td></tr>
+                            <tr><td colspan="3" style="padding:12px;"><div class="skeleton-box" style="height:24px;"></div></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -432,34 +463,41 @@
 
     <!-- BOTTOM NAV BAR -->
     <nav class="bottom-nav">
-        <button class="nav-item active" id="nav-btn-dashboard" onclick="switchNav('dashboard')">
+        <button class="nav-item active ripple-target" id="nav-btn-dashboard" onclick="switchNav('dashboard')">
             <span class="nav-icon">📊</span>
             <span>Dashboard</span>
         </button>
-        <button class="nav-item" id="nav-btn-editor" onclick="switchNav('editor')">
+        <button class="nav-item ripple-target" id="nav-btn-editor" onclick="switchNav('editor')">
             <span class="nav-icon">✏️</span>
             <span>Edit Data</span>
         </button>
-        <button class="nav-item" id="nav-btn-progress" onclick="switchNav('progress')">
+        <button class="nav-item ripple-target" id="nav-btn-progress" onclick="switchNav('progress')">
             <span class="nav-icon">📋</span>
             <span>Progress</span>
         </button>
-        <button class="nav-item" id="nav-btn-config" onclick="switchNav('config')">
+        <button class="nav-item ripple-target" id="nav-btn-config" onclick="switchNav('config')">
             <span class="nav-icon">⚙️</span>
             <span>Mode App</span>
         </button>
-        <button class="nav-item" id="nav-btn-users" onclick="switchNav('users')">
+        <button class="nav-item ripple-target" id="nav-btn-users" onclick="switchNav('users')">
             <span class="nav-icon">🔑</span>
             <span>Sandi</span>
         </button>
     </nav>
 
-    <!-- MODAL EDIT KOREKSI SANTRI -->
+    <!-- MOBILE BOTTOM SHEET MODAL UNTUK EDIT KOREKSI SANTRI DENGAN DRAG & DROP -->
     <div id="modal-edit-koreksi" class="modal-overlay" onclick="if(event.target===this) closeEditModal()">
         <div class="modal-content slide-up">
+            <div class="modal-drag-handle"></div>
             <div class="modal-header">
-                <div style="font-size:13px; font-weight:800; letter-spacing:0.5px;">EDIT KOREKSI SANTRI</div>
-                <button onclick="closeEditModal()" style="background:rgba(255,255,255,0.25); color:white; border:none; width:26px; height:26px; border-radius:50%; font-size:12px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+                <div>
+                    <div style="font-size:13px; font-weight:800; letter-spacing:0.5px;">EDIT KOREKSI SANTRI</div>
+                    <div style="font-size:9.5px; opacity:0.85; font-weight:600;">Geser (drag) tanggal untuk ubah status/hapus</div>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button id="btn-undo" onclick="undoLastAction()" style="background:rgba(255,255,255,0.25); color:white; border:none; padding:4px 10px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; opacity:0.5;" disabled>↩️ Undo</button>
+                    <button onclick="closeEditModal()" style="background:rgba(255,255,255,0.25); color:white; border:none; width:26px; height:26px; border-radius:50%; font-size:12px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+                </div>
             </div>
 
             <div class="modal-body">
@@ -475,40 +513,48 @@
                     </div>
                 </div>
 
-                <div class="section-box">
+                <!-- ZONA ALPHA -->
+                <div class="section-box" data-zone="alpha">
                     <div class="section-title" style="color:var(--alpha-color);">
-                        <span>Tanggal Alpha (A)</span>
-                        <button onclick="addTodayDate('alpha')" style="font-size:9px; color:var(--alpha-color); background:var(--alpha-bg); border:none; padding:3px 8px; border-radius:6px; font-weight:800; cursor:pointer;">+ Hari Ini</button>
+                        <span>🔴 Tanggal Alpha (A)</span>
+                        <button onclick="addTodayDate('alpha')" class="btn-quick-today">+ Hari Ini</button>
                     </div>
                     <div class="chips-wrapper" id="chips-alpha"></div>
-                    <div class="quick-input-group">
-                        <input type="text" id="input-add-alpha" placeholder="Misal: 1, 2, 3..." onkeydown="if(event.key==='Enter'){event.preventDefault();tambahTanggal('alpha');}">
-                        <button onclick="tambahTanggal('alpha')" class="btn-add-chip" style="background:var(--alpha-color);">+ Alpha</button>
-                    </div>
                 </div>
 
-                <div class="section-box">
+                <!-- ZONA IZIN -->
+                <div class="section-box" data-zone="izin">
                     <div class="section-title" style="color:var(--izin-color);">
-                        <span>Tanggal Izin (I)</span>
-                        <button onclick="addTodayDate('izin')" style="font-size:9px; color:var(--izin-color); background:var(--izin-bg); border:none; padding:3px 8px; border-radius:6px; font-weight:800; cursor:pointer;">+ Hari Ini</button>
+                        <span>🟠 Tanggal Izin (I)</span>
+                        <button onclick="addTodayDate('izin')" class="btn-quick-today" style="color:var(--izin-color); background:var(--izin-bg);">+ Hari Ini</button>
                     </div>
                     <div class="chips-wrapper" id="chips-izin"></div>
-                    <div class="quick-input-group">
-                        <input type="text" id="input-add-izin" placeholder="Misal: 1, 2, 3..." onkeydown="if(event.key==='Enter'){event.preventDefault();tambahTanggal('izin');}">
-                        <button onclick="tambahTanggal('izin')" class="btn-add-chip" style="background:var(--izin-color);">+ Izin</button>
+                </div>
+
+                <!-- ZONA SAKIT -->
+                <div class="section-box" data-zone="sakit">
+                    <div class="section-title" style="color:var(--sakit-color);">
+                        <span>🔵 Tanggal Sakit (S)</span>
+                        <button onclick="addTodayDate('sakit')" class="btn-quick-today" style="color:var(--sakit-color); background:var(--sakit-bg);">+ Hari Ini</button>
+                    </div>
+                    <div class="chips-wrapper" id="chips-sakit"></div>
+                </div>
+
+                <!-- QUICK INPUT BAR MANUAL -->
+                <div class="global-quick-card">
+                    <label style="font-size:9px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Tambah Tanggal Manual</label>
+                    <input type="text" id="input-global-tgl" class="input-search" placeholder="Tulis tanggal (contoh: 5, 12, 20)..." onkeydown="if(event.key==='Enter'){event.preventDefault();tambahTanggalGlobal('alpha');}">
+                    <div style="display:flex; gap:6px; margin-top:4px;">
+                        <button onclick="tambahTanggalGlobal('alpha')" class="btn-act" style="background:var(--alpha-bg); color:var(--alpha-color); border:1px solid #fecdd3; font-size:10px; padding:7px;">+ Alpha</button>
+                        <button onclick="tambahTanggalGlobal('izin')" class="btn-act" style="background:var(--izin-bg); color:var(--izin-color); border:1px solid #fde68a; font-size:10px; padding:7px;">+ Izin</button>
+                        <button onclick="tambahTanggalGlobal('sakit')" class="btn-act" style="background:var(--sakit-bg); color:var(--sakit-color); border:1px solid #bae6fd; font-size:10px; padding:7px;">+ Sakit</button>
                     </div>
                 </div>
 
-                <div class="section-box">
-                    <div class="section-title" style="color:var(--sakit-color);">
-                        <span>Tanggal Sakit (S)</span>
-                        <button onclick="addTodayDate('sakit')" style="font-size:9px; color:var(--sakit-color); background:var(--sakit-bg); border:none; padding:3px 8px; border-radius:6px; font-weight:800; cursor:pointer;">+ Hari Ini</button>
-                    </div>
-                    <div class="chips-wrapper" id="chips-sakit"></div>
-                    <div class="quick-input-group">
-                        <input type="text" id="input-add-sakit" placeholder="Misal: 1, 2, 3..." onkeydown="if(event.key==='Enter'){event.preventDefault();tambahTanggal('sakit');}">
-                        <button onclick="tambahTanggal('sakit')" class="btn-add-chip" style="background:var(--sakit-color);">+ Sakit</button>
-                    </div>
+                <!-- ZONA TRASH MELAYANG SAAT DRAG -->
+                <div class="trash-zone" data-zone="trash" id="trash-zone">
+                    <span style="font-size:18px;">🗑️</span>
+                    <span>Lepas tanggal di sini untuk menghapus</span>
                 </div>
 
                 <div>
@@ -520,17 +566,17 @@
                 </div>
 
                 <div style="display:flex; gap:8px; margin-top:4px;">
-                    <button onclick="closeEditModal()" style="flex:1; padding:12px; background:#f1f5f9; color:var(--text-main); font-weight:800; border-radius:12px; font-size:12px; border:none; cursor:pointer;">Batal</button>
-                    <button onclick="saveEditModal()" class="btn-act btn-primary" style="flex:2; padding:12px; font-size:12px; border-radius:12px;">Simpan Data ➔</button>
+                    <button onclick="closeEditModal()" style="flex:1; padding:12px; background:var(--bg-subtle); color:var(--text-main); font-weight:800; border-radius:12px; font-size:12px; border:none; cursor:pointer;">Batal</button>
+                    <button onclick="saveEditModal()" class="btn-act btn-primary ripple-target" style="flex:2; padding:12px; font-size:12px; border-radius:12px;">Simpan Data ➔</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL GANTI PEKAN / ARSIP -->
-    <div id="modal-ganti-pekan" class="modal-overlay center-modal">
-        <div class="modal-content slide-up" style="max-width:360px; padding:16px;">
-            <div style="text-align:center;">
+    <div id="modal-ganti-pekan" class="modal-overlay center-modal" onclick="if(event.target===this) closeGantiPekanModal()">
+        <div class="modal-content slide-up" style="max-width:400px;">
+            <div class="modal-drag-handle"></div>
+            <div style="text-align:center; padding:16px;">
                 <div style="font-size:32px; margin-bottom:6px;">📦</div>
                 <h3 style="font-size:14px; font-weight:800; color:var(--text-main); margin-bottom:4px;">Konfirmasi Ganti Pekan</h3>
                 <p style="font-size:11px; color:var(--text-muted); line-height:1.4; margin-bottom:12px;">
@@ -559,16 +605,16 @@
                 </div>
 
                 <div style="display:flex; gap:8px;">
-                    <button onclick="closeGantiPekanModal()" style="padding:10px; background:#f1f5f9; border-radius:10px; font-size:11px; font-weight:800; flex:1; border:none; cursor:pointer;">Batal</button>
-                    <button onclick="executeGantiPekan()" class="btn-act" style="background:var(--alpha-color); color:white; padding:10px; border-radius:10px; flex:1.5;">Ya, Simpan & Reset</button>
+                    <button onclick="closeGantiPekanModal()" style="padding:10px; background:var(--bg-subtle); border-radius:10px; font-size:11px; font-weight:800; flex:1; border:none; cursor:pointer;">Batal</button>
+                    <button onclick="executeGantiPekan()" class="btn-act ripple-target" style="background:var(--alpha-color); color:white; padding:10px; border-radius:10px; flex:1.5;">Ya, Simpan & Reset</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL DETAIL BREAKDOWN DAERAH -->
-    <div id="modal-detail-daerah" class="modal-overlay center-modal">
-        <div class="modal-content slide-up" style="max-width:520px; border-radius:20px;">
+    <div id="modal-detail-daerah" class="modal-overlay center-modal" onclick="if(event.target===this) closeDetailModal()">
+        <div class="modal-content slide-up" style="max-width:520px;">
+            <div class="modal-drag-handle"></div>
             <div class="modal-header">
                 <div>
                     <div style="font-size:9px; opacity:0.8; font-weight:800; text-transform:uppercase;">Rincian Detail Absensi</div>
@@ -580,25 +626,37 @@
         </div>
     </div>
 
-    <!-- MODAL UBAH SANDI DAERAH -->
-    <div id="modal-pass" class="modal-overlay center-modal">
-        <div class="modal-content slide-up" style="max-width:340px; padding:16px;">
-            <h3 style="font-size:13px; font-weight:800; margin-bottom:4px;">Ubah Sandi Daerah <span id="modal-target-daerah">A</span></h3>
-            <p style="font-size:10px; color:var(--text-muted); margin-bottom:12px;">Sandi baru langsung berlaku di sistem HP Pengurus Daerah.</p>
-            <input type="text" id="input-new-pass" placeholder="Masukkan Sandi Baru..." class="input-search" style="margin-bottom:12px;">
-            <div style="display:flex; gap:6px; justify-content:flex-end;">
-                <button onclick="closePassModal()" style="padding:8px 12px; background:#f1f5f9; border-radius:8px; font-size:10px; font-weight:800; border:none; cursor:pointer;">Batal</button>
-                <button onclick="submitNewPassword()" class="btn-act btn-primary" style="padding:8px 12px; border-radius:8px; font-size:10px;">Simpan Sandi</button>
+    <div id="modal-pass" class="modal-overlay center-modal" onclick="if(event.target===this) closePassModal()">
+        <div class="modal-content slide-up" style="max-width:380px;">
+            <div class="modal-drag-handle"></div>
+            <div style="padding:16px;">
+                <h3 style="font-size:13px; font-weight:800; margin-bottom:4px;">Ubah Sandi Daerah <span id="modal-target-daerah">A</span></h3>
+                <p style="font-size:10px; color:var(--text-muted); margin-bottom:12px;">Sandi baru langsung berlaku di sistem HP Pengurus Daerah.</p>
+                <input type="text" id="input-new-pass" placeholder="Masukkan Sandi Baru..." class="input-search" style="margin-bottom:12px;">
+                <div style="display:flex; gap:6px; justify-content:flex-end;">
+                    <button onclick="closePassModal()" style="padding:8px 12px; background:var(--bg-subtle); border-radius:8px; font-size:10px; font-weight:800; border:none; cursor:pointer;">Batal</button>
+                    <button onclick="submitNewPassword()" class="btn-act btn-primary ripple-target" style="padding:8px 12px; border-radius:8px; font-size:10px;">Simpan Sandi</button>
+                </div>
             </div>
         </div>
     </div>
 
-<!-- EXTERNAL SEPARATED JS MODULES -->
-    <script src="js/core.js?v=1.1"></script>
-    <script src="js/dashboard.js?v=1.1"></script>
-    <script src="js/editor.js?v=1.1"></script>
-    <script src="js/progress.js?v=1.1"></script>
-    <script src="js/config.js?v=1.1"></script>
-    <script src="js/users.js?v=1.1"></script>
+    <!-- MODULE SCRIPTS -->
+    <script src="js/core.js?v=3.5"></script>
+    <script src="js/dashboard.js?v=3.5"></script>
+    <script src="js/editor.js?v=3.5"></script>
+    <script src="js/progress.js?v=3.5"></script>
+    <script src="js/config.js?v=3.5"></script>
+    <script src="js/users.js?v=3.5"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('✅ Service Worker PWA Aktif!', reg.scope))
+                    .catch(err => console.warn('❌ Gagal daftar Service Worker:', err));
+            });
+        }
+    </script>
 </body>
 </html>

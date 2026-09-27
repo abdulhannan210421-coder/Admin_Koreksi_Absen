@@ -1,5 +1,5 @@
 /* =========================================================
-   TAB 1: DASHBOARD ANALITIK & GRAFIK (Akurat & Terintegrasi Master Data)
+   TAB 1: DASHBOARD ANALITIK & GRAFIK
 ========================================================= */
 
 function populateGlobalDaerahDropdown() {
@@ -13,15 +13,19 @@ function populateGlobalDaerahDropdown() {
         let d = window.getValPeka(m, ['domisili', 'daerah', 'kamar', 'wilayah']);
         if (d) {
             let ltr = window.extractDaerahCode(d);
-            if (ltr && ltr !== 'LAIN') daerahSet.add(ltr);
+            if (ltr) daerahSet.add(ltr);
         }
     });
-    rawKoreksiData.forEach(m => { if (m._daerah && m._daerah !== 'LAIN') daerahSet.add(m._daerah); });
+    rawKoreksiData.forEach(m => { if (m._daerah) daerahSet.add(m._daerah); });
 
-    Array.from(daerahSet).sort().forEach(ltr => {
+    Array.from(daerahSet).sort((a,b) => {
+        if (a === 'LAIN') return 1;
+        if (b === 'LAIN') return -1;
+        return a.localeCompare(b);
+    }).forEach(ltr => {
         let opt = document.createElement('option');
         opt.value = ltr;
-        opt.innerText = `Daerah ${ltr}`;
+        opt.innerText = ltr === 'LAIN' ? 'Lainnya / Rumah Ortu' : `Daerah ${ltr}`;
         select.appendChild(opt);
     });
 
@@ -166,6 +170,30 @@ function resetGlobalFilters() {
     showToast("🔄 Filter Dashboard Reset!");
 }
 
+function parseTimestampMs(tsStr) {
+    if (!tsStr) return 0;
+    let d = new Date(tsStr);
+    if (!isNaN(d.getTime())) return d.getTime();
+    
+    let parts = String(tsStr).match(/\d+/g);
+    if (parts && parts.length >= 3) {
+        return new Date(parts[0], parts[1]-1, parts[2]).getTime();
+    }
+    return 0;
+}
+
+function formatLogTime(tsStr) {
+    if (!tsStr) return 'Baru saja';
+    let d = new Date(tsStr);
+    if (isNaN(d.getTime())) return String(tsStr);
+    
+    let hh = String(d.getHours()).padStart(2, '0');
+    let mm = String(d.getMinutes()).padStart(2, '0');
+    let dd = String(d.getDate()).padStart(2, '0');
+    let mo = String(d.getMonth() + 1).padStart(2, '0');
+    return `${dd}/${mo} ${hh}:${mm}`;
+}
+
 function processAndRenderStats() {
     let filterDaerah   = document.getElementById('filter-global-daerah')?.value || "ALL";
     let filterKategori = document.getElementById('filter-global-kategori')?.value || "ALL";
@@ -178,19 +206,12 @@ function processAndRenderStats() {
     let tglMax = isNaN(rawMax) ? 30 : Math.max(1, Math.min(30, rawMax));
     if (tglMin > tglMax) { let temp = tglMin; tglMin = tglMax; tglMax = temp; }
 
-    let katEl = document.getElementById('filter-global-kategori');
-    if (katEl && !katEl.parentElement.querySelector('.custom-select-wrapper')) {
-        buildCustomSelectDropdown(katEl);
-    }
-
-    // MAP PENCARIAN DARI MASTER DATA
     let masterMap = {};
     rawMasterSantri.forEach(m => {
         let idPps = String(m.idpps || m.id_pps || '').trim();
         if (idPps) masterMap[idPps] = m;
     });
 
-    // 1. FILTER MASTER SANTRI
     let filteredMasterData = rawMasterSantri.filter(m => {
         let dom = String(m.domisili || '').toUpperCase();
         let ltr = window.extractDaerahCode(dom);
@@ -202,30 +223,24 @@ function processAndRenderStats() {
         return true;
     });
 
-    // 2. FILTER DATA ABSENSI
-    // Jika tidak ada filter bulan & tahun spesifik, fokus murni ke PEKAN INI (_source === 'koreksi')
     let isFilterActive = (filterBulan !== "ALL" || filterTahun !== "ALL");
     
     let datasetAbsensiFiltered = rawKoreksiData.filter(row => {
-        // Jika filter Bulan/Tahun ALL, ambil murni Koreksi Pekan Ini
         if (!isFilterActive && row._source !== 'koreksi') return false;
 
         let idPps = String(row.idpps || row.id_pps || '').trim();
         let mDetail = masterMap[idPps];
 
-        // Tentukan Daerah (Cek Koreksi dulu, fallback ke Master)
         let letter = row._daerah;
         if ((!letter || letter === 'LAIN') && mDetail) {
             letter = window.extractDaerahCode(mDetail.domisili);
         }
         if (filterDaerah !== "ALL" && letter !== filterDaerah) return false;
 
-        // Tentukan Kategori (Cek Koreksi dulu, fallback ke Master)
         let katText = String(row.kategori || (mDetail ? mDetail.kategori : '') || '').toUpperCase().trim();
         if (filterKategori === "MTQ" && !katText.includes("MTQ")) return false;
         if (filterKategori === "MQS" && !katText.includes("MQS")) return false;
 
-        // Filter Bulan & Tahun Hijriah jika aktif
         if (filterBulan !== "ALL") {
             let rBulan = String(row.bulanhijriah || '').trim().toLowerCase();
             if (rBulan && rBulan !== filterBulan.toLowerCase()) return false;
@@ -238,7 +253,6 @@ function processAndRenderStats() {
         return true;
     });
 
-    // PROGRESS KOREKSI PEKAN INI
     let datasetPekanIni = rawKoreksiData.filter(x => x._source === 'koreksi');
     if (filterDaerah !== "ALL") {
         datasetPekanIni = datasetPekanIni.filter(x => x._daerah === filterDaerah);
@@ -258,13 +272,11 @@ function processAndRenderStats() {
     let statPct = document.getElementById('stat-percent');
     if (statPct) statPct.innerText = `${percentPekanIni}%`;
 
-    let barFill = document.getElementById('progress-bar-fill');
-    if (barFill) barFill.style.width = `${percentPekanIni}%`;
+    updateCircularGauge(percentPekanIni);
 
-    // INISIALISASI PENAMPUNG PERHITUNGAN
     let countSakitTotal = 0, countIzinTotal = 0, countAlphaTotal = 0, countVerifiedTotal = 0;
     
-    let statsPerDaerah = {};
+    let statsPerDaerah = { 'LAIN': { total: 0, sudah: 0, belum: 0, sakit: 0, izin: 0, alpha: 0 } };
     'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(ltr => {
         statsPerDaerah[ltr] = { total: 0, sudah: 0, belum: 0, sakit: 0, izin: 0, alpha: 0 };
     });
@@ -274,13 +286,13 @@ function processAndRenderStats() {
     let mtqGlobal = { total: 0, hadir: 0, sakit: 0, izin: 0, alpha: 0 };
     let mqsGlobal = { total: 0, hadir: 0, sakit: 0, izin: 0, alpha: 0 };
 
-    let mtqDaerah = {}, mqsDaerah = {};
+    let mtqDaerah = { 'LAIN': { total: 0, hadir: 0, sakit: 0, izin: 0, alpha: 0 } }, 
+        mqsDaerah = { 'LAIN': { total: 0, hadir: 0, sakit: 0, izin: 0, alpha: 0 } };
     'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(l => {
         mtqDaerah[l] = { total: 0, hadir: 0, sakit: 0, izin: 0, alpha: 0 };
         mqsDaerah[l] = { total: 0, hadir: 0, sakit: 0, izin: 0, alpha: 0 };
     });
 
-    // POPULASI TOTAL DARI MASTER DATA
     filteredMasterData.forEach(m => {
         let katText = String(m.kategori || '').toUpperCase().trim();
         let dom = String(m.domisili || '').toUpperCase();
@@ -288,17 +300,15 @@ function processAndRenderStats() {
 
         if (katText.includes("MQS")) {
             mqsGlobal.total++;
-            if (ltr !== 'LAIN' && mqsDaerah[ltr]) mqsDaerah[ltr].total++;
+            if (mqsDaerah[ltr]) mqsDaerah[ltr].total++;
         } else {
-            // Default ke MTQ jika tidak MQS
             mtqGlobal.total++;
-            if (ltr !== 'LAIN' && mtqDaerah[ltr]) mtqDaerah[ltr].total++;
+            if (mtqDaerah[ltr]) mtqDaerah[ltr].total++;
         }
     });
 
     let auditLogList = [];
 
-    // OLAHI DATA ABSENSI TERFILTER
     datasetAbsensiFiltered.forEach(row => {
         let idPps = String(row.idpps || row.id_pps || '').trim();
         let mDetail = masterMap[idPps];
@@ -308,7 +318,6 @@ function processAndRenderStats() {
             letter = window.extractDaerahCode(mDetail.domisili);
         }
 
-        // Terapkan Filter Tanggal Min & Max
         let tSakit = (row._tglSakitArr || []).filter(d => d >= tglMin && d <= tglMax);
         let tIzin   = (row._tglIzinArr || []).filter(d => d >= tglMin && d <= tglMax);
         let tAlpha = (row._tglAlphaArr || []).filter(d => d >= tglMin && d <= tglMax);
@@ -340,7 +349,7 @@ function processAndRenderStats() {
             if (hasAlpha) mqsGlobal.alpha++;
             if (!hasSakit && !hasIzin && !hasAlpha) mqsGlobal.hadir++;
 
-            if (letter !== 'LAIN' && mqsDaerah[letter]) {
+            if (mqsDaerah[letter]) {
                 if (hasSakit) mqsDaerah[letter].sakit++;
                 if (hasIzin)  mqsDaerah[letter].izin++;
                 if (hasAlpha) mqsDaerah[letter].alpha++;
@@ -352,7 +361,7 @@ function processAndRenderStats() {
             if (hasAlpha) mtqGlobal.alpha++;
             if (!hasSakit && !hasIzin && !hasAlpha) mtqGlobal.hadir++;
 
-            if (letter !== 'LAIN' && mtqDaerah[letter]) {
+            if (mtqDaerah[letter]) {
                 if (hasSakit) mtqDaerah[letter].sakit++;
                 if (hasIzin)  mtqDaerah[letter].izin++;
                 if (hasAlpha) mtqDaerah[letter].alpha++;
@@ -360,17 +369,20 @@ function processAndRenderStats() {
             }
         }
 
-        if (letter !== 'LAIN' && statsPerDaerah[letter]) {
+        if (statsPerDaerah[letter]) {
             statsPerDaerah[letter].total++;
             if (isDone) {
                 statsPerDaerah[letter].sudah++;
                 if (row._source === 'koreksi') {
                     let namaClean = row.namasantri !== '-' ? row.namasantri : (mDetail ? mDetail.namasantri : '-');
+                    let dispLabel = letter === 'LAIN' ? 'Lainnya / Ortu' : `Daerah ${letter}`;
                     auditLogList.push({ 
                         nama: namaClean, 
-                        daerah: letter, 
+                        daerah: dispLabel, 
                         status: row._statusKoreksi, 
-                        s: numSakit, i: numIzin, a: numAlpha 
+                        s: numSakit, i: numIzin, a: numAlpha,
+                        timestamp: row._timestamp,
+                        rawTime: parseTimestampMs(row._timestamp)
                     });
                 }
             } else {
@@ -382,12 +394,11 @@ function processAndRenderStats() {
         }
     });
 
-    // SESUAIKAN HADIR BERDASARKAN TARGET MASTER (JIKA MASTER DATA TERSEDIA)
     if (rawMasterSantri.length > 0) {
         mtqGlobal.hadir = Math.max(0, mtqGlobal.total - (mtqGlobal.sakit + mtqGlobal.izin + mtqGlobal.alpha));
         mqsGlobal.hadir = Math.max(0, mqsGlobal.total - (mqsGlobal.sakit + mqsGlobal.izin + mqsGlobal.alpha));
 
-        'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(l => {
+        Object.keys(mtqDaerah).forEach(l => {
             if (mtqDaerah[l].total > 0) {
                 mtqDaerah[l].hadir = Math.max(0, mtqDaerah[l].total - (mtqDaerah[l].sakit + mtqDaerah[l].izin + mtqDaerah[l].alpha));
             }
@@ -397,7 +408,8 @@ function processAndRenderStats() {
         });
     }
 
-    // UPDATE CARD KARTU KPI
+    auditLogList.sort((a, b) => b.rawTime - a.rawTime);
+
     let totalEl = document.getElementById('dash-total-santri');
     if (totalEl) totalEl.innerText = totalSantriMaster;
 
@@ -419,7 +431,6 @@ function processAndRenderStats() {
     renderMtqMqsTables(mtqGlobal, mqsGlobal, mtqDaerah, mqsDaerah);
     renderAuditLogTable(auditLogList);
 
-    // DRAW GRAFIK TREN HARIAN
     let labelsDaily = [];
     for (let i = tglMin; i <= tglMax; i++) {
         labelsDaily.push(`Tgl ${i}`);
@@ -434,10 +445,12 @@ function processAndRenderStats() {
         ]
     });
 
-    let activeRegions = Object.keys(statsPerDaerah).filter(k => statsPerDaerah[k].total > 0 || mtqDaerah[k].total > 0 || mqsDaerah[k].total > 0).sort();
+    let activeRegions = Object.keys(statsPerDaerah)
+        .filter(k => statsPerDaerah[k].total > 0 || mtqDaerah[k].total > 0 || mqsDaerah[k].total > 0)
+        .sort((a,b) => (a === 'LAIN' ? 1 : b === 'LAIN' ? -1 : a.localeCompare(b)));
 
     drawChart('chartBarDaerah', 'bar', {
-        labels: activeRegions.map(r => `Drh ${r}`),
+        labels: activeRegions.map(r => r === 'LAIN' ? 'Lain/Ortu' : `Drh ${r}`),
         datasets: [
             { label: 'Sakit', data: activeRegions.map(r => statsPerDaerah[r].sakit), backgroundColor: '#0284c7' },
             { label: 'Izin', data: activeRegions.map(r => statsPerDaerah[r].izin), backgroundColor: '#d97706' },
@@ -446,7 +459,7 @@ function processAndRenderStats() {
     });
 
     drawChart('chartBarMtq', 'bar', {
-        labels: activeRegions.map(r => `Drh ${r}`),
+        labels: activeRegions.map(r => r === 'LAIN' ? 'Lain/Ortu' : `Drh ${r}`),
         datasets: [
             { label: 'Hadir', data: activeRegions.map(r => mtqDaerah[r].hadir), backgroundColor: '#059669' },
             { label: 'Sakit', data: activeRegions.map(r => mtqDaerah[r].sakit), backgroundColor: '#0284c7' },
@@ -456,7 +469,7 @@ function processAndRenderStats() {
     });
 
     drawChart('chartBarMqs', 'bar', {
-        labels: activeRegions.map(r => `Drh ${r}`),
+        labels: activeRegions.map(r => r === 'LAIN' ? 'Lain/Ortu' : `Drh ${r}`),
         datasets: [
             { label: 'Hadir', data: activeRegions.map(r => mqsDaerah[r].hadir), backgroundColor: '#059669' },
             { label: 'Sakit', data: activeRegions.map(r => mqsDaerah[r].sakit), backgroundColor: '#0284c7' },
@@ -494,12 +507,16 @@ function renderMtqMqsTables(mtqG, mqsG, mtqD, mqsD) {
     let tbodyD = document.getElementById('tbody-mtq-mqs-daerah');
     if (tbodyD) {
         tbodyD.innerHTML = "";
-        let activeKeys = Object.keys(mtqD).filter(k => mtqD[k].total > 0 || mqsD[k].total > 0).sort();
+        let activeKeys = Object.keys(mtqD)
+            .filter(k => mtqD[k].total > 0 || mqsD[k].total > 0)
+            .sort((a,b) => (a === 'LAIN' ? 1 : b === 'LAIN' ? -1 : a.localeCompare(b)));
+
         activeKeys.forEach(k => {
             let m = mtqD[k], q = mqsD[k];
+            let labelText = k === 'LAIN' ? 'Lain/Ortu' : `Daerah ${k}`;
             tbodyD.innerHTML += `
                 <tr>
-                    <td><b>Daerah ${k}</b></td>
+                    <td><b>${labelText}</b></td>
                     <td style="text-align:center; font-weight:700;">${m.total}</td><td style="text-align:center; color:var(--primary);">${m.hadir}</td><td style="text-align:center; color:var(--sakit-color);">${m.sakit}</td><td style="text-align:center; color:var(--izin-color);">${m.izin}</td><td style="text-align:center; color:var(--alpha-color); font-weight:800;">${m.alpha}</td>
                     <td style="text-align:center; font-weight:700; border-left:1px dashed var(--border);">${q.total}</td><td style="text-align:center; color:var(--primary);">${q.hadir}</td><td style="text-align:center; color:var(--sakit-color);">${q.sakit}</td><td style="text-align:center; color:var(--izin-color);">${q.izin}</td><td style="text-align:center; color:var(--alpha-color); font-weight:800;">${q.alpha}</td>
                 </tr>
@@ -511,13 +528,18 @@ function renderMtqMqsTables(mtqG, mqsG, mtqD, mqsD) {
 function renderAuditLogTable(logs) {
     let tbody = document.getElementById('tbody-audit-log');
     if (!tbody) return;
-    tbody.innerHTML = logs.length === 0 ? `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:10px;">Belum ada verifikasi data pekan ini.</td></tr>` :
-        logs.slice(0, 15).map(item => `
+    tbody.innerHTML = logs.length === 0 ? `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:12px;">Belum ada verifikasi data pekan ini.</td></tr>` :
+        logs.slice(0, 20).map(item => `
             <tr>
+                <td><span style="font-size:10px; font-weight:700; color:var(--text-muted); white-space:nowrap;">🕒 ${formatLogTime(item.timestamp)}</span></td>
                 <td><b>${item.nama}</b></td>
-                <td><span class="status-tag status-selesai">Daerah ${item.daerah}</span></td>
-                <td><span style="color:var(--primary); font-weight:800;">✔ OK</span></td>
-                <td style="text-align:center; font-weight:800; font-size:9px;">S:${item.s} I:${item.i} A:${item.a}</td>
+                <td><span class="status-tag status-selesai">${item.daerah}</span></td>
+                <td><span style="color:var(--primary); font-weight:800; font-size:10px;">✔ ${item.status || 'OK'}</span></td>
+                <td style="text-align:center; font-weight:800; font-size:10px;">
+                    <span style="color:var(--sakit-color)">S:${item.s}</span> 
+                    <span style="color:var(--izin-color)">I:${item.i}</span> 
+                    <span style="color:var(--alpha-color)">A:${item.a}</span>
+                </td>
             </tr>
         `).join('');
 }

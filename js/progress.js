@@ -1,11 +1,10 @@
 /* =========================================================
-   TAB 3: PROGRESS KOREKSI PEKAN INI (Sheet Koreksi_Absen)
+   TAB 3: PROGRESS KOREKSI PEKAN INI
 ========================================================= */
 
-// Helper pembuat warna gradasi HSL (0% Merah -> 50% Kuning -> 100% Hijau)
 function getProgressGradientColor(percent) {
     let p = Math.max(0, Math.min(100, percent));
-    let hue = Math.round((p * 120) / 100); // 0 = Red, 60 = Yellow, 120 = Green
+    let hue = Math.round((p * 120) / 100);
     return {
         bg: `hsl(${hue}, 85%, 93%)`,
         text: `hsl(${hue}, 90%, 28%)`,
@@ -21,10 +20,8 @@ function renderMonitoringTable() {
     let sortMode = document.getElementById('sort-progress')?.value || 'lowest';
     container.innerHTML = "";
 
-    // 1. Murni mengambil data dari sheet Koreksi_Absen (Pekan Ini)
     let koreksiOnlyDataset = rawKoreksiData.filter(x => x._source === 'koreksi');
 
-    // 2. Filter Mode App HP (Alpha / Izin / Sakit)
     if (appConfigFilter === 'alpha') {
         koreksiOnlyDataset = koreksiOnlyDataset.filter(x => 
             (x._tglAlphaArr && x._tglAlphaArr.length > 0) || parseInt(window.getValPeka(x, ['total_alpa', 'totalalpa', 'alpa']), 10) > 0
@@ -39,16 +36,14 @@ function renderMonitoringTable() {
         );
     }
 
-    // 3. Inisialisasi statistik per Daerah (A-Z)
-    let statsProgress = {};
+    let statsProgress = { 'LAIN': { daerah: 'LAIN', total: 0, sudah: 0, belum: 0, percent: 0 } };
     'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(l => { 
         statsProgress[l] = { daerah: l, total: 0, sudah: 0, belum: 0, percent: 0 }; 
     });
 
-    // 4. Hitung Target & Koreksi Selesai
     koreksiOnlyDataset.forEach(item => {
-        let d = item._daerah;
-        if (d && d !== 'LAIN' && statsProgress[d]) {
+        let d = item._daerah || 'LAIN';
+        if (statsProgress[d]) {
             statsProgress[d].total++;
             if (item._isDone) {
                 statsProgress[d].sudah++;
@@ -58,7 +53,6 @@ function renderMonitoringTable() {
         }
     });
 
-    // 5. Filter daerah aktif
     let activeList = Object.keys(statsProgress)
         .filter(k => statsProgress[k].total > 0 && (!searchVal || k.includes(searchVal)))
         .map(k => {
@@ -67,7 +61,6 @@ function renderMonitoringTable() {
             return obj;
         });
 
-    // 6. Urutkan data
     if (sortMode === 'lowest') {
         activeList.sort((a, b) => a.percent - b.percent || b.total - a.total);
     } else if (sortMode === 'highest') {
@@ -83,10 +76,10 @@ function renderMonitoringTable() {
         return;
     }
 
-    // 7. Render baris tabel (6 Kolom - Ringkas untuk HP)
     activeList.forEach(item => {
         let color = getProgressGradientColor(item.percent);
         let labelText = item.percent === 100 ? "✔ 100%" : `${item.percent}%`;
+        let dispDaerah = item.daerah === 'LAIN' ? 'Lainnya / Rumah Ortu' : `Daerah ${item.daerah}`;
         
         let statusBadge = `
             <span style="
@@ -104,13 +97,13 @@ function renderMonitoringTable() {
 
         container.innerHTML += `
             <tr>
-                <td style="font-weight:800; color:var(--text-main); white-space:nowrap;">Daerah ${item.daerah}</td>
+                <td style="font-weight:800; color:var(--text-main); white-space:nowrap;">${dispDaerah}</td>
                 <td style="text-align:center;">${statusBadge}</td>
                 <td style="text-align:center; font-weight:800;">${item.total}</td>
                 <td style="text-align:center; color:var(--primary); font-weight:800;">${item.sudah}</td>
                 <td style="text-align:center; color:var(--text-muted);">${item.belum}</td>
                 <td style="text-align:center;">
-                    <button class="btn-outline" onclick="openDetailModal('${item.daerah}')" style="padding:4px 8px; font-size:10px; border-radius:8px; font-weight:700;">🔍 Detail</button>
+                    <button class="btn-outline ripple-target" onclick="openDetailModal('${item.daerah}')" style="padding:4px 8px; font-size:10px; border-radius:8px; font-weight:700;">🔍 Detail</button>
                 </td>
             </tr>
         `;
@@ -118,6 +111,7 @@ function renderMonitoringTable() {
 }
 
 function openDetailModal(daerah) {
+    triggerHaptic(15);
     let container = document.getElementById('detail-daerah-body');
     if (!container) return;
     container.innerHTML = "";
@@ -139,8 +133,9 @@ function openDetailModal(daerah) {
     }
 
     let countSudah = koreksiOnly.filter(x => x._isDone).length;
+    let titleText = daerah === 'LAIN' ? 'Lainnya / Rumah Orang Tua' : `Daerah ${daerah}`;
 
-    document.getElementById('detail-daerah-title').innerText = `Daerah ${daerah} (${countSudah}/${koreksiOnly.length} Pekan Ini)`;
+    document.getElementById('detail-daerah-title').innerText = `${titleText} (${countSudah}/${koreksiOnly.length} Pekan Ini)`;
 
     let grouped = {};
     koreksiOnly.forEach(s => {
@@ -152,10 +147,10 @@ function openDetailModal(daerah) {
     Object.keys(grouped).sort().forEach(roomName => {
         let list = grouped[roomName];
         let roomDiv = document.createElement('div');
-        roomDiv.style.cssText = 'background:#f8fafc; border:1px solid var(--border); border-radius:14px; padding:10px; margin-bottom:10px;';
+        roomDiv.style.cssText = 'background:var(--bg-subtle); border:1px solid var(--border); border-radius:14px; padding:10px; margin-bottom:10px;';
         
         let itemsHtml = list.map(s => `
-            <div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:8px 10px; border-radius:10px; border:1px solid var(--border); margin-top:6px; font-size:11px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); padding:8px 10px; border-radius:10px; border:1px solid var(--border); margin-top:6px; font-size:11px;">
                 <div>
                     <div style="font-weight:800; color:var(--text-main);">${s.namasantri}</div>
                     <div style="font-size:9px; color:var(--text-muted);">ID PPS: ${s.idpps}</div>
@@ -167,7 +162,7 @@ function openDetailModal(daerah) {
             </div>
         `).join('');
 
-        roomDiv.innerHTML = `<div style="font-weight:800; font-size:11px; color:var(--primary);">🚪 Kamar ${roomName} (${list.length} Santri)</div>${itemsHtml}`;
+        roomDiv.innerHTML = `<div style="font-weight:800; font-size:11px; color:var(--primary);">🚪 ${roomName} (${list.length} Santri)</div>${itemsHtml}`;
         container.appendChild(roomDiv);
     });
 

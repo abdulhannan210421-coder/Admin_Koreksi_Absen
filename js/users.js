@@ -10,18 +10,19 @@ function renderUsersTable() {
                 <td><b>Daerah ${u.daerah}</b></td>
                 <td style="text-align:center;">
                     <div style="display:inline-flex; align-items:center; gap:4px;">
-                        <input type="password" id="pass-val-${idx}" readonly value="${u.password}" style="background:#f1f5f9; border:1px solid var(--border); padding:6px 10px; border-radius:8px; font-weight:800; font-size:11px; width:95px; text-align:center; outline:none;">
-                        <button onclick="togglePeekPass(${idx})" id="btn-peek-${idx}" title="Intip Sandi" style="background:#f1f5f9; border:1px solid var(--border); padding:6px 8px; border-radius:8px; font-size:11px; cursor:pointer;">👁️</button>
+                        <input type="password" id="pass-val-${idx}" readonly value="${u.password}" style="background:var(--bg-subtle); border:1px solid var(--border); color:var(--text-main); padding:6px 10px; border-radius:8px; font-weight:800; font-size:11px; width:95px; text-align:center; outline:none;">
+                        <button onclick="togglePeekPass(${idx})" id="btn-peek-${idx}" title="Intip Sandi" class="ripple-target" style="background:var(--bg-subtle); border:1px solid var(--border); padding:6px 8px; border-radius:8px; font-size:11px; cursor:pointer;">👁️</button>
                     </div>
                 </td>
                 <td style="text-align:center;">
-                    <button class="btn-act btn-dark" onclick="openPassModal('${u.daerah}','${u.password}')" style="padding:6px 12px; font-size:10px; margin:0 auto;">✏ Edit Sandi</button>
+                    <button class="btn-act btn-dark ripple-target" onclick="openPassModal('${u.daerah}','${u.password}')" style="padding:6px 12px; font-size:10px; margin:0 auto;">✏ Edit Sandi</button>
                 </td>
             </tr>
         `).join('');
 }
 
 function togglePeekPass(idx) {
+    triggerHaptic(10);
     let input = document.getElementById(`pass-val-${idx}`);
     let btn = document.getElementById(`btn-peek-${idx}`);
     if (!input) return;
@@ -35,6 +36,7 @@ function togglePeekPass(idx) {
 }
 
 function openPassModal(daerah, currentPass) {
+    triggerHaptic(15);
     document.getElementById('modal-target-daerah').innerText = daerah;
     document.getElementById('input-new-pass').value = currentPass;
     document.getElementById('modal-pass').style.display = 'flex';
@@ -43,6 +45,7 @@ function openPassModal(daerah, currentPass) {
 function closePassModal() { document.getElementById('modal-pass').style.display = 'none'; }
 
 async function submitNewPassword() {
+    triggerHaptic(20);
     let daerah = document.getElementById('modal-target-daerah').innerText;
     let newPass = document.getElementById('input-new-pass').value.trim();
     if (!newPass) return alert("Sandi tidak boleh kosong!");
