@@ -22,6 +22,9 @@
     <!-- CHART.JS LIBRARY -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <!-- HTML2CANVAS FOR TABLE CAPTURE -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -305,14 +308,19 @@
 
         <!-- TAB 3: PROGRESS KOREKSI PEKAN INI -->
         <section id="view-progress" class="app-view">
-            <div class="panel">
+            <div class="panel" id="panel-progress-capture">
                 <div class="panel-title">
                     <span>📋 Progress Koreksi Daerah Pekan Ini</span>
-                    <span class="config-badge all" id="progress-mode-badge">MODE APP</span>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <button class="btn-outline ripple-target" onclick="captureProgressTable()" style="padding:4px 10px; font-size:10px; border-radius:8px; font-weight:800;">
+                            📸 Capture
+                        </button>
+                        <span class="config-badge all" id="progress-mode-badge">MODE APP</span>
+                    </div>
                 </div>
                 <p style="font-size:11px; color:var(--text-muted); margin-bottom:12px; line-height:1.4;">
                     Progress di bawah murni menghitung data dari <b>Sheet Koreksi Absen (Pekan Ini)</b>.
-                </p>
+                </p> 
                 
                 <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
                     <input type="text" id="search-daerah" class="input-search" placeholder="🔍 Cari Daerah..." oninput="renderMonitoringTable()" style="flex:1; min-width:140px;">
