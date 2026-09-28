@@ -170,3 +170,43 @@ function openDetailModal(daerah) {
 }
 
 function closeDetailModal() { document.getElementById('modal-detail-daerah').style.display = 'none'; }
+
+async function captureProgressTable() {
+    triggerHaptic(20);
+    showToast("📸 Memproses gambar tabel...");
+
+    const targetEl = document.getElementById('panel-progress-capture');
+    if (!targetEl) {
+        showToast("❌ Elemen tabel tidak ditemukan!");
+        return;
+    }
+
+    try {
+        // Render elemen HTML menjadi Canvas
+        const canvas = await html2canvas(targetEl, {
+            scale: 2, // Resolusi HD/Jernih
+            useCORS: true,
+            backgroundColor: getComputedStyle(document.body).getPropertyValue('--card-bg') || '#ffffff',
+            ignoreElements: (element) => {
+                // Sembunyikan tombol capture & bar pencarian di hasil screenshot agar gambar lebih rapi
+                return element.tagName === 'BUTTON' && element.innerText.includes('Capture');
+            }
+        });
+
+        // Konversi Canvas ke gambar PNG & picu download otomatis
+        const imageUri = canvas.toDataURL("image/png");
+        const link = document.createElement('a');
+        
+        let todayStr = new Date().toISOString().split('T')[0];
+        link.download = `Progress_Taklimda_${todayStr}.png`;
+        link.href = imageUri;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast("✅ Gambar berhasil disimpan!");
+    } catch (error) {
+        console.error("Capture Error:", error);
+        showToast("❌ Gagal menyimpan gambar!");
+    }
+}
