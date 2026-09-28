@@ -665,5 +665,24 @@
             });
         }
     </script>
+    <!-- MODAL PREVIEW CAPTURE UNTUK APK KODULAR -->
+<div id="modal-preview-capture" class="modal-overlay center-modal" onclick="if(event.target===this) this.style.display='none'">
+    <div class="modal-content slide-up" style="max-width:480px;">
+        <div class="modal-drag-handle"></div>
+        <div class="modal-header">
+            <div style="font-size:12px; font-weight:800;">📸 HASIL CAPTURE TABEL</div>
+            <button onclick="document.getElementById('modal-preview-capture').style.display='none'" style="background:rgba(255,255,255,0.25); color:white; border:none; width:26px; height:26px; border-radius:50%; font-size:12px; font-weight:bold; cursor:pointer;">✕</button>
+        </div>
+        <div class="modal-body" style="text-align:center; padding:14px;">
+            <p style="font-size:11px; color:var(--text-muted); margin-bottom:10px;">
+                💡 <b>Tekan & tahan (long-press) gambar</b> di bawah untuk menyimpan ke galeri HP atau membagikannya ke WhatsApp.
+            </p>
+            <div style="max-height:60vh; overflow-y:auto; border-radius:12px; border:1px solid var(--border);">
+                <img id="img-captured-result" src="" style="width:100%; height:auto; display:block;" alt="Hasil Capture">
+            </div>
+            <button onclick="document.getElementById('modal-preview-capture').style.display='none'" class="btn-act btn-primary" style="margin-top:12px; width:100%; padding:10px;">Tutup</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
