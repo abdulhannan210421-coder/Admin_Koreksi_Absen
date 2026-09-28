@@ -180,9 +180,12 @@ function setupPullToRefresh() {
     const indicator = document.getElementById('pull-refresh-indicator');
 
     window.addEventListener('touchstart', (e) => {
-        if (window.scrollY === 0) {
+        // Hanya aktif jika BENAR-BENAR di paling atas sejak awal sentuhan jari
+        if (window.scrollY <= 0) {
             startY = e.touches[0].clientY;
             isPulling = true;
+        } else {
+            isPulling = false;
         }
     }, { passive: true });
 
@@ -191,9 +194,10 @@ function setupPullToRefresh() {
         currentY = e.touches[0].clientY;
         let distance = currentY - startY;
 
-        if (distance > 70 && window.scrollY === 0) {
+        // Dituntut ditarik lebih dalam (> 160px) agar tidak sengaja terpicu
+        if (distance > 160 && window.scrollY <= 0) {
             indicator.classList.add('visible');
-        } else if (distance < 30) {
+        } else if (distance < 80) {
             indicator.classList.remove('visible');
         }
     }, { passive: true });
