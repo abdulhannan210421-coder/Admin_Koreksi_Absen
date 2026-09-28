@@ -36,14 +36,14 @@ function renderMonitoringTable() {
         );
     }
 
-    let statsProgress = { 'LAIN': { daerah: 'LAIN', total: 0, sudah: 0, belum: 0, percent: 0 } };
+    let statsProgress = {};
     'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(l => { 
         statsProgress[l] = { daerah: l, total: 0, sudah: 0, belum: 0, percent: 0 }; 
     });
 
     koreksiOnlyDataset.forEach(item => {
-        let d = item._daerah || 'LAIN';
-        if (statsProgress[d]) {
+        let d = item._daerah;
+        if (d && d !== 'LAIN' && statsProgress[d]) {
             statsProgress[d].total++;
             if (item._isDone) {
                 statsProgress[d].sudah++;
@@ -53,8 +53,9 @@ function renderMonitoringTable() {
         }
     });
 
+    // k !== 'LAIN' memastikan Lainnya / Rumah Ortu tidak masuk tabel
     let activeList = Object.keys(statsProgress)
-        .filter(k => statsProgress[k].total > 0 && (!searchVal || k.includes(searchVal)))
+        .filter(k => k !== 'LAIN' && statsProgress[k].total > 0 && (!searchVal || k.includes(searchVal)))
         .map(k => {
             let obj = statsProgress[k];
             obj.percent = obj.total > 0 ? Math.round((obj.sudah / obj.total) * 100) : 0;
@@ -72,14 +73,14 @@ function renderMonitoringTable() {
     }
 
     if (activeList.length === 0) {
-        container.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:16px;">Tidak ada target data koreksi di sheet Koreksi_Absen.</td></tr>`;
+        container.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:16px;">Tidak ada target data koreksi di sheet Koreksi_Absen.</td></tr>`;
         return;
     }
 
     activeList.forEach(item => {
         let color = getProgressGradientColor(item.percent);
         let labelText = item.percent === 100 ? "✔ 100%" : `${item.percent}%`;
-        let dispDaerah = item.daerah === 'LAIN' ? 'Lainnya / Rumah Ortu' : `Daerah ${item.daerah}`;
+        let dispDaerah = `Daerah ${item.daerah}`;
         
         let statusBadge = `
             <span style="
@@ -99,7 +100,6 @@ function renderMonitoringTable() {
             <tr>
                 <td style="font-weight:800; color:var(--text-main); white-space:nowrap;">${dispDaerah}</td>
                 <td style="text-align:center;">${statusBadge}</td>
-                <td style="text-align:center; font-weight:800;">${item.total}</td>
                 <td style="text-align:center; color:var(--primary); font-weight:800;">${item.sudah}</td>
                 <td style="text-align:center; color:var(--text-muted);">${item.belum}</td>
                 <td style="text-align:center;">
