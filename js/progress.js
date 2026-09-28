@@ -182,31 +182,34 @@ async function captureProgressTable() {
     }
 
     try {
-        // Render elemen HTML menjadi Canvas
         const canvas = await html2canvas(targetEl, {
-            scale: 2, // Resolusi HD/Jernih
+            scale: 2,
             useCORS: true,
             backgroundColor: getComputedStyle(document.body).getPropertyValue('--card-bg') || '#ffffff',
             ignoreElements: (element) => {
-                // Sembunyikan tombol capture & bar pencarian di hasil screenshot agar gambar lebih rapi
                 return element.tagName === 'BUTTON' && element.innerText.includes('Capture');
             }
         });
 
-        // Konversi Canvas ke gambar PNG & picu download otomatis
         const imageUri = canvas.toDataURL("image/png");
-        const link = document.createElement('a');
-        
-        let todayStr = new Date().toISOString().split('T')[0];
-        link.download = `Progress_Taklimda_${todayStr}.png`;
-        link.href = imageUri;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
 
-        showToast("✅ Gambar berhasil disimpan!");
+        // Tampilkan gambar di modal preview agar bisa di-longpress / simpan di WebView Kodular
+        const previewModal = document.getElementById('modal-preview-capture');
+        const imgResult = document.getElementById('img-captured-result');
+
+        if (previewModal && imgResult) {
+            imgResult.src = imageUri;
+            previewModal.style.display = 'flex';
+            showToast("✅ Gambar siap! Tekan tahan gambar untuk simpan.");
+        } else {
+            // Fallback jika dibuka di browser laptop/biasa
+            const link = document.createElement('a');
+            link.download = `Progress_Taklimda_${new Date().toISOString().split('T')[0]}.png`;
+            link.href = imageUri;
+            link.click();
+        }
     } catch (error) {
         console.error("Capture Error:", error);
-        showToast("❌ Gagal menyimpan gambar!");
+        showToast("❌ Gagal membuat gambar!");
     }
 }
