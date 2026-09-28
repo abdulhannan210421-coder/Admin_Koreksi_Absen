@@ -175,45 +175,99 @@ function setupRippleEffect() {
 
 function setupPullToRefresh() {
     let startY = 0;
-    let currentY = 0;
-    let isPulling = false;
+    let holdTimer = null;
+    let timerCountdown = null;
+    let isHoldComplete = false;
+    
+    const holdTimeNeeded = 3.0; // Durasi wajib tahan diubah menjadi 3 detik
+    const threshold = 200;       // Jarak tarik minimal (200px)
+    let currentCount = holdTimeNeeded;
+
     const indicator = document.getElementById('pull-refresh-indicator');
+    const pullText = document.getElementById('pull-text');
+
+    if (!indicator) return;
 
     window.addEventListener('touchstart', (e) => {
-        // Hanya aktif jika BENAR-BENAR di paling atas sejak awal sentuhan jari
         if (window.scrollY <= 0) {
             startY = e.touches[0].clientY;
-            isPulling = true;
-        } else {
-            isPulling = false;
+            resetHoldState();
         }
     }, { passive: true });
 
     window.addEventListener('touchmove', (e) => {
-        if (!isPulling) return;
-        currentY = e.touches[0].clientY;
+        if (window.scrollY > 0) {
+            cancelPull();
+            return;
+        }
+
+        let currentY = e.touches[0].clientY;
         let distance = currentY - startY;
 
-        // Dituntut ditarik lebih dalam (> 160px) agar tidak sengaja terpicu
-        if (distance > 160 && window.scrollY <= 0) {
+        if (distance >= threshold) {
             indicator.classList.add('visible');
-        } else if (distance < 80) {
-            indicator.classList.remove('visible');
+
+            if (!holdTimer && !isHoldComplete) {
+                currentCount = holdTimeNeeded;
+                if (pullText) pullText.innerText = `Tahan ${currentCount.toFixed(1)}s...`;
+                
+                triggerHaptic(15);
+
+                timerCountdown = setInterval(() => {
+                    currentCount -= 0.1;
+                    if (currentCount <= 0) {
+                        currentCount = 0;
+                        clearInterval(timerCountdown);
+                    }
+                    if (pullText && !isHoldComplete) {
+                        pullText.innerText = currentCount > 0 
+                            ? `Tahan ${currentCount.toFixed(1)}s...` 
+                            : "✅ Lepaskan untuk Refresh";
+                    }
+                }, 100);
+
+                holdTimer = setTimeout(() => {
+                    isHoldComplete = true;
+                    triggerHaptic(35);
+                    if (pullText) pullText.innerText = "✅ Lepaskan untuk Refresh";
+                }, holdTimeNeeded * 1000);
+            }
+        } else {
+            cancelPull();
         }
     }, { passive: true });
 
     window.addEventListener('touchend', async () => {
-        if (isPulling && indicator.classList.contains('visible')) {
-            triggerHaptic(30);
-            document.getElementById('pull-text').innerText = "Mengambil Data...";
+        if (isHoldComplete) {
+            triggerHaptic(20);
+            if (pullText) pullText.innerText = "🔄 Mengambil Data...";
             await manualSync();
+            
             setTimeout(() => {
-                indicator.classList.remove('visible');
-                document.getElementById('pull-text').innerText = "Tarik untuk Refresh";
-            }, 600);
+                cancelPull();
+            }, 500);
+        } else {
+            cancelPull();
         }
-        isPulling = false;
     });
+
+    window.addEventListener('touchcancel', () => {
+        cancelPull();
+    });
+
+    function resetHoldState() {
+        if (holdTimer) clearTimeout(holdTimer);
+        if (timerCountdown) clearInterval(timerCountdown);
+        holdTimer = null;
+        timerCountdown = null;
+        isHoldComplete = false;
+    }
+
+    function cancelPull() {
+        resetHoldState();
+        if (indicator) indicator.classList.remove('visible');
+        if (pullText) pullText.innerText = "Tarik & Tahan";
+    }
 }
 
 function copyWaRekapFormat() {
