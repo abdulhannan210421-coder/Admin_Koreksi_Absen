@@ -148,7 +148,13 @@ document.addEventListener("DOMContentLoaded", () => {
     setupPullToRefresh();
     setupTouchDragAndDrop();
     loadFromLocalCache();
-    loadAllRealtimeData(true);
+    
+    // Mengunduh Data Taklimda & Master Santri secara bersamaan (Paralel)
+    Promise.all([
+        loadAllRealtimeData(true),
+        fetchMasterSantriData()
+    ]);
+    
     startAutoSync();
 });
 
@@ -477,6 +483,7 @@ function transformRekapList(listRekap) {
     });
 }
 
+// --- KODE LAMA (CARI INI) ---
 function loadFromLocalCache() {
     let cachedRekap = LOCAL_CACHE.get('taklimda_cache_rekap');
     let cachedUsers = LOCAL_CACHE.get('taklimda_cache_users');
@@ -553,6 +560,7 @@ async function fetchMasterSantriData() {
 
             rawMasterSantri = parsedMaster;
             masterDataLoaded = true;
+            LOCAL_CACHE.save('taklimda_cache_master', parsedMaster);
         }
     } catch(e) {
         console.warn("Gagal load master data:", e);
