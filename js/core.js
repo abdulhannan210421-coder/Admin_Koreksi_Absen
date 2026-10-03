@@ -483,9 +483,9 @@ function transformRekapList(listRekap) {
     });
 }
 
-// --- KODE LAMA (CARI INI) ---
 function loadFromLocalCache() {
     let cachedRekap = LOCAL_CACHE.get('taklimda_cache_rekap');
+    let cachedMaster = LOCAL_CACHE.get('taklimda_cache_master'); // <-- Tambahkan ini
     let cachedUsers = LOCAL_CACHE.get('taklimda_cache_users');
     let cachedConfig = LOCAL_CACHE.get('taklimda_cache_config');
     let cachedBc = LOCAL_CACHE.get('taklimda_cache_broadcast');
@@ -498,6 +498,11 @@ function loadFromLocalCache() {
     if (cachedBc) {
         activeBroadcastData = cachedBc;
         renderBroadcastCardUI(activeBroadcastData);
+    }
+    // Tambahkan blok penanganan Master Santri ini:
+    if (cachedMaster && Array.isArray(cachedMaster) && cachedMaster.length > 0) {
+        rawMasterSantri = cachedMaster;
+        masterDataLoaded = true;
     }
 
     if (cachedRekap && Array.isArray(cachedRekap) && cachedRekap.length > 0) {
