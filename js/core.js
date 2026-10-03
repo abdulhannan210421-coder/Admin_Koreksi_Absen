@@ -62,7 +62,6 @@ function highlightTextHTML(text, query) {
 const LOCAL_CACHE = {
     save: (key, data) => {
         try { 
-            if (key === 'taklimda_cache_master' || key === 'taklimda_cache_rekap') return; 
             localStorage.setItem(key, JSON.stringify(data)); 
         } catch(e) { console.warn("Cache Warning:", e); }
     },
